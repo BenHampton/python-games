@@ -17,7 +17,7 @@ class SpriteObject:
         self.x, self.y = pos
         self.image = pg.image.load(path).convert_alpha()
         self.IMAGE_WIDTH = self.image.get_width()
-        self.IMAGE_HALF_HEIGHT = self.image.get_width() // 2
+        self.IMAGE_HALF_WIDTH = self.image.get_width() // 2
         self.IMAGE_RATIO = self.IMAGE_WIDTH / self.image.get_height()
         self.dx, self.dy, self.theta, self.screen_x, self.dist, self.norm_dist = 0, 0, 0, 0, 1, 1
         self.sprite_half_width = 0
@@ -51,7 +51,7 @@ class SpriteObject:
 
         self.dist = math.hypot(dx, dy)
         self.norm_dist = self.dist * math.cos(delta)
-        if -self.IMAGE_HALF_HEIGHT < self.screen_x < (WIDTH + self.IMAGE_HALF_HEIGHT) and self.norm_dist > 0.5:
+        if -self.IMAGE_HALF_WIDTH < self.screen_x < (WIDTH + self.IMAGE_HALF_WIDTH) and self.norm_dist > 0.5:
             self.get_sprite_projection()
 
     def update(self):
@@ -64,7 +64,7 @@ class AnimatedSprite(SpriteObject):
                  path='resources/sprites/animated_sprites/green_light/0.png',
                  pos=(10.5, 3.5),
                  scale=0.8,
-                 shift=0.15,
+                 shift=0.16,
                  animation_time=120):
         super().__init__(game, path, pos, scale, shift)
         self.animation_time = animation_time
@@ -92,9 +92,12 @@ class AnimatedSprite(SpriteObject):
 
     def get_images(self, path):
         images = deque()
-        for file_name in os.listdir(path):
+        for file_name in sorted(os.listdir(path)):
+            # added sorted() that was not in the tutorial - debug for shotgun images no being ordered
+            # if 'shotgun' in path: print(path + ' ' + file_name)
             if os.path.isfile(os.path.join(path, file_name)):
                 img = pg.image.load(path + '/' + file_name).convert_alpha()
                 images.append(img)
         return images
+
 
