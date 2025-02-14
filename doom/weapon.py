@@ -33,3 +33,5 @@ class Weapon(AnimatedSprite):
     def update(self):
         self.check_animation_time()
         self.animate_shot()
+
+

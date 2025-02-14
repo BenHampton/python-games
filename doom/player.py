@@ -64,14 +64,15 @@ class Player:
         if self.check_wall(int(self.x), int(self.y + dy * scale)):
             self.y += dy
 
+    # test player, test his direction of movement as a line an the player as a circle
     def draw(self):
-        # test player, test his direction of movement as a line an the player as a circle
-        # pg.draw.line(self.game.screen,
-        #              'yellow',
-        #              (self.x * 100, self.y * 100),
-        #              (self.x * 100 + WIDTH * math.cos(self.angle), self.y * 100 + WIDTH * math.sin(self.angle)),
-        #              2)
-        pg.draw.circle(self.game.screen, 'green', (self.x * 100, self.y * 100), 15)
+        if self.game.test_mode:
+            pg.draw.line(self.game.screen,
+                         'yellow',
+                         (self.x * 100, self.y * 100),
+                         (self.x * 100 + WIDTH * math.cos(self.angle), self.y * 100 + WIDTH * math.sin(self.angle)),
+                         2)
+            pg.draw.circle(self.game.screen, 'green', (self.x * 100, self.y * 100), 15)
 
     def mouse_control(self):
         mx, my = pg.mouse.get_pos()
