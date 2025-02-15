@@ -9,12 +9,19 @@ class ObjectRenderer:
         self.sky_image = self.get_texture('resources/textures/sky.png', (WIDTH, HALF_HEIGHT))
         self.sky_offset = 0
 
+        #todo display level like win()
+        self.win_image = self.get_texture('resources/textures/win.png', RES)
+
     def draw(self):
         self.draw_background()
         self.render_game_objects()
 
+    def win(self):
+        self.screen.blit(self.win_image, (0, 0))
+
     def draw_background(self):
         #sky
+        print('draw_background test')
         self.sky_offset = (self.sky_offset + 4.0 * self.game.player.rel) % WIDTH
         self.screen.blit(self.sky_image, (-self.sky_offset, 0))
         self.screen.blit(self.sky_image, (-self.sky_offset + WIDTH, 0))

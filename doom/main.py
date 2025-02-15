@@ -14,17 +14,28 @@ class Game:
     def __init__(self):
         pg.init()
         pg.mouse.set_visible(False)
-        self.test_mode = True # False === 3D mode #todo find a better way to toggle 2D/3D mode
         self.screen = pg.display.set_mode(RES)
+        self.map_level = 1
         self.clock = pg.time.Clock()
         self.delta_time = 1
         self.global_trigger = False
         self.global_event = pg.USEREVENT + 0
         pg.time.set_timer(self.global_event, 40)
+
+        mode = False
+        self.test_mode = mode # False === 3D mode #todo find a better way to toggle 2D/3D mode
+        self.npc_disabled = mode # False === disable npc #todo toggle npc
+
+        self.new_game()
+
+    def test_level_change(self):
+        # self.map_level += 1
         self.new_game()
 
     def new_game(self):
+        print("new game map level:", self.map_level)
         self.map = Map(self)
+        print('made it')
         self.player = Player(self)
         self.object_renderer = ObjectRenderer(self)
         self.raycasting = RayCasting(self)
@@ -68,5 +79,6 @@ class Game:
 
 if __name__ == '__main__':
     game = Game()
-    # game.sound.theme.play()
+    if not game.test_mode:
+        game.sound.theme.play()
     game.run()

@@ -1,7 +1,7 @@
 ﻿import pygame as pg
 
 _ = False
-todo_mini_map = [
+map_one = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 1],
     [1, _, _, 1, 1, 1, 1, _, _, _, 1, 1, 1, _, _, 1],
@@ -13,7 +13,7 @@ todo_mini_map = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ]
 
-mini_map = [
+map_two = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 1],
     [1, _, _, 3, 3, 3, 3, _, _, _, 2, 2, 2, _, _, 1],
@@ -48,15 +48,18 @@ mini_map = [
     [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
 ]
 
+
 class Map:
     def __init__(self, game):
         self.game = game
-        self.mini_map = mini_map
+        self.all_maps = [map_one, map_two]
+        print('Map class map level: ' + str(self.game.map_level))
+        self.level_map = self.all_maps[self.game.map_level] # map_one init map
         self.world_map = {}
         self.get_map()
 
     def get_map(self):
-        for j, row in enumerate(self.mini_map):
+        for j, row in enumerate(self.level_map):
             for i, value in enumerate(row):
                 if value:
                     self.world_map[(i,j)] = value

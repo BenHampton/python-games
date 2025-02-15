@@ -58,6 +58,7 @@ class NPC(AnimatedSprite):
                 self.death_images.rotate(-1)
                 self.image = self.death_images[0]
                 self.frame_count += 1
+                self.game.object_handler.count -= 1
 
     def animate_pain(self):
         self.animate(self.pain_images)
