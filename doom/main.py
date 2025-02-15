@@ -1,22 +1,26 @@
-﻿import pygame as pg
-import sys
-from settings import *
+﻿import sys
+
 from map import *
+from object_handler import *
+from object_renderer import *
+from pathfinding import *
 from player import *
 from raycasting import *
-from object_renderer import *
-from sprite_object import *
-from object_handler import *
-from weapon import *
 from sound import *
-from pathfinding import *
+from weapon import *
 
 class Game:
     def __init__(self):
         pg.init()
         pg.mouse.set_visible(False)
-        self.test_mode = False # False == 3D mode #todo find a better way to toggle 2D/3D mode
+
+        is_test = False  # True/2D mode - False/3D mode
+        self.test_mode = is_test  # False === 3D mode #todo find a better way to toggle 2D/3D mode
+        self.npc_disabled = is_test  # False === disabled npc spawn #todo toggle npc
+        self.sound_disabled = is_test # False == disabled sounds #todo toggle sound
+
         self.screen = pg.display.set_mode(RES)
+        self.map_level = 0
         self.clock = pg.time.Clock()
         self.delta_time = 1
         self.global_trigger = False
@@ -33,6 +37,15 @@ class Game:
         self.weapon = Weapon(self)
         self.sound = Sound(self)
         self.pathfinding = PathFinding(self)
+
+    def next_level(self):
+        self.map_level += 1
+        self.new_game()
+
+    def completed_game_results(self):
+        # todo show game results
+        # self.screen.fill('black')
+        pass
 
     def update(self):
         self.player.update()
@@ -70,5 +83,6 @@ class Game:
 
 if __name__ == '__main__':
     game = Game()
-    # game.sound.theme.play()
+    if not game.sound_disabled:
+        game.sound.theme.play()
     game.run()

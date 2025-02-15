@@ -27,5 +27,7 @@ graph (self.ways):
   - use command: `pngcrush -ow -rem allb -reduce file.png`
 
 ## Reference
+#### Doom SpriteDatabase: https://spritedatabase.net/game/760
+#### Doom Text Generator: https://fontmeme.com/doom-font/
 #### youtube link: https://www.youtube.com/watch?v=ECqUrT7IdqQ&list=PLi77irUVkDatlbulEY4Kz8O107HO8RGH8
 #### github link: https://github.com/StanislavPetrovV/DOOM-style-Game
