@@ -9,12 +9,13 @@ from sprite_object import *
 from object_handler import *
 from weapon import *
 from sound import *
+from pathfinding import *
 
 class Game:
     def __init__(self):
         pg.init()
         pg.mouse.set_visible(False)
-        self.test_mode = True # False === 3D mode #todo find a better way to toggle 2D/3D mode
+        self.test_mode = False # False == 3D mode #todo find a better way to toggle 2D/3D mode
         self.screen = pg.display.set_mode(RES)
         self.clock = pg.time.Clock()
         self.delta_time = 1
@@ -31,6 +32,7 @@ class Game:
         self.object_handler = ObjectHandler(self)
         self.weapon = Weapon(self)
         self.sound = Sound(self)
+        self.pathfinding = PathFinding(self)
 
     def update(self):
         self.player.update()

@@ -8,6 +8,19 @@
  ----------------  =  ----------------  =>  PROJECTED_HEIGHT  =  -----------------
    SCREEN_DIST             DEPTH                                       DEPTH
 ```
+### Path Finding moving to neighboring tiles
+```
+graph (self.ways):
+
+|----------|----------|----------|
+|  -1, -1  |   0, -1  |   1, -1  |
+|----------|----------|----------|
+|  -1, 0   |   0, 0   |   1, 0   |
+|----------|----------|----------|
+|  -1, 1   |   0, 1   |   1, 1   |
+|----------|----------|----------|
+```
+
 ## Notes
 - needed to use `pngcrush` to fix *.png files
   - install via homebrew: `brew install pngcrush` 
