@@ -14,10 +14,11 @@ class Game:
         pg.init()
         pg.mouse.set_visible(False)
 
+        # todo find a better way to toggle 2D/3D mode
         is_test = False  # True/2D mode - False/3D mode
-        self.test_mode = is_test  # False === 3D mode #todo find a better way to toggle 2D/3D mode
-        self.npc_disabled = is_test  # False === disabled npc spawn #todo toggle npc
-        self.sound_disabled = is_test # False == disabled sounds #todo toggle sound
+        self.test_mode = is_test
+        self.npc_disabled = is_test
+        self.sound_disabled = is_test
 
         self.screen = pg.display.set_mode(RES)
         self.map_level = 0
