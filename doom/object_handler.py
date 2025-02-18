@@ -57,7 +57,7 @@ class ObjectHandler:
             if (self.game.map_level + 1) == len(self.game.map.all_maps):
                 self.completed_game()
             else:
-                self.game.object_renderer.level_completed()
+                self.game.object_renderer.win()
                 pg.display.flip()
                 pg.time.delay(1500)
                 self.game.next_level()
