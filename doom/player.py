@@ -12,6 +12,8 @@ class Player:
         self.rel = 0
         self.health_recovery_delay = 700
         self.time_prev = pg.time.get_ticks()
+        self.weapon_bag_ids = [2]
+        self.active_weapon_id = None
 
     def recover_health(self):
         if self.check_health_recovery_delay() and self.health < PLAYER_MAX_HEALTH:
@@ -44,6 +46,17 @@ class Player:
                     self.game.sound.shotgun.play()
                 self.shot = True
                 self.game.weapon.reloading = True
+
+    def change_weapon(self, event):
+        # print(str(self.weapon_bag_ids))
+        print(str(self.active_weapon_id))
+        if event.type == pg.KEYDOWN:
+            if event.key == pg.K_1 and 1 in self.weapon_bag_ids:
+               self.active_weapon_id = 1
+            if event.key == pg.K_2 and 2 in self.weapon_bag_ids:
+                self.active_weapon_id = 2
+            if event.key == pg.K_2 and 3 in self.weapon_bag_ids:
+                self.active_weapon_id = 3
 
     def movement(self):
         sin_a = math.sin(self.angle)
