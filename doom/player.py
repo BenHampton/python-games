@@ -48,8 +48,6 @@ class Player:
                 self.game.weapon.reloading = True
 
     def change_weapon(self, event):
-        # print(str(self.weapon_bag_ids))
-        print(str(self.active_weapon_id))
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_1 and 1 in self.weapon_bag_ids:
                self.active_weapon_id = 1

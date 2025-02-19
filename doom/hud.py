@@ -84,7 +84,6 @@ class Hud:
         # todo params -> (image, (width, height), Rect( (left, top), (width, height)) )
         start_left = self.hud_sections_width[3] / 1/6
         x = 0
-        print(str(self.game.player.active_weapon_id))
         for i in range(0, 3):
             self.screen.blit(self.arms_image,
                              (self.hud_sections_start[3] + start_left + x, HEIGHT + y),
