@@ -1,5 +1,6 @@
 ﻿import sys
 
+from doom.ground_weapon import GroundWeapon
 from doom.hud import Hud
 from map import *
 from hud import *
@@ -10,6 +11,7 @@ from player import *
 from raycasting import *
 from sound import *
 from weapon import *
+from inventory import *
 
 class Game:
     def __init__(self):
@@ -18,9 +20,12 @@ class Game:
 
         # todo find a better way to toggle 2D/3D mode
         is_test = False  # True/2D mode - False/3D mode
-        self.test_mode = is_test
+        # self.test_mode = True
+        self.test_mode = False
         self.npc_disabled = True
         self.sound_disabled = True
+
+        self.new_weapon = None
 
         self.screen = pg.display.set_mode((WIDTH, FULL_HEIGHT))
         self.map_level = 0
@@ -34,13 +39,17 @@ class Game:
     def new_game(self):
         self.map = Map(self)
         self.player = Player(self)
+        # self.inventory = Inventory(self)
         self.object_renderer = ObjectRenderer(self)
         self.raycasting = RayCasting(self)
         self.object_handler = ObjectHandler(self)
-        self.weapon = Weapon(self)
+        self.ground_weapon = GroundWeapon(self)
         self.sound = Sound(self)
         self.pathfinding = PathFinding(self)
         self.hud = Hud(self)
+        init_weapon = self.player.weapon_bag[0](self)
+        self.weapon = init_weapon
+        self.player.active_weapon_id = init_weapon.weapon_id
 
     def next_level(self):
         self.map_level += 1
@@ -55,10 +64,19 @@ class Game:
         self.player.update()
         self.raycasting.update()
         self.object_handler.update()
-        self.weapon.update()
+        if self.weapon is not None:
+            self.weapon.update()
+        if self.new_weapon is not None and self.weapon is None:
+            self.change_weapon()
         pg.display.flip()
         self.delta_time = self.clock.tick(FPS)
         pg.display.set_caption(f'{self.clock.get_fps() :.1f}')
+
+    def change_weapon(self):
+        weapon = self.new_weapon(self)
+        self.weapon = weapon
+        self.player.active_weapon_id = weapon.weapon_id
+        self.new_weapon = None
 
     def draw(self):
         if self.test_mode:
@@ -68,7 +86,8 @@ class Game:
         else:
             # pg.draw.(self.game.screen, 'blue', (100 * next_x, 100 * next_y, 100, 100))
             self.object_renderer.draw()
-            self.weapon.draw()
+            if self.weapon is not None:
+                self.weapon.draw()
             self.hud.draw()
 
     def check_events(self):
@@ -80,7 +99,7 @@ class Game:
             elif event.type == self.global_event:
                 self.global_trigger = True
             self.player.single_fire_event(event)
-            self.player.change_weapon(event)
+            self.player.change_weapon_event(event)
 
     def run(self):
         while True:

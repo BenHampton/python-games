@@ -40,13 +40,13 @@ class Hud:
 
     def draw(self):
         self.draw_background()
-        # self.draw_ammo()
-        # self.draw_player_health()
+        self.draw_ammo()
+        self.draw_player_health()
         self.draw_arms()
-        # self.draw_face()
-        # self.draw_armor()
-        # self.draw_cards() #todo rename??
-        # self.draw_inventory()
+        self.draw_face()
+        self.draw_armor()
+        self.draw_cards() #todo rename??
+        self.draw_inventory()
 
     def draw_background(self):
         # todo params -> (image, (width, height), Rect( (left, top), (width, height)) )
@@ -81,7 +81,7 @@ class Hud:
 
 
     def draw_arms_digits(self, y, digits):
-        # todo params -> (image, (width, height), Rect( (left, top), (width, height)) )
+        # todo params -> (image, (width, height), Rect( (left, top), (width, height)) )`
         start_left = self.hud_sections_width[3] / 1/6
         x = 0
         for i in range(0, 3):
@@ -89,7 +89,7 @@ class Hud:
                              (self.hud_sections_start[3] + start_left + x, HEIGHT + y),
                              (1, 5, 25, 25))
 
-            if len(self.game.player.weapon_bag_ids) and digits[i] == self.game.player.active_weapon_id:
+            if len(self.game.player.weapon_bag) and digits[i] == self.game.player.active_weapon_id:
                 color = 'yellow'
             else:
                 color = 'lightgray'

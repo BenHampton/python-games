@@ -46,8 +46,10 @@ class ObjectRenderer:
         self.screen.blit(self.sky_image, (-self.sky_offset + WIDTH, 0))
         # floor
         pg.draw.rect(self.screen, FLOOR_COLOR, (0, HALF_HEIGHT, WIDTH, HEIGHT))
+        # pg.draw.rect(self.screen, 'yellow', (self.game.ground_weapon.x, HALF_HEIGHT, self.game.ground_weapon.y * 100 - self.game.ground_weapon.images[0].get_width(), HEIGHT))
 
     def render_game_objects(self):
+        pass
         list_objects = sorted(self.game.raycasting.objects_to_render, key=lambda t: t[0], reverse=True)
         # list_objects = self.game.raycasting.objects_to_render
         for depth, image, pos in list_objects:

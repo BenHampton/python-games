@@ -1,4 +1,5 @@
 ﻿import pygame as pg
+from weapon import PistolWeapon, ShotgunWeapon
 from settings import *
 import math
 
@@ -12,8 +13,8 @@ class Player:
         self.rel = 0
         self.health_recovery_delay = 700
         self.time_prev = pg.time.get_ticks()
-        self.weapon_bag_ids = [2]
-        self.active_weapon_id = None
+        self.weapon_bag = []
+        self.active_weapon_id = -1
 
     def recover_health(self):
         if self.check_health_recovery_delay() and self.health < PLAYER_MAX_HEALTH:
@@ -47,14 +48,21 @@ class Player:
                 self.shot = True
                 self.game.weapon.reloading = True
 
-    def change_weapon(self, event):
+    def change_weapon_event(self, event):
+        new_weapon = None
         if event.type == pg.KEYDOWN:
-            if event.key == pg.K_1 and 1 in self.weapon_bag_ids:
-               self.active_weapon_id = 1
-            if event.key == pg.K_2 and 2 in self.weapon_bag_ids:
-                self.active_weapon_id = 2
-            if event.key == pg.K_2 and 3 in self.weapon_bag_ids:
-                self.active_weapon_id = 3
+            if event.key == pg.K_1:
+               new_weapon = PistolWeapon
+            if event.key == pg.K_2:
+                new_weapon = ShotgunWeapon
+            if event.key == pg.K_3:
+                new_weapon = PistolWeapon
+            if new_weapon is not None:
+                for i in self.weapon_bag:
+                    if i == new_weapon:
+                        print('test')
+                        self.game.new_weapon = new_weapon
+                        self.game.weapon = None
 
     def movement(self):
         sin_a = math.sin(self.angle)
@@ -112,6 +120,7 @@ class Player:
                          (self.x * 100, self.y * 100),
                          (self.x * 100 + WIDTH * math.cos(self.angle), self.y * 100 + WIDTH * math.sin(self.angle)),
                          2)
+            pg.draw.rect(self.game.screen, 'pink', (self.x * 100 - 50, self.y * 100 - 50, 100, 100), 2)
             pg.draw.circle(self.game.screen, 'green', (self.x * 100, self.y * 100), 15)
 
     def mouse_control(self):
