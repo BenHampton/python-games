@@ -56,13 +56,16 @@ class SpriteObject:
 
     def update(self):
         self.get_sprite()
+        # if self.game.test_mode:
+            # pg.draw.rect(self.game.screen, 'gray', (self.x * 100 - 50, self.y * 100 - 50, 100, 100), 2)
+            # pg.draw.circle(self.game.screen, 'gray', (self.x * 100, self.y * 100), 10)
 
 
 class AnimatedSprite(SpriteObject):
     def __init__(self,
                  game,
                  path='resources/sprites/animated_sprites/green_light/0.png',
-                 pos=(10.5, 3.5),
+                 pos=(10, 3),
                  scale=0.8,
                  shift=0.16,
                  animation_time=120):
@@ -94,7 +97,7 @@ class AnimatedSprite(SpriteObject):
         images = deque()
         for file_name in sorted(os.listdir(path)):
             # added sorted() that was not in the tutorial - debug for shotgun images no being ordered
-            # if 'shotgun' in path: print(path + ' ' + file_name)
+            # if 'ground' in path: print(path + ' ' + file_name)
             if os.path.isfile(os.path.join(path, file_name)):
                 img = pg.image.load(path + '/' + file_name).convert_alpha()
                 images.append(img)
