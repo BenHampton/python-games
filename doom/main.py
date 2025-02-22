@@ -1,6 +1,6 @@
 ﻿import sys
 
-from doom.ground_weapon import GroundWeapon
+from ground_weapon import GroundWeapon
 from doom.hud import Hud
 from map import *
 from hud import *
