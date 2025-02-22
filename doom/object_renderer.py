@@ -9,11 +9,9 @@ class ObjectRenderer:
         self.sky_image = self.get_texture('resources/textures/sky.png', (WIDTH, HALF_HEIGHT))
         self.sky_offset = 0
 
+        self.font = pg.font.Font('resources/font/doom.ttf', 150)
+
         self. blood_screen = self.get_texture('resources/textures/blood_screen.png', RES)
-        self.digit_size = 90
-        self.digit_images = [self.get_texture(f'resources/textures/digits/{i}.png', [self.digit_size] * 2)
-                             for i in range(11)]
-        self.digits = dict(zip(map(str, range(11)), self.digit_images))
 
         self.mission_completed = self.get_texture('resources/textures/mission_completed.png', RES)
         self.win_image = self.get_texture('resources/textures/win.png', RES)
@@ -22,23 +20,21 @@ class ObjectRenderer:
     def draw(self):
         self.draw_background()
         self.render_game_objects()
-        self.draw_player_health()
 
-    # todo shrink font
+    def draw_text(self, message):
+        text = self.font.render(f'{message}', True, 'white')
+        self.screen.blit(text,
+                         (HALF_WIDTH - text.get_width() // 2,
+                          HALF_HEIGHT - text.get_height() // 2))
+
     def level_completed(self):
-        self.screen.blit(self.mission_completed, (0, 0))
+        self.draw_text('Mission Completed')
 
     def win(self):
         self.screen.blit(self.win_image, (0, 0))
 
     def game_over(self):
         self.screen.blit(self.game_over_image, (0, 0))
-
-    def draw_player_health(self):
-        health = str(self.game.player.health)
-        for i, char in enumerate(health):
-            self.screen.blit(self.digits[char], (i * self.digit_size, 0))
-        self.screen.blit(self.digits['10'], ((i + 1) * self.digit_size, 0))
 
     def player_damage(self):
         self.screen.blit(self.blood_screen, (0, 0))

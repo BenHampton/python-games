@@ -1,6 +1,8 @@
 ﻿import sys
 
+from doom.hud import Hud
 from map import *
+from hud import *
 from object_handler import *
 from object_renderer import *
 from pathfinding import *
@@ -17,10 +19,10 @@ class Game:
         # todo find a better way to toggle 2D/3D mode
         is_test = False  # True/2D mode - False/3D mode
         self.test_mode = is_test
-        self.npc_disabled = is_test
-        self.sound_disabled = is_test
+        self.npc_disabled = True
+        self.sound_disabled = True
 
-        self.screen = pg.display.set_mode(RES)
+        self.screen = pg.display.set_mode((WIDTH, FULL_HEIGHT))
         self.map_level = 0
         self.clock = pg.time.Clock()
         self.delta_time = 1
@@ -38,6 +40,7 @@ class Game:
         self.weapon = Weapon(self)
         self.sound = Sound(self)
         self.pathfinding = PathFinding(self)
+        self.hud = Hud(self)
 
     def next_level(self):
         self.map_level += 1
@@ -63,8 +66,10 @@ class Game:
             self.map.draw()
             self.player.draw()
         else:
+            # pg.draw.(self.game.screen, 'blue', (100 * next_x, 100 * next_y, 100, 100))
             self.object_renderer.draw()
             self.weapon.draw()
+            self.hud.draw()
 
     def check_events(self):
         self.global_trigger = False
@@ -75,6 +80,7 @@ class Game:
             elif event.type == self.global_event:
                 self.global_trigger = True
             self.player.single_fire_event(event)
+            self.player.change_weapon(event)
 
     def run(self):
         while True:

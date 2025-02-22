@@ -1,5 +1,8 @@
 # Doom Remake
 
+![doom](screenshot/doom-1.png "doom-1")
+
+
 ## Formulas
 
 #### how to calculate the projection height of the walls
@@ -19,7 +22,7 @@ graph (self.ways):
 |----------|----------|----------|
 |  -1, 1   |   0, 1   |   1, 1   |
 |----------|----------|----------|
-```
+```![doom-readme.png](../../../Downloads/doom-readme.png)
 
 ## Notes
 - needed to use `pngcrush` to fix *.png files
