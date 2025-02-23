@@ -67,3 +67,14 @@ class ShotgunWeapon(Weapon):
         self.damage = 50
         self.frame_counter = 0
 
+class AxeWeapon(Weapon):
+    def __init__(self,
+                 game,
+                 path='resources/sprites/weapon/axe/0.png',
+                 scale=0.4,
+                 animation_time=90,
+                 weapon_id=3):
+        super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)
+        self.damage = 35
+        self.frame_counter = 0
+

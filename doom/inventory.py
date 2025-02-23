@@ -19,7 +19,6 @@ class Inventory:
  #        # self.selected_weapon.update(self.game)
  #
  #    def draw(self):
- #        # print(self.selected_weapon(self.game))
  #        self.game.weapon = self.selected_weapon(self.game)
  #        # self.selected_weapon.test(self.game)
  #        self.switch_weapons = False

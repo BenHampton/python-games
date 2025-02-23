@@ -37,11 +37,11 @@ class GroundWeapon(AnimatedSprite):
     def check_picked_up(self):
         if self.game.player.map_pos in self.game.object_handler.ground_weapon_positions:
             for weapon in self.game.object_handler.available_ground_weapons:
-                if weapon(self).weapon_id == self.weapon_id:
-                    # self.game.object_handler.add_weapon_to_bag(weapon)
-                    weapon_from_ground = self.game.object_handler.all_weapons[weapon(self).weapon_id]
-                    self.game.object_handler.add_weapon_to_bag(weapon_from_ground)
-                    self.available = False
+                if self.game.player.map_pos == self.map_pos:
+                    if weapon(self).weapon_id == self.weapon_id:
+                        weapon_from_ground = self.game.object_handler.all_weapons[weapon(self).weapon_id]
+                        self.game.object_handler.add_weapon_to_bag(weapon_from_ground)
+                        self.available = False
 
     @property
     def map_pos(self):
@@ -55,6 +55,18 @@ class GroundShotgun(GroundWeapon):
                  scale=0.5,
                  animation_time=90,
                  weapon_id=2):
+        super().__init__(game=game, path=path, pos=pos, scale=scale, animation_time=animation_time, weapon_id=weapon_id)
+        self.size = 5
+        self.available = True
+
+class GroundAxe(GroundWeapon):
+    def __init__(self,
+                 game,
+                 path='resources/sprites/weapon/axe/ground/0.png',
+                 pos=(4,4),
+                 scale=0.5,
+                 animation_time=90,
+                 weapon_id=3):
         super().__init__(game=game, path=path, pos=pos, scale=scale, animation_time=animation_time, weapon_id=weapon_id)
         self.size = 5
         self.available = True

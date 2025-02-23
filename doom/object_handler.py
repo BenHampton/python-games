@@ -1,4 +1,4 @@
-from doom.ground_weapon import GroundShotgun
+from doom.ground_weapon import GroundShotgun, GroundAxe
 from weapon import *
 from npc  import *
 from random import choices, randrange
@@ -47,16 +47,19 @@ class ObjectHandler:
         # spawn ground weapons
         self.ground_weapon_positions = {}
         self.total_ground_weapons = 1
-        self.available_ground_weapons = [GroundShotgun]
-        self.weights = [70]
+        self.available_ground_weapons = [GroundShotgun, GroundAxe]
+        self.weights = [70, 30]
         # test add ground weapon:
         add_weapon = self.add_ground_weapon
         shotgun_path = 'resources/sprites/weapon/shotgun/ground/0.png'
         add_weapon(GroundShotgun(game, path=shotgun_path, pos=(3.5, 3.5), scale=0.8))
+
+        axe_path = 'resources/sprites/weapon/axe/ground/0.png'
+        add_weapon(GroundAxe(game, path=axe_path, pos=(1.5, 1.5), scale=0.8))
         # self.spawn_ground_weapon()
 
 
-        self.all_weapons = {1: PistolWeapon, 2: ShotgunWeapon}
+        self.all_weapons = {1: PistolWeapon, 2: ShotgunWeapon, 3: AxeWeapon}
         # init inventory weapon bag
         self.add_weapon_to_bag(PistolWeapon)
 
@@ -110,7 +113,6 @@ class ObjectHandler:
         self.sprite_list.append(sprite)
 
     def add_weapon_to_bag(self, weapon):
-        print(str(weapon))
         self.game.player.weapon_bag.append(weapon)
 
 

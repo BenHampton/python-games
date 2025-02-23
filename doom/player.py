@@ -1,5 +1,6 @@
 ﻿import pygame as pg
-from weapon import PistolWeapon, ShotgunWeapon
+
+from weapon import PistolWeapon, ShotgunWeapon, AxeWeapon
 from settings import *
 import math
 
@@ -56,11 +57,12 @@ class Player:
             if event.key == pg.K_2:
                 new_weapon = ShotgunWeapon
             if event.key == pg.K_3:
-                new_weapon = PistolWeapon
+                new_weapon = AxeWeapon
             if new_weapon is not None:
+                print(str(new_weapon))
+                print(str(self.weapon_bag))
                 for i in self.weapon_bag:
                     if i == new_weapon:
-                        print('test')
                         self.game.new_weapon = new_weapon
                         self.game.weapon = None
 
