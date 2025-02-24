@@ -66,10 +66,7 @@ class Game:
         self.object_handler.update()
         if self.weapon is not None:
             self.weapon.update()
-            # print('self.new_weapon: ' + str(self.new_weapon))
-            # print('self.weapon: ' + str(self.weapon))
         if self.new_weapon is not None and self.weapon is None:
-            # print('test')
             self.change_weapon()
         pg.display.flip()
         self.delta_time = self.clock.tick(FPS)
@@ -101,7 +98,8 @@ class Game:
                 sys.exit()
             elif event.type == self.global_event:
                 self.global_trigger = True
-            self.player.single_fire_event(event)
+            if self.weapon is not None:
+                self.player.fire_weapon_event(event)
             self.player.change_weapon_event(event)
 
     def run(self):

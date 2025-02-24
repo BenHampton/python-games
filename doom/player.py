@@ -1,6 +1,5 @@
 ﻿import pygame as pg
-
-from weapon import PistolWeapon, ShotgunWeapon, AxeWeapon
+from weapon import PistolWeapon, ShotgunWeapon, AxeWeapon, ChaingunWeapon
 from settings import *
 import math
 
@@ -41,9 +40,39 @@ class Player:
             self.game.sound.player_pain.play()
         self.check_game_over()
 
+    #todo move weapon sound to weapon.py
+    def fire_weapon_event(self, event):
+        if self.game.weapon.is_automatic:
+            self.automatic_fire_event(event)
+            # if event.type == pg.MOUSEBUTTONDOWN:
+            #     if event.button == 1 and not self.shot and not self.game.weapon.reloading:
+            #         if not self.game.sound_disabled:
+            #             self.game.sound.shotgun.play()
+            #         self.shot = True
+            #         self.game.weapon.reloading = True
+        else:
+            self.single_fire_event(event)
+
+    def automatic_fire_event(self, event):
+        if event.type == pg.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                if not self.game.weapon.reloading:
+                    if not self.game.sound_disabled:
+                        self.game.sound.shotgun.play()
+                    self.shot = True
+                    # self.game.weapon.reloading = True
+        if event.type == pg.MOUSEBUTTONUP:
+            if event.button == 1:
+                self.shot = False
+
     def single_fire_event(self, event):
         if event.type == pg.MOUSEBUTTONDOWN:
-            if event.button == 1 and not self.shot and not self.game.weapon.reloading:
+            # if event.button == 1 and not self.shot and not self.game.weapon.reloading:
+            if event.button == 1:
+                self.fire_weapon()
+
+    def fire_weapon(self):
+        if not self.shot and not self.game.weapon.reloading:
                 if not self.game.sound_disabled:
                     self.game.sound.shotgun.play()
                 self.shot = True
@@ -58,9 +87,9 @@ class Player:
                 new_weapon = ShotgunWeapon
             if event.key == pg.K_3:
                 new_weapon = AxeWeapon
+            if event.key == pg.K_4:
+                new_weapon = ChaingunWeapon
             if new_weapon is not None:
-                print(str(new_weapon))
-                print(str(self.weapon_bag))
                 for i in self.weapon_bag:
                     if i == new_weapon:
                         self.game.new_weapon = new_weapon

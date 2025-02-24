@@ -70,3 +70,15 @@ class GroundAxe(GroundWeapon):
         super().__init__(game=game, path=path, pos=pos, scale=scale, animation_time=animation_time, weapon_id=weapon_id)
         self.size = 5
         self.available = True
+
+class GroundChaingun(GroundWeapon):
+    def __init__(self,
+                 game,
+                 path='resources/sprites/weapon/axe/ground/0.png',
+                 pos=(4,4),
+                 scale=0.5,
+                 animation_time=90,
+                 weapon_id=4):
+        super().__init__(game=game, path=path, pos=pos, scale=scale, animation_time=animation_time, weapon_id=weapon_id)
+        self.size = 5
+        self.available = True
