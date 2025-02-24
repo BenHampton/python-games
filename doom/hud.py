@@ -16,6 +16,13 @@ class Hud:
         self.digit_images = [self.game.object_renderer.get_texture(f'resources/textures/digits/{i}.png', [self.digit_size] * 2)
                              for i in range(11)]
         self.digits = dict(zip(map(str, range(11)), self.digit_images))
+
+        self.face_size = 90
+        self.face_images = [
+            self.game.object_renderer.get_texture(f'resources/textures/hud/face/{i}.png', [self.face_size] * 2)
+            for i in range(2)]
+        self.face_image = dict(zip(map(int, range(2)), self.face_images))
+
         self.hud_padding_top = 20
         self.hud_width = WIDTH // 8
         self.hud_sections_start = [0, # padding left
@@ -47,6 +54,7 @@ class Hud:
         self.draw_armor()
         self.draw_cards() #todo rename??
         self.draw_inventory()
+
 
     def draw_background(self):
         # todo params -> (image, (width, height), Rect( (left, top), (width, height)) )
@@ -105,7 +113,11 @@ class Hud:
         self.draw_section_text(3, 'ARMS')
 
     def draw_face(self):
-        pass
+        test = self.game.player.health - 90
+        idx = ((round(test / 10.0) * 10) // 10)
+        self.screen.blit(self.face_image[idx],
+                         (self.hud_sections_start[4] + 55, (FULL_HEIGHT - HUD_HEIGHT) + 10),
+                         (1, 5, self.face_images[0].get_width(), self.face_images[0].get_height()))
 
     def draw_armor(self):
         self.draw_section_text(5, 'ARMOR')
