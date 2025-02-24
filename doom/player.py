@@ -15,6 +15,12 @@ class Player:
         self.time_prev = pg.time.get_ticks()
         self.weapon_bag = []
         self.active_weapon_id = -1
+        self.weapon_key_map = {pg.K_1: PistolWeapon,
+                               pg.K_2: ShotgunWeapon,
+                               pg.K_3: AxeWeapon,
+                               pg.K_4: ChaingunWeapon,
+                               pg.K_5: None,
+                               pg.K_6: None}
 
     def recover_health(self):
         if self.check_health_recovery_delay() and self.health < PLAYER_MAX_HEALTH:
@@ -44,51 +50,30 @@ class Player:
     def fire_weapon_event(self, event):
         if self.game.weapon.is_automatic:
             self.automatic_fire_event(event)
-            # if event.type == pg.MOUSEBUTTONDOWN:
-            #     if event.button == 1 and not self.shot and not self.game.weapon.reloading:
-            #         if not self.game.sound_disabled:
-            #             self.game.sound.shotgun.play()
-            #         self.shot = True
-            #         self.game.weapon.reloading = True
         else:
             self.single_fire_event(event)
 
     def automatic_fire_event(self, event):
         if event.type == pg.MOUSEBUTTONDOWN:
-            if event.button == 1:
-                if not self.game.weapon.reloading:
-                    if not self.game.sound_disabled:
-                        self.game.sound.shotgun.play()
-                    self.shot = True
-                    # self.game.weapon.reloading = True
+            if event.button == 1 and not self.shot and not self.game.weapon.reloading:
+                if not self.game.sound_disabled:
+                    self.game.sound.shotgun.play()
+                self.shot = True
         if event.type == pg.MOUSEBUTTONUP:
             if event.button == 1:
                 self.shot = False
 
     def single_fire_event(self, event):
         if event.type == pg.MOUSEBUTTONDOWN:
-            # if event.button == 1 and not self.shot and not self.game.weapon.reloading:
-            if event.button == 1:
-                self.fire_weapon()
-
-    def fire_weapon(self):
-        if not self.shot and not self.game.weapon.reloading:
+            if event.button == 1 and not self.shot and not self.game.weapon.reloading:
                 if not self.game.sound_disabled:
                     self.game.sound.shotgun.play()
                 self.shot = True
                 self.game.weapon.reloading = True
 
     def change_weapon_event(self, event):
-        new_weapon = None
         if event.type == pg.KEYDOWN:
-            if event.key == pg.K_1:
-               new_weapon = PistolWeapon
-            if event.key == pg.K_2:
-                new_weapon = ShotgunWeapon
-            if event.key == pg.K_3:
-                new_weapon = AxeWeapon
-            if event.key == pg.K_4:
-                new_weapon = ChaingunWeapon
+            new_weapon = self.weapon_key_map.get(event.key)
             if new_weapon is not None:
                 for i in self.weapon_bag:
                     if i == new_weapon:

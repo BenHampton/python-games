@@ -18,29 +18,34 @@ class Weapon(AnimatedSprite):
         self.reloading = False
         self.available = False
         self.is_automatic = False
+        self.is_handhold = False
         self.num_images = len(self.images)
         self.frame_counter = 0
-        self.damage = 10
+        self.damage = 0
+        self.ammo_cap = 0
+        self.ammo = 0
         self.weapon_id = weapon_id
 
     def animate_shot(self):
         if self.weapon_id == self.game.player.active_weapon_id:
             if self.reloading:
                 self.player.shot = False
-                if self.animation_trigger:
+                if self.animation_trigger and self.game.weapon.ammo > 0:
                     self.images.rotate(-1)
                     self.image = self.images[0]
                     self.frame_counter += 1
                     if self.frame_counter == self.num_images:
                         self.reloading = False
                         self.frame_counter = 0
+                        self.game.weapon.ammo -= 1
             if self.is_automatic and self.game.player.shot:
-                if self.animation_trigger:
+                if self.animation_trigger and self.game.weapon.ammo > 0:
                     self.images.rotate(-1)
                     self.image = self.images[0]
                     self.frame_counter += 1
                     if self.frame_counter == self.num_images:
                         self.frame_counter = 0
+                        self.game.weapon.ammo -= 1
 
     def draw(self):
         self.game.screen.blit(self.images[0], self.weapon_pos)
@@ -62,6 +67,8 @@ class PistolWeapon(Weapon):
                  weapon_id=1):
         super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)
         self.damage = 10
+        self.ammo = 10
+        self.ammo_cap = 50
         self.frame_counter = 0
 
 class ShotgunWeapon(Weapon):
@@ -73,6 +80,8 @@ class ShotgunWeapon(Weapon):
                  weapon_id=2):
         super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)
         self.damage = 50
+        self.ammo = 5
+        self.ammo_cap = 25
         self.frame_counter = 0
 
 class AxeWeapon(Weapon):
@@ -95,6 +104,8 @@ class ChaingunWeapon(Weapon):
                  weapon_id=4):
         super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)
         self.damage = 45
+        self.ammo = 100
+        self.ammo_cap = 200
         self.frame_counter = 0
         self.is_automatic = True
 

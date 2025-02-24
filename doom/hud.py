@@ -114,7 +114,7 @@ class Hud:
         pass
 
     def draw_inventory(self):
-        pass
+        self.draw_section_text(7, self.game.weapon.ammo)
 
 
 
