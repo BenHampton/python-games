@@ -99,7 +99,7 @@ class ChaingunWeapon(Weapon):
     def __init__(self,
                  game,
                  path='resources/sprites/weapon/chaingun/0.png',
-                 scale=0.4,
+                 scale=3,
                  animation_time=90,
                  weapon_id=4):
         super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)

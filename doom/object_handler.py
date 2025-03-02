@@ -64,7 +64,7 @@ class ObjectHandler:
 
         self.all_weapons = {1: PistolWeapon, 2: ShotgunWeapon, 3: AxeWeapon, 4: ChaingunWeapon}
         # init inventory weapon bag
-        self.add_weapon_to_bag(PistolWeapon)
+        self.add_weapon_to_bag(ChaingunWeapon) #PistolWeapon)
 
     def spawn_npc(self):
         for i in range(self.total_enemies):

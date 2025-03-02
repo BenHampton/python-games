@@ -19,11 +19,11 @@ class Game:
         pg.mouse.set_visible(False)
 
         # todo find a better way to toggle 2D/3D mode
-        is_test = False  # True/2D mode - False/3D mode
+        is_test = True  # True/2D mode - False/3D mode
         # self.test_mode = True
-        self.test_mode = True
-        self.npc_disabled = True
-        self.sound_disabled = True
+        self.test_mode = False
+        self.npc_disabled = is_test
+        self.sound_disabled = is_test
 
         self.new_weapon = None
 
