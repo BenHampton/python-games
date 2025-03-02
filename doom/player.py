@@ -1,5 +1,6 @@
 ﻿import pygame as pg
-from weapon import PistolWeapon, ShotgunWeapon, AxeWeapon, ChaingunWeapon
+
+from weapon import PistolWeapon, ShotgunWeapon, AxeWeapon, ChaingunWeapon, PlasmaRifleWeapon
 from settings import *
 import math
 
@@ -19,7 +20,7 @@ class Player:
                                pg.K_2: ShotgunWeapon,
                                pg.K_3: AxeWeapon,
                                pg.K_4: ChaingunWeapon,
-                               pg.K_5: None,
+                               pg.K_5: PlasmaRifleWeapon,
                                pg.K_6: None}
 
     def recover_health(self):

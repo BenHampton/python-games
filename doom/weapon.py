@@ -3,7 +3,6 @@ from pygame.display import update
 from sprite_object import *
 
 class Weapon(AnimatedSprite):
-    # def __init__(self, game, path, scale, animation_time):
     def __init__(self,
                  game,
                  path='resources/sprites/weapon/pistol/0.png',
@@ -108,4 +107,19 @@ class ChaingunWeapon(Weapon):
         self.ammo_cap = 200
         self.frame_counter = 0
         self.is_automatic = True
+
+class PlasmaRifleWeapon(Weapon):
+    def __init__(self,
+                 game,
+                 path='resources/sprites/weapon/plasma_rifle/0.png',
+                 scale=4.3,
+                 animation_time=90,
+                 weapon_id=5):
+        super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)
+        self.damage = 65
+        self.ammo = 5
+        self.ammo_cap = 5
+        self.frame_counter = 0
+
+
 

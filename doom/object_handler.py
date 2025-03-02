@@ -1,4 +1,4 @@
-from doom.ground_weapon import GroundShotgun, GroundAxe, GroundChaingun
+from doom.ground_weapon import GroundShotgun, GroundAxe, GroundChaingun, GroundPlasmaRifle
 from weapon import *
 from npc  import *
 from random import choices, randrange
@@ -47,7 +47,7 @@ class ObjectHandler:
         # spawn ground weapons
         self.ground_weapon_positions = {}
         self.total_ground_weapons = 1
-        self.available_ground_weapons = [GroundShotgun, GroundAxe, GroundChaingun]
+        self.available_ground_weapons = [GroundShotgun, GroundAxe, GroundChaingun, GroundPlasmaRifle]
         self.weights = [70, 30]
         # test add ground weapon:
         add_weapon = self.add_ground_weapon
@@ -59,10 +59,17 @@ class ObjectHandler:
 
         chaingun_path = 'resources/sprites/weapon/chaingun/ground/0.png'
         add_weapon(GroundChaingun(game, path=chaingun_path, pos=(3.5, 6.5), scale=0.2))
+
+        plasma_rifle_path = 'resources/sprites/weapon/plasma_rifle/ground/0.png'
+        add_weapon(GroundPlasmaRifle(game, path=plasma_rifle_path, pos=(3.5, 7.5), scale=0.2))
         # self.spawn_ground_weapon()
 
+        self.all_weapons = {1: PistolWeapon,
+                            2: ShotgunWeapon,
+                            3: AxeWeapon,
+                            4: ChaingunWeapon,
+                            5: PlasmaRifleWeapon}
 
-        self.all_weapons = {1: PistolWeapon, 2: ShotgunWeapon, 3: AxeWeapon, 4: ChaingunWeapon}
         # init inventory weapon bag
         self.add_weapon_to_bag(PistolWeapon)
 
