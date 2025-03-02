@@ -2,14 +2,14 @@ from sprite_object import *
 from random import randint, random, choice
 
 class NPC(AnimatedSprite):
-    # def __init__(self,
-    #              game,
-    #              path='resources/sprites/npc/soldier/0.png',
-    #              pos=(10.5, 5.5),
-    #              scale=0.6,
-    #              shift=0.38,
-    #              animation_time=100):
-    def __init__(self, game, path, pos, scale, shift, animation_time):
+    def __init__(self,
+                 game,
+                 path='resources/sprites/npc/soldier/0.png',
+                 pos=(10.5, 5.5),
+                 scale=0.6,
+                 shift=0.38,
+                 animation_time=100):
+    # def __init__(self, game, path, pos, scale, shift, animation_time):
         super(NPC, self).__init__(game, path, pos, scale, shift, animation_time)
         self.attack_images = self.get_images(self.path + '/attack')
         self.death_images = self.get_images(self.path + '/death')
@@ -23,6 +23,7 @@ class NPC(AnimatedSprite):
         self.health = 100
         self.attack_damage = 10
         self.accuracy = 0.15
+        self.search_step_count = 0
         self.alive = True
         self.pain = False
         self.frame_count = 0
@@ -95,6 +96,9 @@ class NPC(AnimatedSprite):
             if not self.game.sound_disabled:
                 self.game.sound.npc_death.play()
 
+    def reset_search_step_count(self):
+        self.search_step_count = 0
+
     def run_logic(self):
         if self.alive:
             self.ray_casting_value = self.ray_cast_player_npc()
@@ -104,6 +108,7 @@ class NPC(AnimatedSprite):
 
             elif self.ray_casting_value:
                 self.player_search_trigger = True
+                self.reset_search_step_count()
 
                 if self.dist < self.attack_dist:
                     self.animate(self.attack_images)
@@ -115,6 +120,10 @@ class NPC(AnimatedSprite):
             elif self.player_search_trigger:
                 self.animate(self.walk_images)
                 self.movement()
+                self.search_step_count += 1
+
+                if self.search_step_count == 500:
+                    self.player_search_trigger = False
 
             else:
                 self.animate(self.idle_images)
