@@ -48,7 +48,6 @@ class Player:
 
     #todo move weapon sound to weapon.py
     def fire_weapon_event(self, event):
-        # print(self.game.weapon.is_automatic)
         if self.game.weapon.is_automatic:
             self.automatic_fire_event(event)
         else:
