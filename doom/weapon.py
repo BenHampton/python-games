@@ -99,7 +99,7 @@ class ChaingunWeapon(Weapon):
                  game,
                  path='resources/sprites/weapon/chaingun/0.png',
                  scale=3,
-                 animation_time=90,
+                 animation_time=70,
                  weapon_id=4):
         super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)
         self.damage = 45
@@ -113,7 +113,7 @@ class PlasmaRifleWeapon(Weapon):
                  game,
                  path='resources/sprites/weapon/plasma_rifle/0.png',
                  scale=4.3,
-                 animation_time=90,
+                 animation_time=105,
                  weapon_id=5):
         super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)
         self.damage = 65
