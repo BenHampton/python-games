@@ -1,6 +1,5 @@
 ﻿import pygame as pg
-
-from weapon import PistolWeapon, ShotgunWeapon, AxeWeapon, ChaingunWeapon, PlasmaRifleWeapon
+from weapon import PistolWeapon, ShotgunWeapon, AxeWeapon, ChaingunWeapon, PlasmaRifleWeapon, BFGWeapon
 from settings import *
 import math
 
@@ -21,7 +20,7 @@ class Player:
                                pg.K_3: AxeWeapon,
                                pg.K_4: ChaingunWeapon,
                                pg.K_5: PlasmaRifleWeapon,
-                               pg.K_6: None}
+                               pg.K_6: BFGWeapon}
 
     def recover_health(self):
         if self.check_health_recovery_delay() and self.health < PLAYER_MAX_HEALTH:

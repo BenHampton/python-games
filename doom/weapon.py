@@ -116,9 +116,22 @@ class PlasmaRifleWeapon(Weapon):
                  animation_time=105,
                  weapon_id=5):
         super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)
+        self.damage = 35
+        self.ammo = 25
+        self.ammo_cap = 25
+        self.frame_counter = 0
+
+class BFGWeapon(Weapon):
+    def __init__(self,
+                 game,
+                 path='resources/sprites/weapon/bfg/0.png',
+                 scale=3,
+                 animation_time=105,
+                 weapon_id=6):
+        super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)
         self.damage = 65
-        self.ammo = 5
-        self.ammo_cap = 5
+        self.ammo = 50
+        self.ammo_cap = 50
         self.frame_counter = 0
 
 
