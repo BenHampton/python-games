@@ -15,6 +15,7 @@ class Player:
         self.time_prev = pg.time.get_ticks()
         self.weapon_bag = []
         self.active_weapon_id = -1
+        #todo update weapon_key_map to dynamically set keys to Weapon class
         self.weapon_key_map = {pg.K_1: PistolWeapon,
                                pg.K_2: ShotgunWeapon,
                                pg.K_3: AxeWeapon,

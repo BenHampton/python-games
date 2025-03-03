@@ -21,10 +21,9 @@ class GroundWeapon(AnimatedSprite):
         self.weapon_id = weapon_id
 
     def draw(self):
-        pass
-        # if self.game.test_mode:
-            # pg.draw.rect(self.game.screen, 'pink', (self.x * 100 - 50, self.y * 100 - 50, 100, 100), 2)
-            # pg.draw.circle(self.game.screen, 'pink', (self.x * 100,  self.y * 100), 15)
+        if self.game.test_mode:
+            pg.draw.rect(self.game.screen, 'pink', (self.x * 100 - 50, self.y * 100 - 50, 100, 100), 2)
+            pg.draw.circle(self.game.screen, 'pink', (self.x * 100,  self.y * 100), 15)
 
     def update(self):
         if self.available:
@@ -51,8 +50,8 @@ class GroundShotgun(GroundWeapon):
     def __init__(self,
                  game,
                  path='resources/sprites/weapon/shotgun/ground/0.png',
-                 pos=(4,4),
-                 scale=0.5,
+                 pos=(3.5, 3.5),
+                 scale=0.8,
                  animation_time=90,
                  weapon_id=2):
         super().__init__(game=game, path=path, pos=pos, scale=scale, animation_time=animation_time, weapon_id=weapon_id)
@@ -63,8 +62,8 @@ class GroundAxe(GroundWeapon):
     def __init__(self,
                  game,
                  path='resources/sprites/weapon/axe/ground/0.png',
-                 pos=(4,4),
-                 scale=0.5,
+                 pos=(1.5, 1.5),
+                 scale=0.8,
                  animation_time=90,
                  weapon_id=3):
         super().__init__(game=game, path=path, pos=pos, scale=scale, animation_time=animation_time, weapon_id=weapon_id)
@@ -74,9 +73,9 @@ class GroundAxe(GroundWeapon):
 class GroundChaingun(GroundWeapon):
     def __init__(self,
                  game,
-                 path='resources/sprites/weapon/axe/ground/0.png',
-                 pos=(4,4),
-                 scale=0.5,
+                 path='resources/sprites/weapon/chaingun/ground/0.png',
+                 pos=(3.5, 6.5),
+                 scale=0.2,
                  animation_time=90,
                  weapon_id=4):
         super().__init__(game=game, path=path, pos=pos, scale=scale, animation_time=animation_time, weapon_id=weapon_id)
@@ -87,8 +86,8 @@ class GroundPlasmaRifle(GroundWeapon):
     def __init__(self,
                  game,
                  path='resources/sprites/weapon/plasma_rifle/ground/0.png',
-                 pos=(4,4),
-                 scale=0.5,
+                 pos=(3.5, 7.5),
+                 scale=0.2,
                  animation_time=90,
                  weapon_id=5):
         super().__init__(game=game, path=path, pos=pos, scale=scale, animation_time=animation_time, weapon_id=weapon_id)

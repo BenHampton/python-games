@@ -46,26 +46,13 @@ class ObjectHandler:
 
         # spawn ground weapons
         self.ground_weapon_positions = {}
-        self.total_ground_weapons = 1
         self.available_ground_weapons = [GroundShotgun, GroundAxe, GroundChaingun, GroundPlasmaRifle, GroundBFG]
-        self.weights = [70, 30]
+        self.ground_weapon_weights = [30, 5, 35, 20, 10]
         # test add ground weapon:
-        add_weapon = self.add_ground_weapon
-        shotgun_path = 'resources/sprites/weapon/shotgun/ground/0.png'
-        add_weapon(GroundShotgun(game, path=shotgun_path, pos=(3.5, 3.5), scale=0.8))
-
-        axe_path = 'resources/sprites/weapon/axe/ground/0.png'
-        add_weapon(GroundAxe(game, path=axe_path, pos=(1.5, 1.5), scale=0.8))
-
-        chaingun_path = 'resources/sprites/weapon/chaingun/ground/0.png'
-        add_weapon(GroundChaingun(game, path=chaingun_path, pos=(3.5, 6.5), scale=0.2))
-
-        plasma_rifle_path = 'resources/sprites/weapon/plasma_rifle/ground/0.png'
-        add_weapon(GroundPlasmaRifle(game, path=plasma_rifle_path, pos=(3.5, 7.5), scale=0.2))
-
-        bfg_path = 'resources/sprites/weapon/bfg/ground/0.png'
-        add_weapon(GroundBFG(game, path=bfg_path, pos=(4.5, 4.5), scale=0.6))
-        # self.spawn_ground_weapon()
+        # add_weapon = self.add_ground_weapon
+        # shotgun_path = 'resources/sprites/weapon/shotgun/ground/0.png'
+        # add_weapon(GroundShotgun(game, path=shotgun_path, pos=(3.5, 3.5), scale=0.8))
+        self.spawn_ground_weapon()
 
         self.all_weapons = {1: PistolWeapon,
                             2: ShotgunWeapon,
@@ -87,11 +74,11 @@ class ObjectHandler:
 
     def spawn_ground_weapon(self):
         for i in range(len(self.available_ground_weapons)):
-            weapon = choices(self.available_ground_weapons, self.weights)[0]
+            ground_weapon = choices(self.available_ground_weapons, self.ground_weapon_weights)[0]
             pos = x, y = randrange(self.game.map.cols), randrange(self.game.map.rows)
-            while (pos in self.game.map.world_map) or (pos in self.restricted_area):
+            while (pos in self.game.map.world_map):
                 pos = x, y = randrange(self.game.map.cols), randrange(self.game.map.rows)
-            self.add_ground_weapon(weapon(self.game, pos=(x + 0.5, y + 0.5)))
+            self.add_ground_weapon(ground_weapon(self.game, pos=(x + 0.5, y + 0.5)))
 
     def completed_game(self):
         self.game.object_renderer.win()
