@@ -47,8 +47,8 @@ class Hud:
 
     def draw(self):
         self.draw_background()
-        self.draw_ammo()
-        self.draw_player_health()
+        self.draw_ammo() #todo center text
+        self.draw_player_health() #todo center text
         self.draw_arms()
         self.draw_face()
         self.draw_armor()
@@ -69,10 +69,17 @@ class Hud:
         self.screen.blit(text,
                          (self.hud_sections_start[index] + (self.hud_sections_width[index] - text.get_width()) // 2,
                           FULL_HEIGHT - padding_bottom))
+        return text
 
     def draw_ammo(self):
-        self.draw_section_text(1, 'AMMO')
-
+        self.draw_section_text(2, self.game.weapon.ammo)
+        ammo = str(self.game.weapon.ammo)
+        txt = self.draw_section_text(1, 'AMMO')
+        for i, char in enumerate(ammo):
+            # todo params -> (image, (width, height), Rect( (left, top), (width, height)) )
+            self.screen.blit( self.digits[char],
+                             (i * self.digit_size + (self.hud_sections_start[1] + (self.hud_sections_width[1] - txt.get_width()) // 3), HEIGHT + self.hud_padding_top),
+                             (0, 0, self.hud_sections_width[1], FULL_HUB_HEIGHT))
 
     def draw_player_health(self):
         padding_left = 10
@@ -126,7 +133,7 @@ class Hud:
         pass
 
     def draw_inventory(self):
-        self.draw_section_text(7, self.game.weapon.ammo)
+        self.draw_section_text(7, 'INVENTORY')
 
 
 
