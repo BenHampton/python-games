@@ -111,7 +111,7 @@ class RayCasting:
             self.ray_casting_result.append((depth, proj_height, texture, offset))
 
             # no longer needed with textures
-            # draw walls
+            # draw wall
             # color = [255 / (1 + depth ** 5 * 0.00002)] * 3
             # pg.draw.rect(self.game.screen,
             #              color,
