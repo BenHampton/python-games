@@ -20,15 +20,16 @@ class Game:
 
         # todo find a better way to toggle 2D/3D mode
         is_test = True  # True/2D mode - False/3D mode
-        # self.test_mode = True
+        # self.test_mode = is_test
         self.test_mode = False
         self.npc_disabled = is_test
         self.sound_disabled = is_test
+        self.test_npc_spawn_coverage = not is_test
 
         self.new_weapon = None
 
         self.screen = pg.display.set_mode((WIDTH, FULL_HEIGHT))
-        self.map_level = 0
+        self.map_level = 3
         self.clock = pg.time.Clock()
         self.delta_time = 1
         self.global_trigger = False
@@ -81,7 +82,10 @@ class Game:
     def draw(self):
         if self.test_mode:
             self.screen.fill('black')
-            self.map.draw()
+            if self.test_npc_spawn_coverage:
+                self.map.draw_spawn_coverage()
+            else:
+                self.map.draw()
             self.player.draw()
         else:
             # pg.draw.(self.game.screen, 'blue', (100 * next_x, 100 * next_y, 100, 100))
