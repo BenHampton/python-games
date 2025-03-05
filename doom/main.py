@@ -152,7 +152,7 @@ def menu():
             if event.type == pg.MOUSEBUTTONDOWN:
                 if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
                     game = Game()
-                    if not game.sound_disabled:
+                    if  game.sound and not game.sound_disabled:
                         game.sound.theme.play()
                     game.run()
                 if OPTIONS_BUTTON.checkForInput(MENU_MOUSE_POS):
