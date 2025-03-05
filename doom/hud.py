@@ -1,3 +1,4 @@
+import pygame as pg
 from settings import *
 from utils.utility import Utility
 
@@ -28,7 +29,7 @@ class Hud:
         self.hud_sections_start = [0, # padding left
                                    100, # ammo
                                    250, # health
-                                   430, # arms
+                                   425, # arms
                                    550, # face
                                    750, # armor
                                    925, # cards
@@ -37,13 +38,13 @@ class Hud:
         # 1300 / 2 = 650
         self.hud_sections_width = [100, # padding left
                                    150, # ammo
-                                   200, # health
-                                   125, # arms
+                                   175, # health
+                                   125, # arms = 550
                                    200, # face
                                    175, # armor
                                    75, # cards
                                    200, # inventory
-                                   100] # padding right
+                                   100] # padding right = 725 == 1275
 
     def draw(self):
         self.draw_background()
@@ -53,7 +54,7 @@ class Hud:
         self.draw_face()
         self.draw_armor()
         self.draw_cards() #todo rename??
-        self.draw_inventory()
+        # self.draw_inventory()
 
 
     def draw_background(self):
@@ -62,6 +63,10 @@ class Hud:
             self.screen.blit(self.hud_image,
                              (self.hud_sections_start[i], HEIGHT),
                              (0, 0, self.hud_sections_width[i], FULL_HUB_HEIGHT))
+        # test block with
+        # pg.draw.rect(self.game.screen, 'green', (self.hud_sections_start[0], HEIGHT - 75, self.hud_sections_width[0], FULL_HUB_HEIGHT- 550))
+
+
 
     def draw_section_text(self, index, message):
         padding_bottom = (HUD_HEIGHT * 1 / 3)
@@ -73,15 +78,18 @@ class Hud:
 
     def draw_ammo(self):
         self.draw_section_text(2, self.game.weapon.ammo)
+        self.draw_section_text(1, 'AMMO')
+
         ammo = str(self.game.weapon.ammo)
-        txt = self.draw_section_text(1, 'AMMO')
         for i, char in enumerate(ammo):
             # todo params -> (image, (width, height), Rect( (left, top), (width, height)) )
-            self.screen.blit( self.digits[char],
-                             (i * self.digit_size + (self.hud_sections_start[1] + (self.hud_sections_width[1] - txt.get_width()) // 3), HEIGHT + self.hud_padding_top),
+            image = self.digits[char]
+            padding = (image.get_width() // 2) * len(ammo)
+            self.screen.blit(image,
+                             (i * self.digit_size + (self.hud_sections_start[1] + (self.hud_sections_width[1] // 2) - padding), HEIGHT + self.hud_padding_top),
                              (0, 0, self.hud_sections_width[1], FULL_HUB_HEIGHT))
 
-    def draw_player_health(self):
+    def draw_player_health_x(self):
         padding_left = 10
         health = str(self.game.player.health)
         for i, char in enumerate(health):
@@ -90,6 +98,22 @@ class Hud:
                              (0, 0, self.hud_sections_width[2], FULL_HUB_HEIGHT))
         self.screen.blit(self.digits['10'],
                          ((i + 1) * self.digit_size + self.hud_sections_start[2] + padding_left, HEIGHT + self.hud_padding_top),
+                         (0, 0, self.hud_sections_width[2], FULL_HUB_HEIGHT))
+
+        self.draw_section_text(2, 'HEALTH')
+
+    def draw_player_health(self):
+        padding = 0
+        health = str(self.game.player.health)
+        percent_image = self.digits['10']
+        for i, char in enumerate(health):
+            image = self.digits[char]
+            padding = ((image.get_width() // 2) * len(health)) + (percent_image.get_width() // 2)
+            self.screen.blit(image,
+                             (i * self.digit_size + (self.hud_sections_start[2] + (self.hud_sections_width[2] // 2) - padding), HEIGHT + self.hud_padding_top),
+                             (0, 0, self.hud_sections_width[2], FULL_HUB_HEIGHT))
+        self.screen.blit(percent_image,
+                         ((i + 1) * self.digit_size + (self.hud_sections_start[2] + (self.hud_sections_width[2] // 2) - padding), HEIGHT + self.hud_padding_top),
                          (0, 0, self.hud_sections_width[2], FULL_HUB_HEIGHT))
 
         self.draw_section_text(2, 'HEALTH')
