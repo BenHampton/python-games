@@ -1,5 +1,6 @@
 ﻿import pygame as pg
 from settings import *
+from utils.utility import Utility
 
 class ObjectRenderer:
     def __init__(self, game):
@@ -9,7 +10,7 @@ class ObjectRenderer:
         self.sky_image = self.get_texture('resources/textures/sky/' + str(self.game.map_level) + '.png', (WIDTH, HALF_HEIGHT))
         self.sky_offset = 0
 
-        self.font = pg.font.Font('resources/font/doom.ttf', 150)
+        self.font =  Utility.get_font('doom.ttf', 150)
 
         self. blood_screen = self.get_texture('resources/textures/blood_screen.png', RES)
 

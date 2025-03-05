@@ -12,6 +12,7 @@ from raycasting import *
 from sound import *
 from weapon import *
 from inventory import *
+from utils.utility import Utility
 
 SCREEN = pg.display.set_mode((WIDTH, FULL_HEIGHT))
 
@@ -30,7 +31,7 @@ class Game:
 
         self.new_weapon = None
 
-        self.screen = SCREEN #pg.display.set_mode((WIDTH, FULL_HEIGHT))
+        self.screen = SCREEN
         self.map_level = 0
         self.clock = pg.time.Clock()
         self.delta_time = 1
@@ -114,51 +115,51 @@ class Game:
             self.update()
             self.draw()
 
-def get_font(size):  # Returns Press-Start-2P in the desired size
-    text_font = pg.font.Font('resources/font/doom.ttf', size)
-    return text_font
+def menu_start_game():
+    game = Game()
+    if game.sound and not game.sound_disabled:
+        game.sound.theme.play()
+    game.run()
 
 def menu():
     pg.display.set_caption("Menu")
-    bg = pg.image.load('resources/textures/background.png')
+    bg = pg.image.load('resources/textures/menu/background.png').convert_alpha()
 
     while True:
-
         SCREEN.blit(bg, (0, 0))
+        menu_mouse_pos = pg.mouse.get_pos()
+        menu_text = Utility.get_font('doom.ttf', 100).render("MAIN MENU", True, "white")
+        menu_rect = menu_text.get_rect(center=((WIDTH // 2) + 15, 100))
+        image = pg.image.load("resources/textures/menu/item_bg_rect.png")
 
-        MENU_MOUSE_POS = pg.mouse.get_pos()
+        play_button = Button(image,
+                             pos=(50, FULL_HEIGHT - (HUD_HEIGHT // 2) + 10),
+                             text_input="PLAY")
 
-        MENU_TEXT = get_font(100).render("MAIN MENU", True, "#b68f40")
-        MENU_RECT = MENU_TEXT.get_rect(center=(640, 100))
+        option_button = Button(image,
+                               pos=((WIDTH // 2) - (menu_text.get_width() // 2) - 32, FULL_HEIGHT - (HUD_HEIGHT // 2) + 10),
+                               text_input="OPTIONS")
 
-        PLAY_BUTTON = Button(image=pg.image.load("resources/textures/play_rect.png"), pos=(640, 250),
-                             text_input="PLAY", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
-        OPTIONS_BUTTON = Button(image=pg.image.load("resources/textures/options_rect.png"), pos=(640, 400),
-                                text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4",
-                                hovering_color="White")
-        QUIT_BUTTON = Button(image=pg.image.load("resources/textures/quit_rect.png"), pos=(640, 550),
-                             text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
+        quit_button = Button(image,
+                             pos=(WIDTH - image.get_width() - 50, FULL_HEIGHT - (HUD_HEIGHT // 2) + 10),
+                             text_input="QUIT")
 
-        SCREEN.blit(MENU_TEXT, MENU_RECT)
+        SCREEN.blit(menu_text, menu_rect)
 
-        for button in [PLAY_BUTTON, OPTIONS_BUTTON, QUIT_BUTTON]:
-            button.changeColor(MENU_MOUSE_POS)
+        for button in [play_button, option_button, quit_button]:
+            button.changeColor(menu_mouse_pos)
             button.update(SCREEN)
 
         for event in pg.event.get():
-            if event.type == pg.QUIT:
+            if event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
                 pg.quit()
                 sys.exit()
             if event.type == pg.MOUSEBUTTONDOWN:
-                if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    game = Game()
-                    if  game.sound and not game.sound_disabled:
-                        game.sound.theme.play()
-                    game.run()
-                if OPTIONS_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    print('options')
-                    # options()
-                if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
+                if play_button.checkForInput(menu_mouse_pos):
+                    menu_start_game()
+                if option_button.checkForInput(menu_mouse_pos):
+                    print('TODO')
+                if quit_button.checkForInput(menu_mouse_pos):
                     pg.quit()
                     sys.exit()
 

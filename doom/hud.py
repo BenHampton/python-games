@@ -1,5 +1,5 @@
-import pygame as pg
 from settings import *
+from utils.utility import Utility
 
 class Hud:
     def __init__(self, game):
@@ -9,8 +9,8 @@ class Hud:
         self.hud_image = self.game.object_renderer.get_texture('resources/textures/hud/section_background.jpg', (WIDTH, HUD_HEIGHT))
         self.arms_image = self.game.object_renderer.get_texture('resources/textures/hud/arms_background.jpg', (WIDTH, HUD_HEIGHT))
 
-        self.text_font = pg.font.Font('resources/font/doom.ttf', 35)
-        self.arms_font = pg.font.Font('resources/font/doom.ttf', 18)
+        self.text_font = Utility.get_font('doom.ttf', 35)
+        self.arms_font = Utility.get_font('doom.ttf', 18)
 
         self.digit_size = 40
         self.digit_images = [self.game.object_renderer.get_texture(f'resources/textures/digits/{i}.png', [self.digit_size] * 2)
