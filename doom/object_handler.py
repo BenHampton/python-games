@@ -31,15 +31,15 @@ class ObjectHandler:
         add_sprite(AnimatedSprite(game, path=red_flame_path, pos=(5.1, 7.8)))
         add_sprite(AnimatedSprite(game, path=red_flame_path, pos=(7.9, 7.8)))
 
-        # spawn items
-        self.restricted_area = {(i, j) for i in range(10) for j in range(10)}
-
         # spawn npc
         self.npc_positions = {}
         self.total_enemies = NUM_OF_NPCS * (self.game.map_level + 1)
-        self.weights = [70, 20, 10]
-        self.npc_types = [SoldierNPC, CacoDemonNPC, CyberDemonNPC]
+        self.weights = [70, 20]
+        self.npc_types = [SoldierNPC, CacoDemonNPC]
+        self.npc_boss_types = [CyberDemonNPC]
+        self.boss_weights = [70]
         self.spawn_npc()
+        self.spawn_boss_npc()
         # test add npc
         # add_npc(NPC(game))
         # add_npc(NPC(game, pos=(11.5, 4.5)))
@@ -68,9 +68,17 @@ class ObjectHandler:
         for i in range(self.total_enemies):
             npc = choices(self.npc_types, self.weights)[0]
             pos = x, y = randrange(self.game.map.cols), randrange(self.game.map.rows)
-            while (pos in self.game.map.world_map) or (pos in self.restricted_area):
+            while (pos in self.game.map.world_map) or (pos not in self.game.map.spawn_coords):
                 pos = x, y = randrange(self.game.map.cols), randrange(self.game.map.rows)
             self.add_npc(npc(self.game, pos=(x + 0.5, y + 0.5)))
+
+    def spawn_boss_npc(self):
+        if len(self.game.map.boss_spawn_coords):
+            pos = x, y = randrange(self.game.map.cols), randrange(self.game.map.rows)
+            boss = choices(self.npc_boss_types, self.boss_weights)[0]
+            while (pos in self.game.map.world_map) or (pos not in self.game.map.boss_spawn_coords):
+                pos = x, y = randrange(self.game.map.cols), randrange(self.game.map.rows)
+            self.add_npc(boss(self.game, pos=(x + 0.5, y + 0.5)))
 
     def spawn_ground_weapon(self):
         for i in range(len(self.available_ground_weapons)):
