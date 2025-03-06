@@ -26,7 +26,7 @@ class Weapon(AnimatedSprite):
         self.weapon_id = weapon_id
 
     def animate_shot(self):
-        if self.weapon_id == self.game.player.active_weapon_id:
+        if self.game.player.active_weapon is not None and self.weapon_id == self.game.player.active_weapon.weapon_id:
             if self.reloading:
                 self.player.shot = False
                 if self.animation_trigger and self.game.weapon.ammo > 0:
@@ -45,6 +45,10 @@ class Weapon(AnimatedSprite):
                     if self.frame_counter == self.num_images:
                         self.frame_counter = 0
                         self.game.weapon.ammo -= 1
+
+    def add_ammo(self, ammo):
+        #todo calculate incoming ammo and ammo_cap
+        self.ammo += ammo
 
     def draw(self):
         self.game.screen.blit(self.images[0], self.weapon_pos)

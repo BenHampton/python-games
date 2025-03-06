@@ -14,7 +14,7 @@ class Player:
         self.health_recovery_delay = 700
         self.time_prev = pg.time.get_ticks()
         self.weapon_bag = []
-        self.active_weapon_id = -1
+        self.active_weapon = None
         #todo update weapon_key_map to dynamically set keys to Weapon class
         self.weapon_key_map = {pg.K_1: PistolWeapon,
                                pg.K_2: ShotgunWeapon,
@@ -74,12 +74,13 @@ class Player:
 
     def change_weapon_event(self, event):
         if event.type == pg.KEYDOWN:
-            new_weapon = self.weapon_key_map.get(event.key)
-            if new_weapon is not None:
-                for i in self.weapon_bag:
-                    if i == new_weapon:
-                        self.game.new_weapon = new_weapon
-                        self.game.weapon = None
+            weapon_key = self.weapon_key_map.get(event.key)
+            if weapon_key is not None:
+                for wb in self.weapon_bag:
+                    if wb.weapon_id == weapon_key(self.game).weapon_id:
+                        self.game.weapon = wb
+                        self.game.player.active_weapon = wb
+
 
     def movement(self):
         sin_a = math.sin(self.angle)
@@ -152,6 +153,11 @@ class Player:
         self.movement()
         self.mouse_control()
         self.recover_health()
+        # if self.game.weapon is not None:
+        #     print("TEST id:" + str(self.game.weapon.weapon_id) + ' ammo:' + str(self.game.weapon.ammo))
+        # for w in self.weapon_bag:
+        #     wp = w(self.game)
+        #     print("id:" + str(wp.weapon_id) + ' ammo:' + str(wp.ammo))
 
     @property
     def pos(self):

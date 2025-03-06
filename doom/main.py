@@ -1,7 +1,7 @@
 ﻿import sys
 from button import Button
 from ground_weapon import GroundWeapon
-from doom.hud import Hud
+from ammo import Ammo
 from map import *
 from hud import *
 from object_handler import *
@@ -11,7 +11,6 @@ from player import *
 from raycasting import *
 from sound import *
 from weapon import *
-from inventory import *
 from utils.utility import Utility
 
 SCREEN = pg.display.set_mode((WIDTH, FULL_HEIGHT))
@@ -20,7 +19,6 @@ IS_TEST = True # True/2D mode - False/3D mode
 
 class Game:
     def __init__(self):
-        # pg.init()
         pg.mouse.set_visible(False)
 
         # todo find a better way to toggle 2D/3D mode
@@ -28,8 +26,6 @@ class Game:
         self.npc_disabled = IS_TEST
         self.sound_disabled = IS_TEST
         self.test_npc_spawn_coverage = not IS_TEST
-
-        self.new_weapon = None
 
         self.screen = SCREEN
         self.map_level = 0
@@ -43,17 +39,17 @@ class Game:
     def new_game(self):
         self.map = Map(self)
         self.player = Player(self)
-        # self.inventory = Inventory(self)
         self.object_renderer = ObjectRenderer(self)
         self.raycasting = RayCasting(self)
         self.object_handler = ObjectHandler(self)
         self.ground_weapon = GroundWeapon(self)
+        self.ammo = Ammo(self)
         self.sound = Sound(self)
         self.pathfinding = PathFinding(self)
         self.hud = Hud(self)
-        init_weapon = self.player.weapon_bag[0](self)
+        init_weapon = self.player.weapon_bag[0]
         self.weapon = init_weapon
-        self.player.active_weapon_id = init_weapon.weapon_id
+        self.player.active_weapon = init_weapon
 
     def next_level(self):
         self.map_level += 1
@@ -70,17 +66,10 @@ class Game:
         self.object_handler.update()
         if self.weapon is not None:
             self.weapon.update()
-        if self.new_weapon is not None and self.weapon is None:
-            self.change_weapon()
+
         pg.display.flip()
         self.delta_time = self.clock.tick(FPS)
         pg.display.set_caption(f'{self.clock.get_fps() :.1f}')
-
-    def change_weapon(self):
-        weapon = self.new_weapon(self)
-        self.weapon = weapon
-        self.player.active_weapon_id = weapon.weapon_id
-        self.new_weapon = None
 
     def draw(self):
         if self.test_mode:

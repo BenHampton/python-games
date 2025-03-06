@@ -77,7 +77,6 @@ class Hud:
         return text
 
     def draw_ammo(self):
-        self.draw_section_text(2, self.game.weapon.ammo)
         self.draw_section_text(1, 'AMMO')
 
         ammo = str(self.game.weapon.ammo)
@@ -89,20 +88,8 @@ class Hud:
                              (i * self.digit_size + (self.hud_sections_start[1] + (self.hud_sections_width[1] // 2) - padding), HEIGHT + self.hud_padding_top),
                              (0, 0, self.hud_sections_width[1], FULL_HUB_HEIGHT))
 
-    def draw_player_health_x(self):
-        padding_left = 10
-        health = str(self.game.player.health)
-        for i, char in enumerate(health):
-            self.screen.blit(self.digits[char],
-                             (i * self.digit_size + self.hud_sections_start[2] + padding_left, HEIGHT + self.hud_padding_top),
-                             (0, 0, self.hud_sections_width[2], FULL_HUB_HEIGHT))
-        self.screen.blit(self.digits['10'],
-                         ((i + 1) * self.digit_size + self.hud_sections_start[2] + padding_left, HEIGHT + self.hud_padding_top),
-                         (0, 0, self.hud_sections_width[2], FULL_HUB_HEIGHT))
-
-        self.draw_section_text(2, 'HEALTH')
-
     def draw_player_health(self):
+        self.draw_section_text(2, 'HEALTH')
         padding = 0
         health = str(self.game.player.health)
         percent_image = self.digits['10']
@@ -116,9 +103,6 @@ class Hud:
                          ((i + 1) * self.digit_size + (self.hud_sections_start[2] + (self.hud_sections_width[2] // 2) - padding), HEIGHT + self.hud_padding_top),
                          (0, 0, self.hud_sections_width[2], FULL_HUB_HEIGHT))
 
-        self.draw_section_text(2, 'HEALTH')
-
-
     def draw_arms_digits(self, y, digits):
         # todo params -> (image, (width, height), Rect( (left, top), (width, height)) )`
         start_left = self.hud_sections_width[3] / 1/6
@@ -128,10 +112,11 @@ class Hud:
                              (self.hud_sections_start[3] + start_left + x, HEIGHT + y),
                              (1, 5, 25, 25))
 
-            if len(self.game.player.weapon_bag) and digits[i] == self.game.player.active_weapon_id:
+            color = 'lightgray'
+            if (len(self.game.player.weapon_bag) and self.game.weapon is not None
+                    and self.game.player.active_weapon in self.game.player.weapon_bag
+                    and digits[i] == self.game.player.active_weapon.weapon_id):
                 color = 'yellow'
-            else:
-                color = 'lightgray'
 
             text = self.arms_font.render(f'{digits[i]}', True, color)
             self.screen.blit(text,

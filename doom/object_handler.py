@@ -1,3 +1,4 @@
+from doom.ammo import ShotgunAmmo, PlasmaRifleAmmo, ChaingunAmmo
 from doom.ground_weapon import GroundShotgun, GroundAxe, GroundChaingun, GroundPlasmaRifle, GroundBFG
 from weapon import *
 from npc  import *
@@ -9,6 +10,7 @@ class ObjectHandler:
         self.sprite_list = []
         self.npc_list = []
         self.ground_weapon_list = []
+        self.ammo_list = []
         self.weapon_bag_list = []
         self.nps_sprite_path = 'resources/sprites/npc/'
         self.static_sprite_path = 'resources/sprites/static_sprites'
@@ -37,23 +39,27 @@ class ObjectHandler:
         self.weights = [70, 20]
         self.npc_types = [SoldierNPC, CacoDemonNPC]
         self.npc_boss_types = [CyberDemonNPC]
-        self.boss_weights = [70]
         self.spawn_npc()
         self.spawn_boss_npc()
-        # test add npc
+        # test -> force spawning npc
         # add_npc(NPC(game))
         # add_npc(NPC(game, pos=(11.5, 4.5)))
 
+        #spawn ammo
+        self.ammo_positions = {}
+        self.all_ammo = [ShotgunAmmo, PlasmaRifleAmmo, ChaingunAmmo]
+        #test -> force spawning ammo
+        # add_ammo = self.add_ammo
+        # add_ammo(ShotgunAmmo(game, scale=0.2, quantity=10, shift=2.5))
+
         # spawn ground weapons
         self.ground_weapon_positions = {}
-        self.available_ground_weapons = [GroundShotgun, GroundAxe, GroundChaingun, GroundPlasmaRifle, GroundBFG]
-        self.ground_weapon_weights = [30, 5, 35, 20, 10]
-        # test add ground weapon:
+        # test -> force spawning ground weapon:
         # add_weapon = self.add_ground_weapon
-        # shotgun_path = 'resources/sprites/weapon/shotgun/ground/0.png'
-        # add_weapon(GroundShotgun(game, path=shotgun_path, pos=(3.5, 3.5), scale=0.8))
+        # add_weapon(GroundShotgun(game, pos=(3.5, 3.5), scale=0.8))
         self.spawn_ground_weapon()
 
+        #todo map Weapon id to class better
         self.all_weapons = {1: PistolWeapon,
                             2: ShotgunWeapon,
                             3: AxeWeapon,
@@ -62,31 +68,45 @@ class ObjectHandler:
                             6: BFGWeapon}
 
         # init inventory weapon bag
+        self.add_weapon_to_bag(PlasmaRifleWeapon)
+        self.add_weapon_to_bag(ShotgunWeapon)
         self.add_weapon_to_bag(PistolWeapon)
 
     def spawn_npc(self):
         for i in range(self.total_enemies):
             npc = choices(self.npc_types, self.weights)[0]
-            pos = x, y = randrange(self.game.map.cols), randrange(self.game.map.rows)
+            pos = x, y = self.get_random_pos(self.game.map.cols, self.game.map.rows)
             while (pos in self.game.map.world_map) or (pos not in self.game.map.spawn_coords):
-                pos = x, y = randrange(self.game.map.cols), randrange(self.game.map.rows)
+                pos = x, y = self.get_random_pos(self.game.map.cols, self.game.map.rows)
             self.add_npc(npc(self.game, pos=(x + 0.5, y + 0.5)))
 
     def spawn_boss_npc(self):
         if len(self.game.map.boss_spawn_coords):
-            pos = x, y = randrange(self.game.map.cols), randrange(self.game.map.rows)
-            boss = choices(self.npc_boss_types, self.boss_weights)[0]
-            while (pos in self.game.map.world_map) or (pos not in self.game.map.boss_spawn_coords):
-                pos = x, y = randrange(self.game.map.cols), randrange(self.game.map.rows)
-            self.add_npc(boss(self.game, pos=(x + 0.5, y + 0.5)))
+            for boss_npc in self.npc_boss_types:
+                pos = x, y = self.get_random_pos(self.game.map.cols, self.game.map.rows)
+                while (pos in self.game.map.world_map) or (pos not in self.game.map.boss_spawn_coords):
+                    pos = x, y = self.get_random_pos(self.game.map.cols, self.game.map.rows)
+                self.add_npc(boss_npc(self.game, pos=(x + 0.5, y + 0.5)))
+                self.total_enemies += 1
 
     def spawn_ground_weapon(self):
-        for i in range(len(self.available_ground_weapons)):
-            ground_weapon = choices(self.available_ground_weapons, self.ground_weapon_weights)[0]
-            pos = x, y = randrange(self.game.map.cols), randrange(self.game.map.rows)
-            while (pos in self.game.map.world_map):
-                pos = x, y = randrange(self.game.map.cols), randrange(self.game.map.rows)
-            self.add_ground_weapon(ground_weapon(self.game, pos=(x + 0.5, y + 0.5)))
+        for i in range(len(self.game.map.map_weapons)):
+            pos = x, y = self.get_random_pos(self.game.map.cols, self.game.map.rows)
+            while pos in self.game.map.world_map:
+                pos = x, y = self.get_random_pos(self.game.map.cols, self.game.map.rows)
+            self.add_ground_weapon(self.game.map.map_weapons[i](self.game, pos=(x + 0.5, y + 0.5)))
+
+    def spawn_ammo(self, ground_weapon_id):
+        for ammo in self.all_ammo:
+            if ground_weapon_id == ammo(self.game).weapon_id:
+                pos = x, y = self.get_random_pos(self.game.map.cols, self.game.map.rows)
+                while pos in self.game.map.world_map:
+                    pos = x, y = self.get_random_pos(self.game.map.cols, self.game.map.rows)
+                self.add_ammo(ammo(self.game, pos=(x + 0.5, y + 0.5)))
+
+    @staticmethod
+    def get_random_pos(cols, rows):
+        return randrange(cols), randrange(rows)
 
     def completed_game(self):
         self.game.object_renderer.win()
@@ -107,9 +127,11 @@ class ObjectHandler:
     def update(self):
         self.npc_positions = {npc.map_pos for npc in self.npc_list if npc.alive}
         self.ground_weapon_positions = {gw.map_pos for gw in self.ground_weapon_list if gw.available}
+        self.ammo_positions = {ammo.map_pos for ammo in self.ammo_list if ammo.available}
         [sprite.update() for sprite in self.sprite_list]
         [npc.update() for npc in self.npc_list]
-        [weapon.update() for weapon in self.ground_weapon_list]
+        [ground_weapon.update() for ground_weapon in self.ground_weapon_list]
+        [ammo.update() for ammo in self.ammo_list]
         self.check_completed_level()
 
     def add_npc(self, npc):
@@ -118,10 +140,13 @@ class ObjectHandler:
     def add_ground_weapon(self, weapon):
         self.ground_weapon_list.append(weapon)
 
+    def add_ammo(self, ammo):
+        self.ammo_list.append(ammo)
+
     def add_sprite(self, sprite):
         self.sprite_list.append(sprite)
 
     def add_weapon_to_bag(self, weapon):
-        self.game.player.weapon_bag.append(weapon)
+        self.game.player.weapon_bag.append(weapon(self.game))
 
 

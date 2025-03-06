@@ -35,7 +35,7 @@ class GroundWeapon(AnimatedSprite):
 
     def check_picked_up(self):
         if self.game.player.map_pos in self.game.object_handler.ground_weapon_positions:
-            for weapon in self.game.object_handler.available_ground_weapons:
+            for weapon in self.game.map.map_weapons:
                 if self.game.player.map_pos == self.map_pos:
                     if weapon(self).weapon_id == self.weapon_id:
                         weapon_from_ground = self.game.object_handler.all_weapons[weapon(self).weapon_id]
