@@ -13,27 +13,29 @@ from sound import *
 from weapon import *
 from utils.utility import Utility
 
+
 SCREEN = pg.display.set_mode((WIDTH, FULL_HEIGHT))
+
 SHOW_MENU = False
-IS_TEST = True # True/2D mode - False/3D mode
+IS_TEST = False # True/2D mode - False/3D mode
 
 class Game:
     def __init__(self):
         pg.mouse.set_visible(False)
 
         # todo find a better way to toggle 2D/3D mode
-        self.test_mode = False#IS_TEST
-        self.npc_disabled = IS_TEST
-        self.sound_disabled = IS_TEST
-        self.test_npc_spawn_coverage = not IS_TEST
+        self.test_mode = False
+        self.npc_disabled = True
+        self.sound_disabled = True #IS_TEST
 
         self.screen = SCREEN
-        self.map_level = 0
+        self.current_level = 0
         self.clock = pg.time.Clock()
         self.delta_time = 1
         self.global_trigger = False
         self.global_event = pg.USEREVENT + 0
         pg.time.set_timer(self.global_event, 40)
+
         self.new_game()
 
     def new_game(self):
@@ -47,12 +49,13 @@ class Game:
         self.sound = Sound(self)
         self.pathfinding = PathFinding(self)
         self.hud = Hud(self)
+
         init_weapon = self.player.weapon_bag[0]
         self.weapon = init_weapon
         self.player.active_weapon = init_weapon
 
     def next_level(self):
-        self.map_level += 1
+        self.current_level += 1
         self.new_game()
 
     def completed_game_results(self):
@@ -74,11 +77,8 @@ class Game:
     def draw(self):
         if self.test_mode:
             self.screen.fill('black')
-            if self.test_npc_spawn_coverage:
-                self.map.draw_spawn_coverage()
-            else:
-                self.map.draw()
-            self.player.draw()
+            self.map.draw_for_test()
+            self.player.draw_for_test()
         else:
             # pg.draw.(self.game.screen, 'blue', (100 * next_x, 100 * next_y, 100, 100))
             self.object_renderer.draw()

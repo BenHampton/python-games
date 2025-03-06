@@ -7,7 +7,7 @@ class ObjectRenderer:
         self.game = game
         self.screen = game.screen
         self.wall_textures = self.load_wall_textures()
-        self.sky_image = self.get_texture('resources/textures/sky/' + str(self.game.map_level) + '.png', (WIDTH, HALF_HEIGHT))
+        self.sky_image = self.get_texture('resources/textures/sky/' + str(self.game.current_level) + '.png', (WIDTH, HALF_HEIGHT))
         self.sky_offset = 0
 
         self.font =  Utility.get_font('doom.ttf', 150)

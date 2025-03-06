@@ -1,5 +1,5 @@
 from sprite_object import *
-from random import randint, random, choice
+from random import randint, random
 
 class NPC(AnimatedSprite):
     def __init__(self,
@@ -34,9 +34,9 @@ class NPC(AnimatedSprite):
     def update(self):
         self.check_animation_time()
         self.get_sprite()
-        if not self.game.npc_disabled:
-            self.run_logic()
-        self.draw_ray_cast() # debug/test in 2D mode
+        self.run_logic()
+        if self.game.test_mode:
+            self.draw_ray_cast_for_test()
 
     def check_wall(self, x, y):
         return (x, y) not in self.game.map.world_map
@@ -52,7 +52,8 @@ class NPC(AnimatedSprite):
         next_x, next_y = next_pos
 
         if self.game.test_mode:
-            pg.draw.rect(self.game.screen, 'blue', (100 * next_x, 100 * next_y, 100, 100))
+            dim = TEST_SPAWN_COVERAGE_DIM[self.game.current_level]
+            pg.draw.rect(self.game.screen, 'green', (dim * next_x, dim * next_y, dim, dim))
 
         if next_pos not in self.game.object_handler.npc_positions:
             angle = math.atan2(next_y + 0.5 - self.y, next_x + 0.5 - self.x)
@@ -110,7 +111,7 @@ class NPC(AnimatedSprite):
                 self.player_search_trigger = True
                 self.reset_search_step_count()
 
-                if self.dist < self.attack_dist:
+                if self.dist < self.attack_dist and not self.game.npc_disabled:
                     self.animate(self.attack_images)
                     self.attack()
                 else:
@@ -197,18 +198,15 @@ class NPC(AnimatedSprite):
         if 0 < player_dist < wall_dist or not wall_dist:
             return True
 
-    def draw_ray_cast(self):
-        if self.game.test_mode:
-            pg.draw.circle(self.game.screen,
-                           'red',
-                           (100 * self.x, 100 * self.y),
-                           15)
-            if self.ray_cast_player_npc():
-                pg.draw.line(self.game.screen,
-                             'orange',
-                             (100 * self.game.player.x, 100 * self.game.player.y),
-                             (100 * self.x, 100 * self.y),
-                             2)
+    def draw_ray_cast_for_test(self):
+        dim = TEST_SPAWN_COVERAGE_DIM[self.game.current_level]
+        dim_two = dim // 2
+        radius = TEST_SPAWN_RADIUS[self.game.current_level]
+        pg.draw.rect(self.game.screen, 'orange',(self.x * dim - dim_two, self.y * dim - dim_two, dim, dim), 2)
+        pg.draw.circle(self.game.screen, 'orange',(dim * self.x, dim * self.y),  radius)
+
+        if self.ray_cast_player_npc():
+            pg.draw.line(self.game.screen, 'orange',(dim * self.game.player.x, dim * self.game.player.y),(dim * self.x, dim * self.y), 2)
 
 class SoldierNPC(NPC):
     def __init__(self,
@@ -232,7 +230,7 @@ class CacoDemonNPC(NPC):
         self.attack_dist = 1.0
         self.health = 150
         self.attack_damage = 25
-        self.speed = 0.05
+        self.speed = 0.03
         self.accuracy = 0.35
 
 class CyberDemonNPC(NPC):
@@ -247,6 +245,6 @@ class CyberDemonNPC(NPC):
         self.attack_dist = 6
         self.health = 200
         self.attack_damage = 15
-        self.speed = 0.055
+        self.speed = 0.005
         self.accuracy = 0.25
 

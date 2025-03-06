@@ -1,5 +1,5 @@
+from doom.map import MAPS
 from doom.ammo import ShotgunAmmo, PlasmaRifleAmmo, ChaingunAmmo
-from doom.ground_weapon import GroundShotgun, GroundAxe, GroundChaingun, GroundPlasmaRifle, GroundBFG
 from weapon import *
 from npc  import *
 from random import choices, randrange
@@ -35,7 +35,7 @@ class ObjectHandler:
 
         # spawn npc
         self.npc_positions = {}
-        self.total_enemies = NUM_OF_NPCS * (self.game.map_level + 1)
+        self.total_enemies = NUM_OF_NPCS * (self.game.current_level + 1)
         self.weights = [70, 20]
         self.npc_types = [SoldierNPC, CacoDemonNPC]
         self.npc_boss_types = [CyberDemonNPC]
@@ -68,8 +68,6 @@ class ObjectHandler:
                             6: BFGWeapon}
 
         # init inventory weapon bag
-        self.add_weapon_to_bag(PlasmaRifleWeapon)
-        self.add_weapon_to_bag(ShotgunWeapon)
         self.add_weapon_to_bag(PistolWeapon)
 
     def spawn_npc(self):
@@ -94,7 +92,9 @@ class ObjectHandler:
             pos = x, y = self.get_random_pos(self.game.map.cols, self.game.map.rows)
             while pos in self.game.map.world_map:
                 pos = x, y = self.get_random_pos(self.game.map.cols, self.game.map.rows)
-            self.add_ground_weapon(self.game.map.map_weapons[i](self.game, pos=(x + 0.5, y + 0.5)))
+            ground_weapon = self.game.map.map_weapons[i](self.game, pos=(x + 0.5, y + 0.5))
+            self.add_ground_weapon(ground_weapon)
+            self.spawn_ammo(ground_weapon.weapon_id)
 
     def spawn_ammo(self, ground_weapon_id):
         for ammo in self.all_ammo:
@@ -116,7 +116,7 @@ class ObjectHandler:
 
     def check_completed_level(self):
         if not len(self.npc_positions):
-            if (self.game.map_level + 1) == len(self.game.map.all_maps):
+            if (self.game.current_level + 1) == len(MAPS):
                 self.completed_game()
             else:
                 self.game.object_renderer.level_completed()

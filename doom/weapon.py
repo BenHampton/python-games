@@ -1,5 +1,3 @@
-from pygame.display import update
-
 from sprite_object import *
 
 class Weapon(AnimatedSprite):
@@ -69,7 +67,7 @@ class PistolWeapon(Weapon):
                  animation_time=90,
                  weapon_id=1):
         super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)
-        self.damage = 10
+        self.damage = 5
         self.ammo = 10
         self.ammo_cap = 50
         self.frame_counter = 0
@@ -82,7 +80,7 @@ class ShotgunWeapon(Weapon):
                  animation_time=90,
                  weapon_id=2):
         super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)
-        self.damage = 50
+        self.damage = 35
         self.ammo = 5
         self.ammo_cap = 25
         self.frame_counter = 0
@@ -95,7 +93,7 @@ class AxeWeapon(Weapon):
                  animation_time=90,
                  weapon_id=3):
         super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)
-        self.damage = 35
+        self.damage = 40
         self.frame_counter = 0
 
 class ChaingunWeapon(Weapon):
@@ -120,8 +118,8 @@ class PlasmaRifleWeapon(Weapon):
                  animation_time=105,
                  weapon_id=5):
         super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)
-        self.damage = 35
-        self.ammo = 25
+        self.damage = 55
+        self.ammo = 60
         self.ammo_cap = 25
         self.frame_counter = 0
 
@@ -133,9 +131,9 @@ class BFGWeapon(Weapon):
                  animation_time=105,
                  weapon_id=6):
         super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)
-        self.damage = 65
-        self.ammo = 50
-        self.ammo_cap = 50
+        self.damage = 85
+        self.ammo = 15
+        self.ammo_cap = 25
         self.frame_counter = 0
 
 

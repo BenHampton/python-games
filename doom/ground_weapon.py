@@ -1,7 +1,6 @@
 from sprite_object import *
 
 class GroundWeapon(AnimatedSprite):
-    # def __init__(self, game, path, scale, animation_time):
     def __init__(self,
                  game,
                  path='resources/sprites/weapon/shotgun/ground/0.png',
@@ -21,9 +20,12 @@ class GroundWeapon(AnimatedSprite):
         self.weapon_id = weapon_id
 
     def draw(self):
-        if self.game.test_mode:
-            pg.draw.rect(self.game.screen, 'pink', (self.x * 100 - 50, self.y * 100 - 50, 100, 100), 2)
-            pg.draw.circle(self.game.screen, 'pink', (self.x * 100,  self.y * 100), 15)
+        if self.game.test_mode and self.available:
+            dim = TEST_SPAWN_COVERAGE_DIM[self.game.current_level]
+            dim_two = dim // 2
+            radius = TEST_SPAWN_RADIUS[self.game.current_level]
+            pg.draw.rect(self.game.screen, 'pink', (self.x * dim - dim_two, self.y * dim - dim_two, dim, dim), 2)
+            pg.draw.circle(self.game.screen, 'pink', (self.x * dim,  self.y * dim), radius)
 
     def update(self):
         if self.available:
