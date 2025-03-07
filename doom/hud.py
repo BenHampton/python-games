@@ -1,12 +1,14 @@
 import pygame as pg
+from os import listdir
+from os.path import isfile, join
 from settings import *
 from utils.utility import Utility
 
 class Hud:
+    ANIMATION_DELAY = 1
     def __init__(self, game):
         self.game = game
         self.screen = game.screen
-        # self.hud_height = FULL_HEIGHT - HUD_HEIGHT #HEIGHT
         self.hud_image = self.game.object_renderer.get_texture('resources/textures/hud/section_background.jpg', (WIDTH, HUD_HEIGHT))
         self.arms_image = self.game.object_renderer.get_texture('resources/textures/hud/arms_background.jpg', (WIDTH, HUD_HEIGHT))
 
@@ -18,11 +20,12 @@ class Hud:
                              for i in range(11)]
         self.digits = dict(zip(map(str, range(11)), self.digit_images))
 
-        self.face_size = 90
-        self.face_images = [
-            self.game.object_renderer.get_texture(f'resources/textures/hud/face/{i}.png', [self.face_size] * 2)
-            for i in range(2)]
-        self.face_image = dict(zip(map(int, range(2)), self.face_images))
+        self.face_images = self.load_sprite_sheets("hud", "face", 31, 32)
+        self.face_image = self.init_face_imag()
+        self.animation_count = 0
+        self.animation_time =2000
+        self.animation_time_prev = pg.time.get_ticks()
+        self.animation_trigger = False
 
         self.hud_padding_top = 20
         self.hud_width = WIDTH // 8
@@ -46,6 +49,28 @@ class Hud:
                                    200, # inventory
                                    100] # padding right = 725 == 1275
 
+    def check_animation_time(self):
+        self.animation_trigger = False
+        time_now = pg.time.get_ticks()
+        if time_now - self.animation_time_prev > self.animation_time:
+            self.animation_time_prev = time_now
+            self.animation_trigger = True
+
+    def animate(self):
+        sprite_sheet_name = self.get_face()
+        images = self.face_images[sprite_sheet_name]
+
+        if self.animation_trigger:
+
+            sprite_index = (self.animation_count //
+                            self.ANIMATION_DELAY) % len(images)
+            self.face_image = images[sprite_index]
+            self.animation_count += 1
+
+    def update(self):
+        self.check_animation_time()
+        self.animate()
+
     def draw(self):
         self.draw_background()
         self.draw_ammo() #todo center text
@@ -56,7 +81,6 @@ class Hud:
         self.draw_cards() #todo rename??
         # self.draw_inventory()
 
-
     def draw_background(self):
         # todo params -> (image, (width, height), Rect( (left, top), (width, height)) )
         for i in range (0, len(self.hud_sections_width)):
@@ -65,8 +89,6 @@ class Hud:
                              (0, 0, self.hud_sections_width[i], FULL_HUB_HEIGHT))
         # test block with
         # pg.draw.rect(self.game.screen, 'green', (self.hud_sections_start[0], HEIGHT - 75, self.hud_sections_width[0], FULL_HUB_HEIGHT- 550))
-
-
 
     def draw_section_text(self, index, message):
         padding_bottom = (HUD_HEIGHT * 1 / 3)
@@ -128,12 +150,63 @@ class Hud:
         self.draw_arms_digits(35, [4,5,6])
         self.draw_section_text(3, 'ARMS')
 
+    #todo the image cropping works but looks like its off by a pixel, fix and the update draw_face->(see todo)
+    @staticmethod
+    def load_sprite_sheets(dir1, dir2, width, height):
+        path = join('resources/textures', dir1, dir2)
+        images = [f for f in listdir(path) if isfile(join(path, f))]
+
+        all_sprites = {}
+
+        for index, image in enumerate(images):
+
+            sprite_sheet = pg.image.load(join(path, image)).convert_alpha()
+            sprite_sheet = pg.transform.scale(sprite_sheet, (90 , height))
+
+            sprites = []
+            for i in range(3):
+                surface = pg.Surface((width, height), pg.SRCALPHA, 32)
+                rect = pg.Rect(i * width + 0, 0, width, height)
+                surface.blit(sprite_sheet, (0, 0), rect)
+                transform = pg.transform.scale(surface, (120, 80))
+                sprites.append(transform)
+
+            all_sprites[image.replace(".png", "")] = sprites
+        return all_sprites
+
+    @staticmethod
+    def flip(sprites):
+        return [pg.transform.flip(sprite, True, False) for sprite in sprites]
+
+    def init_face_imag(self):
+        sprite_sheet_name = self.get_face()
+        images = self.face_images[sprite_sheet_name]
+        return images[1]
+
+    def get_face(self):
+        health = self.game.player.health
+        if health > 91:
+            sprite_sheet = "great"
+        elif health > 71:
+            sprite_sheet = "good"
+        elif health > 51:
+            sprite_sheet = "ok"
+        elif health > 31:
+            sprite_sheet = "not_good"
+        else:
+            sprite_sheet = "bad"
+        return sprite_sheet
+
+    #todo fix load_sprite_sheets and remove the '+ 5' in this method (used for centering)
     def draw_face(self):
-        test = self.game.player.health - 90
-        idx = ((round(test / 10.0) * 10) // 10)
-        self.screen.blit(self.face_image[idx],
-                         (self.hud_sections_start[4] + 55, (FULL_HEIGHT - HUD_HEIGHT) + 10),
-                         (1, 5, self.face_images[0].get_width(), self.face_images[0].get_height()))
+        self.screen.blit(self.face_image,
+                         (self.hud_sections_start[4] + (self.hud_sections_width[4] // 2) - (self.face_image.get_width() // 2) + 5,
+                          FULL_HUB_HEIGHT + 15),
+                         (1, 5, self.face_image.get_width(), self.face_image.get_height()))
+        # pg.draw.rect(self.game.screen, 'green',
+        #              (self.hud_sections_start[4] + (self.hud_sections_width[4] // 2) - (self.face_image.get_width() // 2), FULL_HUB_HEIGHT + 10 - 75,
+        #               self.face_image.get_width(), self.face_image.get_height()))
+
 
     def draw_armor(self):
         self.draw_section_text(5, 'ARMOR')

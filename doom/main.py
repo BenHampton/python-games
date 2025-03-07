@@ -67,6 +67,7 @@ class Game:
         self.player.update()
         self.raycasting.update()
         self.object_handler.update()
+        self.hud.update()
         if self.weapon is not None:
             self.weapon.update()
 
