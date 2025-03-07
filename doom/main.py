@@ -11,6 +11,7 @@ from player import *
 from raycasting import *
 from sound import *
 from weapon import *
+from enemy_counter import *
 from utils.utility import Utility
 
 
@@ -44,6 +45,7 @@ class Game:
         self.object_renderer = ObjectRenderer(self)
         self.raycasting = RayCasting(self)
         self.object_handler = ObjectHandler(self)
+        self.enemy_counter = EnemyCounter(self)
         self.ground_weapon = GroundWeapon(self)
         self.ammo = Ammo(self)
         self.sound = Sound(self)
@@ -86,6 +88,7 @@ class Game:
             if self.weapon is not None:
                 self.weapon.draw()
             self.hud.draw()
+            self.enemy_counter.draw()
 
     def check_events(self):
         self.global_trigger = False
