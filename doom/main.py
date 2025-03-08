@@ -11,6 +11,7 @@ from player import *
 from raycasting import *
 from sound import *
 from weapon import *
+from door import *
 from enemy_counter import *
 from utils.utility import Utility
 
@@ -26,7 +27,7 @@ class Game:
 
         # todo find a better way to toggle 2D/3D mode
         self.test_mode = False
-        self.npc_disabled = True
+        self.npc_disabled, self.npc_disabled_walk = True, True
         self.sound_disabled = True #IS_TEST
 
         self.screen = SCREEN
@@ -45,6 +46,7 @@ class Game:
         self.object_renderer = ObjectRenderer(self)
         self.raycasting = RayCasting(self)
         self.object_handler = ObjectHandler(self)
+        self.door = Door(self)
         self.enemy_counter = EnemyCounter(self)
         self.ground_weapon = GroundWeapon(self)
         self.ammo = Ammo(self)

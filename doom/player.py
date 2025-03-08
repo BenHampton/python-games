@@ -15,6 +15,7 @@ class Player:
         self.time_prev = pg.time.get_ticks()
         self.weapon_bag = []
         self.active_weapon = None
+        self.door_active_coords = None
         #todo update weapon_key_map to dynamically set keys to Weapon class
         self.weapon_key_map = {pg.K_1: PistolWeapon,
                                pg.K_2: ShotgunWeapon,
@@ -81,7 +82,6 @@ class Player:
                         self.game.weapon = wb
                         self.game.player.active_weapon = wb
 
-
     def movement(self):
         sin_a = math.sin(self.angle)
         cos_a = math.cos(self.angle)
@@ -105,6 +105,9 @@ class Player:
         if keys[pg.K_d]:
             dx += -speed_sin
             dy += speed_cos
+        if keys[pg.K_e] and self.door_active_coords is not None:
+            self.game.map.handle_open_door(self.door_active_coords)
+
 
         # self.x += dx
         # self.y += dy
@@ -123,12 +126,29 @@ class Player:
     def check_wall(self, x, y):
         return (x, y) not in self.game.map.world_map
 
+    # def check_door(self, x, y):
+    #     door_pos = (x, y) in self.game.map.door_interation_coords
+    #     if door_pos:
+    #         self.door_active_coords = (x, y)
+    #         return True
+    #     else:
+    #         self.door_active_coords = None
+    #         return False
+
     def check_wall_collision(self, dx, dy):
         scale = PLAYER_SIZE_SCALE / self.game.delta_time
         if self.check_wall(int(self.x + dx * scale), int(self.y)):
             self.x += dx
         if self.check_wall(int(self.x), int(self.y + dy * scale)):
             self.y += dy
+
+        # self.game.door.check_door(int(self.x + dx * scale), int(self.y))
+        # self.game.door.check_door(int(self.x), int(self.y + dy * scale))
+
+        self.game.door.check_door(self.x, self.y, dx, dy, scale)
+
+        # self.check_door(int(self.x + dx * scale), int(self.y))
+        # self.check_door(int(self.x), int(self.y + dy * scale))
 
     def draw_for_test(self):
         if self.game.test_mode:

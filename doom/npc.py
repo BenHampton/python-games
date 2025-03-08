@@ -102,6 +102,8 @@ class NPC(AnimatedSprite):
 
     def run_logic(self):
         if self.alive:
+            if self.game.npc_disabled_walk:
+                return
             self.ray_casting_value = self.ray_cast_player_npc()
             self.check_hit_in_npc()
             if self.pain:

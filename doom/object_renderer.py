@@ -70,5 +70,6 @@ class ObjectRenderer:
             5: self.get_texture('resources/textures/wall/red_bird_flag.png'),
             6: self.get_texture('resources/textures/wall/green_brick.png'),
             7: self.get_texture('resources/textures/wall/green_skulls.png'),
+            8: self.get_texture('resources/textures/wall/door.png'),
         }
 

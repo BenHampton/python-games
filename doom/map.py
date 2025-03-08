@@ -1,12 +1,13 @@
 ﻿import pygame as pg
 from doom.ground_weapon import GroundShotgun, GroundAxe, GroundChaingun, GroundPlasmaRifle, GroundBFG
 from doom.main import TEST_SPAWN_COVERAGE_DIM
+from map_level.test_map import *
 from map_level.level_one import *
 from map_level.level_two import *
 from map_level.level_three import *
 from map_level.level_four import *
 
-MAPS =  [level_one, level_two, level_three, level_four]
+MAPS =  [test, level_one, level_two, level_three, level_four]
 
 class Map:
     def __init__(self, game):
@@ -14,6 +15,9 @@ class Map:
         self.current_map = MAPS[self.game.current_level]
         self.world_map = {}
         self.world_spawn_map = {}
+        self.door_interation_coords = {}
+        self.door_coords = {}
+
         self.rows = len(self.current_map)
         self.cols = len(self.current_map[0])
         self.get_map()
@@ -83,12 +87,26 @@ class Map:
             case _:
                 raise Exception("No map_id found could not append map's weapons")
 
+    def handle_open_door(self, pos):
+        x, y = pos
+        self.door_interation_coords.pop((x, y))
+        x_offset = x + 1
+        self.door_coords.pop((x_offset, y))
+        self.world_map.pop((x_offset, y))
+
     def get_map(self):
         for j, row in enumerate(self.current_map):
             for i, value in enumerate(row):
                 if value:
                     self.world_map[(i,j)] = value
                     self.world_spawn_map[(i, j)] = value
+                    if value == 8:
+                        a = i - 1
+                        b = j + 0
+                        self.door_interation_coords[(a, b)] = (a, b)
+                        self.door_coords[(i, j)] = value
+                        print('door_coords: ', self.door_coords)
+                        print('door_interation_coords: ', self.door_interation_coords)
 
         for j, row in enumerate(self.current_map):
             for i, value in enumerate(row):
@@ -112,11 +130,17 @@ class Map:
                 block_width = 3
             elif pos in self.boss_spawn_coords:
                 color = 'green'  # spawn final boss
+            elif pos in self.door_interation_coords:
+                color = 'yellow'  # spawn final boss
+                pg.draw.circle(self.game.screen, 'green', (pos[0] * dim, pos[1] * dim), 5)
+                pg.draw.circle(self.game.screen, 'pink', (pos[0] * dim, pos[1] * dim), 5)
+
             elif pos not in self.world_map:
                 color = 'black' # not spawn-able
 
             # todo params -> Rect( (left, top), (width, height))
             pg.draw.rect(self.game.screen, color, (pos[0] * dim, pos[1] * dim, dim, dim), block_width)
+
 
 
 

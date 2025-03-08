@@ -45,7 +45,6 @@ class Ammo(AnimatedSprite):
                         if weapon_in_bag.weapon_id == self.weapon_id:
                             weapon_in_bag.add_ammo(self.quantity)
                             self.available = False
-                            print('test')
 
     @property
     def map_pos(self):
