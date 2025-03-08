@@ -26,12 +26,13 @@ class Game:
         pg.mouse.set_visible(False)
 
         # todo find a better way to toggle 2D/3D mode
-        self.test_mode = False
+        # self.test_mode = False
+        self.test_mode = True
         self.npc_disabled, self.npc_disabled_walk = True, True
         self.sound_disabled = True #IS_TEST
 
         self.screen = SCREEN
-        self.current_level = 0
+        self.current_level = 2
         self.clock = pg.time.Clock()
         self.delta_time = 1
         self.global_trigger = False

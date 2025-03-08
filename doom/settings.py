@@ -11,7 +11,7 @@ HALF_HEIGHT = (HEIGHT // 2)
 FPS = 0
 
 # Test settings
-TEST_SPAWN_COVERAGE_DIM = [30]#[35, 17, 19.5, 14]
+TEST_SPAWN_COVERAGE_DIM = [35, 17, 19.5, 14] #[30] for Test
 TEST_SPAWN_RADIUS = [7, 4, 4, 3, 1]
 
 # HUD settings

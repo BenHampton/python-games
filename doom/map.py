@@ -7,7 +7,8 @@ from map_level.level_two import *
 from map_level.level_three import *
 from map_level.level_four import *
 
-MAPS =  [test, level_one, level_two, level_three, level_four]
+MAPS =  [level_one, level_two, level_three, level_four]
+# MAPS =  [test, level_one, level_two, level_three, level_four] # for test Map
 
 class Map:
     def __init__(self, game):
@@ -27,6 +28,9 @@ class Map:
 
         self.map_weapons = []
         self.handle_map_weapons()
+
+        self.ways = [-1, 0], [0, -1], [1, 0], [0, 1], [-1, -1], [1, 1]
+        self.graph = {}
 
     def handle_available_npc_spawn_coords(self):
         match self.game.current_level:
@@ -89,10 +93,14 @@ class Map:
 
     def handle_open_door(self, pos):
         x, y = pos
+        print('handle_open_door: ', pos)
         self.door_interation_coords.pop((x, y))
-        x_offset = x + 1
-        self.door_coords.pop((x_offset, y))
-        self.world_map.pop((x_offset, y))
+        x_offset = x
+        y_offset = y + 1
+
+        print('offset: ', (x_offset, y_offset))
+        self.door_coords.pop((x_offset, y_offset))
+        self.world_map.pop((x_offset, y_offset))
 
     def get_map(self):
         for j, row in enumerate(self.current_map):
@@ -100,9 +108,9 @@ class Map:
                 if value:
                     self.world_map[(i,j)] = value
                     self.world_spawn_map[(i, j)] = value
-                    if value == 8:
-                        a = i - 1
-                        b = j + 0
+                    if value == 8: # (x/a, y/b)
+                        a = i
+                        b = j - 1
                         self.door_interation_coords[(a, b)] = (a, b)
                         self.door_coords[(i, j)] = value
                         print('door_coords: ', self.door_coords)
@@ -113,6 +121,18 @@ class Map:
                 if not value:
                     self.world_spawn_map[(i, j)] = True
 
+    # def get_door_coords(self):
+
+    #todo use test map to write method that sets the  x/yoffset to the applicable door__coord
+    # def get_next_nodes(self, x, y):
+    #     return [(x + dx, y + dy) for dx, dy in self.ways if (x + dx, y + dy) not in self.game.map.world_map]
+    #
+    # def get_graph(self):
+    #     for y, row in enumerate(self.current_map):
+    #         for x, col in enumerate(row):
+    #             if not col:
+    #                 self.graph[(x, y)] = self.graph.get((x, y), []) + self.get_next_nodes(x, y)
+
     def draw_for_test(self):
 
         dim = TEST_SPAWN_COVERAGE_DIM[self.game.current_level]
@@ -120,7 +140,13 @@ class Map:
         for pos in self.world_spawn_map:
             color = 'darkgray'
             block_width = 2
-            if pos not in self.world_map and pos in self.spawn_coords:
+            if pos in self.door_interation_coords:
+                color = 'purple'  # spawn door
+                # todo params -> Rect( (left, top), (width, height))
+                pg.draw.rect(self.game.screen, color, (pos[0] * dim , pos[1] * dim, dim, dim), 100)
+                # pg.draw.rect(self.game.screen, color, (pos[0] * dim, pos[1] * dim, dim, dim), 5)
+                continue
+            elif pos not in self.world_map and pos in self.spawn_coords:
                 if pos in self.boss_spawn_coords:
                     color = 'green'  # spawn final boss
                 else:
@@ -130,16 +156,13 @@ class Map:
                 block_width = 3
             elif pos in self.boss_spawn_coords:
                 color = 'green'  # spawn final boss
-            elif pos in self.door_interation_coords:
-                color = 'yellow'  # spawn final boss
-                pg.draw.circle(self.game.screen, 'green', (pos[0] * dim, pos[1] * dim), 5)
-                pg.draw.circle(self.game.screen, 'pink', (pos[0] * dim, pos[1] * dim), 5)
-
             elif pos not in self.world_map:
                 color = 'black' # not spawn-able
 
             # todo params -> Rect( (left, top), (width, height))
             pg.draw.rect(self.game.screen, color, (pos[0] * dim, pos[1] * dim, dim, dim), block_width)
+
+
 
 
 
