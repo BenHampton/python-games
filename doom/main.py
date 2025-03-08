@@ -90,6 +90,7 @@ class Game:
             if self.weapon is not None:
                 self.weapon.draw()
             self.hud.draw()
+            self.door.draw()
             self.enemy_counter.draw()
 
     def check_events(self):

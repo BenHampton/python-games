@@ -15,7 +15,6 @@ class Player:
         self.time_prev = pg.time.get_ticks()
         self.weapon_bag = []
         self.active_weapon = None
-        self.door_active_coords = None
         #todo update weapon_key_map to dynamically set keys to Weapon class
         self.weapon_key_map = {pg.K_1: PistolWeapon,
                                pg.K_2: ShotgunWeapon,
@@ -105,14 +104,13 @@ class Player:
         if keys[pg.K_d]:
             dx += -speed_sin
             dy += speed_cos
-        if keys[pg.K_e] and self.door_active_coords is not None:
-            self.game.map.handle_open_door(self.door_active_coords)
-
+        if keys[pg.K_e] and self.game.door.active_door_coords is not None:
+            self.game.map.handle_open_door(self.game.door.active_door_coords)
 
         # self.x += dx
         # self.y += dy
         # instead of changing the player coords use method to enable wall collision
-        self.check_wall_collision(dx, dy)
+        self.check_collision(dx, dy)
 
         # player movement with arrow keys in favor of mouse movement
         # if keys[pg.K_LEFT]:
@@ -126,29 +124,17 @@ class Player:
     def check_wall(self, x, y):
         return (x, y) not in self.game.map.world_map
 
-    # def check_door(self, x, y):
-    #     door_pos = (x, y) in self.game.map.door_interation_coords
-    #     if door_pos:
-    #         self.door_active_coords = (x, y)
-    #         return True
-    #     else:
-    #         self.door_active_coords = None
-    #         return False
-
-    def check_wall_collision(self, dx, dy):
-        scale = PLAYER_SIZE_SCALE / self.game.delta_time
+    def check_wall_collision(self, dx, dy, scale):
         if self.check_wall(int(self.x + dx * scale), int(self.y)):
             self.x += dx
         if self.check_wall(int(self.x), int(self.y + dy * scale)):
             self.y += dy
 
-        # self.game.door.check_door(int(self.x + dx * scale), int(self.y))
-        # self.game.door.check_door(int(self.x), int(self.y + dy * scale))
+    def check_collision(self, dx, dy):
+        scale = PLAYER_SIZE_SCALE / self.game.delta_time
 
+        self.check_wall_collision(dx, dy, scale)
         self.game.door.check_door(self.x, self.y, dx, dy, scale)
-
-        # self.check_door(int(self.x + dx * scale), int(self.y))
-        # self.check_door(int(self.x), int(self.y + dy * scale))
 
     def draw_for_test(self):
         if self.game.test_mode:
@@ -171,11 +157,6 @@ class Player:
         self.movement()
         self.mouse_control()
         self.recover_health()
-        # if self.game.weapon is not None:
-        #     print("TEST id:" + str(self.game.weapon.weapon_id) + ' ammo:' + str(self.game.weapon.ammo))
-        # for w in self.weapon_bag:
-        #     wp = w(self.game)
-        #     print("id:" + str(wp.weapon_id) + ' ammo:' + str(wp.ammo))
 
     @property
     def pos(self):
