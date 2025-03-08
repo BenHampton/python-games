@@ -1,6 +1,6 @@
 ﻿import pygame as pg
-from doom.ground_weapon import GroundShotgun, GroundAxe, GroundChaingun, GroundPlasmaRifle, GroundBFG
-from doom.main import TEST_SPAWN_COVERAGE_DIM
+from ground_weapon import GroundShotgun, GroundAxe, GroundChaingun, GroundPlasmaRifle, GroundBFG
+from settings import TEST_SPAWN_COVERAGE_DIM
 from map_level.test_map import *
 from map_level.level_one import *
 from map_level.level_two import *

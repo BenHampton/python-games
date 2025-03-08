@@ -1,11 +1,12 @@
 from utils.utility import Utility
 
 class Button:
-	def __init__(self, image, pos, text_input):
+	def __init__(self, image, pos, text_input, font_size=75):
 		self.image = image
+		self.font_size = font_size
 		self.x_pos = pos[0]
 		self.y_pos = pos[1]
-		self.font = Utility.get_font('doom.ttf', 75)
+		self.font = Utility.get_font('doom.ttf', font_size)
 		self.base_color = 'white'
 		self.hovering_color = (252, 2, 3)
 		self.text_input = text_input
