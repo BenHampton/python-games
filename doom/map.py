@@ -50,8 +50,8 @@ class Map:
             case 2:
                 spawn_coords = {(x, y) for x in range(7, self.cols - 1) for y in range(1, 9)}
                 spawn_coords.update({(x, y) for x in range(4, 7) for y in range(1, 3)})
-                spawn_coords.update({(x, y) for x in range(1, self.cols - 1) for y in range(9, self.rows - 1)})
-                spawn_coords.update({(x, y) for x in range(1, self.cols - 1) for y in range(14, self.rows - 1)})
+                spawn_coords.update({(x, y) for x in range(1, self.cols - 1) for y in range(9, 13)})
+                spawn_coords.update({(x, y) for x in range(3, self.cols - 1) for y in range(14, 21)})
 
                 # self.boss_spawn_coords = {(x, y) for x in range(4, self.cols - 5) for y in range(28, self.rows - 3)}
                 self.handle_available_boss_npc_spawn_coords(4, 5, 28, 3)
@@ -64,7 +64,7 @@ class Map:
                 spawn_coords.update({(x, y) for x in range(8, self.cols - 3) for y in range(22, 32)})
 
                 # self.boss_spawn_coords = {(x, y) for x in range(1, self.cols - 1) for y in range(42, self.rows - 1)}
-                self.handle_available_boss_npc_spawn_coords(1, 1, 42, 1)
+                # self.handle_available_boss_npc_spawn_coords(1, 1, 42, 1)
                 return spawn_coords
             case _:
                 return {(x, y) for x in range(0, self.cols) for y in range(0, self.rows)}

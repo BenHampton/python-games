@@ -16,15 +16,20 @@ class Weapon(AnimatedSprite):
         self.available = False
         self.is_automatic = False
         self.is_handhold = False
+        self.infinite = False
         self.num_images = len(self.images)
         self.frame_counter = 0
         self.damage = 0
         self.ammo_cap = 0
         self.ammo = 0
+        self.init_ammo = 0
         self.weapon_id = weapon_id
 
     def animate_shot(self):
         if self.game.player.active_weapon is not None and self.weapon_id == self.game.player.active_weapon.weapon_id:
+            if self.ammo == 0 and self.infinite:
+                self.ammo = self.init_ammo
+                return
             if self.reloading:
                 self.player.shot = False
                 if self.animation_trigger and self.game.weapon.ammo > 0:
@@ -69,7 +74,9 @@ class PistolWeapon(Weapon):
         super().__init__(game=game, path=path, scale=scale, animation_time=animation_time,weapon_id=weapon_id)
         self.damage = 5
         self.ammo = 10
+        self.init_ammo = 10
         self.ammo_cap = 50
+        self.infinite = True
         self.frame_counter = 0
 
 class ShotgunWeapon(Weapon):
