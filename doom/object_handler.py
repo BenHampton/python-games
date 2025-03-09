@@ -1,5 +1,5 @@
 from doom.map import MAPS
-from doom.ammo import ShotgunAmmo, PlasmaRifleAmmo, ChaingunAmmo
+from doom.ammo_item import ShotgunAmmo, PlasmaRifleAmmo, ChaingunAmmo
 from weapon import *
 from npc  import *
 from random import choices, randrange

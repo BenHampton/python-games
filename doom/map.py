@@ -1,5 +1,5 @@
 ﻿import pygame as pg
-from ground_weapon import GroundShotgun, GroundAxe, GroundChaingun, GroundPlasmaRifle, GroundBFG
+from ground_weapon_item import GroundShotgun, GroundAxe, GroundChaingun, GroundPlasmaRifle, GroundBFG
 from settings import TEST_SPAWN_COVERAGE_DIM
 from map_level.test_map import *
 from map_level.level_one import *

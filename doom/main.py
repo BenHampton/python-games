@@ -2,7 +2,7 @@
 from sound import *
 
 SCREEN = pg.display.set_mode((WIDTH, FULL_HEIGHT))
-SHOW_MENU = True
+SHOW_MENU = False
 
 class InitGame:
     def __init__(self, screen):

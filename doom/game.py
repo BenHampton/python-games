@@ -1,7 +1,6 @@
 from map import *
 from player import *
-from ground_weapon import GroundWeapon
-from ammo import Ammo
+from ground_item import *
 from hud import *
 from object_handler import *
 from object_renderer import *
@@ -42,8 +41,9 @@ class Game:
         self.object_handler = ObjectHandler(self)
         self.door = Door(self)
         self.enemy_counter = EnemyCounter(self)
-        self.ground_weapon = GroundWeapon(self)
-        self.ammo = Ammo(self)
+        # self.ground_weapon = GroundWeapon(self)
+        # self.ammo = Ammo(self)
+        self.ground_item = GroundItem(self)
         self.sound = Sound(self)
         self.pathfinding = PathFinding(self)
         self.hud = Hud(self)
