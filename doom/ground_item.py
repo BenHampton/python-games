@@ -4,7 +4,7 @@ class GroundItem(AnimatedSprite):
     def __init__(self,
                  game,
                  path='resources/sprites/weapon/shotgun/ground/0.png',
-                 item_id =0,
+                 item_type='-1',
                  pos=(1, 1),
                  scale=0.4,
                  shift=0.16,
@@ -22,8 +22,7 @@ class GroundItem(AnimatedSprite):
         self.size = 10
         self.frame_counter = 0
         self.weapon_id = weapon_id
-        self.item_id = item_id
-        self.items = {1: 'ammo', 2: 'ground_gun'}
+        self.item_type = item_type
 
     def draw(self):
         if self.game.test_mode and self.available:
@@ -42,14 +41,11 @@ class GroundItem(AnimatedSprite):
             self.draw()
 
     def check_picked_up(self):
-        item_name = self.items.get(self.item_id)
-        print(item_name)
-        if item_name == 'ammo':
+        if self.item_type == 'ammo':
             self.check_picked_up_ammo_item()
-        if item_name == 'ground_gun':
+        if self.item_type == 'ground_weapon':
             self.check_picked_up_ground_weapon_item()
 
-    #todo when picked up -> gun fires
     def check_picked_up_ammo_item(self):
         if self.game.player.map_pos in self.game.object_handler.ammo_positions:
             if self.game.player.map_pos == self.map_pos and  self.weapon_id == self.weapon_id:
@@ -58,7 +54,6 @@ class GroundItem(AnimatedSprite):
                             weapon_in_bag.add_ammo(self.quantity)
                             self.available = False
 
-    #todo lag when picked up gun
     def check_picked_up_ground_weapon_item(self):
         if self.game.player.map_pos in self.game.object_handler.ground_weapon_positions:
             for weapon in self.game.map.map_weapons:
