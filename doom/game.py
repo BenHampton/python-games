@@ -97,7 +97,16 @@ class Game:
                 self.global_trigger = True
             if self.weapon is not None:
                 self.player.fire_weapon_event(event)
-            self.player.change_weapon_event(event)
+            self.change_weapon_event(event)
+
+    def change_weapon_event(self, event):
+        if event.type == pg.KEYDOWN:
+            weapon_key = self.player.weapon_key_map.get(event.key)
+            if weapon_key is not None:
+                for weapon_in_bag in self.player.weapon_bag:
+                    if isinstance(weapon_in_bag, weapon_key):
+                        self.weapon = weapon_in_bag
+                        self.player.active_weapon = weapon_in_bag
 
     def run(self):
         if self.sound and not self.sound_disabled:
