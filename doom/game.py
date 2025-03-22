@@ -9,7 +9,6 @@ from pathfinding import *
 from raycasting import *
 from sound import *
 from door import *
-from enemy_counter import *
 from menu import *
 
 IS_TEST = False # True/2D mode - False/3D mode
@@ -41,7 +40,6 @@ class Game:
         self.raycasting = RayCasting(self)
         self.object_handler = ObjectHandler(self)
         self.door = Door(self)
-        self.enemy_counter = EnemyCounter(self)
         self.ground_weapon = GroundWeapon(self)
         self.ammo = Ammo(self)
         self.sound = Sound(self)
@@ -85,7 +83,6 @@ class Game:
                 self.weapon.draw()
             self.hud.draw()
             self.door.draw()
-            self.enemy_counter.draw()
 
     def check_events(self):
         self.global_trigger = False

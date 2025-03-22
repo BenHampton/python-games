@@ -9,7 +9,6 @@ class NPC(AnimatedSprite):
                  scale=0.6,
                  shift=0.38,
                  animation_time=100):
-    # def __init__(self, game, path, pos, scale, shift, animation_time):
         super(NPC, self).__init__(game, path, pos, scale, shift, animation_time)
         self.attack_images = self.get_images(self.path + '/attack')
         self.death_images = self.get_images(self.path + '/death')
@@ -73,6 +72,7 @@ class NPC(AnimatedSprite):
             if self.game.global_trigger and self.frame_count < len(self.death_images) - 1:
                 self.death_images.rotate(-1)
                 self.image = self.death_images[0]
+                self.player.total_kills += 1
                 self.frame_count += 1
 
     def animate_pain(self):

@@ -12,8 +12,8 @@ class Hud:
         self.hud_image = self.game.object_renderer.get_texture('resources/textures/hud/section_background.jpg', (WIDTH, HUD_HEIGHT))
         self.arms_image = self.game.object_renderer.get_texture('resources/textures/hud/arms_background.jpg', (WIDTH, HUD_HEIGHT))
 
-        self.text_font = Utility.get_font('doom.ttf', 35)
-        self.arms_font = Utility.get_font('doom.ttf', 18)
+        self.text_font = Utility.get_font('doom.ttf', 23)
+        self.text_font_two = Utility.get_font('doom.ttf', 18)
 
         self.digit_size = 40
         self.digit_images = [self.game.object_renderer.get_texture(f'resources/textures/digits/{i}.png', [self.digit_size] * 2)
@@ -36,7 +36,7 @@ class Hud:
                                    550, # face
                                    750, # armor
                                    925, # cards
-                                   1000, # inventory
+                                   1000, # statistics
                                    1200] # padding right
         # 1300 / 2 = 650
         self.hud_sections_width = [100, # padding left
@@ -46,7 +46,7 @@ class Hud:
                                    200, # face
                                    175, # armor
                                    75, # cards
-                                   200, # inventory
+                                   200, # statistics
                                    100] # padding right = 725 == 1275
 
     def check_animation_time(self):
@@ -79,7 +79,7 @@ class Hud:
         self.draw_face()
         self.draw_armor()
         self.draw_cards() #todo rename??
-        # self.draw_inventory()
+        self.draw_statistics()
 
     def draw_background(self):
         # todo params -> (image, (width, height), Rect( (left, top), (width, height)) )
@@ -91,11 +91,12 @@ class Hud:
         # pg.draw.rect(self.game.screen, 'green', (self.hud_sections_start[0], HEIGHT - 75, self.hud_sections_width[0], FULL_HUB_HEIGHT- 550))
 
     def draw_section_text(self, index, message):
-        padding_bottom = (HUD_HEIGHT * 1 / 3)
         text = self.text_font.render(f'{message}', True, 'white')
+
+        bottom = (HUD_HEIGHT + FULL_HUB_HEIGHT) - 22
         self.screen.blit(text,
                          (self.hud_sections_start[index] + (self.hud_sections_width[index] - text.get_width()) // 2,
-                          FULL_HEIGHT - padding_bottom))
+                          bottom))
         return text
 
     def draw_ammo(self):
@@ -140,7 +141,7 @@ class Hud:
                     and digits[i] == self.game.player.active_weapon.weapon_id):
                 color = 'yellow'
 
-            text = self.arms_font.render(f'{digits[i]}', True, color)
+            text = self.text_font_two.render(f'{digits[i]}', True, color)
             self.screen.blit(text,
                              (self.hud_sections_start[3] + start_left + x + 10, HEIGHT + y + 5))
             x += 30
@@ -207,15 +208,39 @@ class Hud:
         #              (self.hud_sections_start[4] + (self.hud_sections_width[4] // 2) - (self.face_image.get_width() // 2), FULL_HUB_HEIGHT + 10 - 75,
         #               self.face_image.get_width(), self.face_image.get_height()))
 
-
     def draw_armor(self):
         self.draw_section_text(5, 'ARMOR')
 
     def draw_cards(self):
         pass
 
-    def draw_inventory(self):
-        self.draw_section_text(7, 'INVENTORY')
+    def draw_individual_statistic(self, message, blit_top_padding, top_padding):
+
+        left = self.hud_sections_start[7] + 10
+        top = FULL_HUB_HEIGHT
+        width = self.hud_sections_width[7] - 30
+        height = 2
+
+        text = self.text_font_two.render(f'{message}', True, 'white')
+
+        self.screen.blit(text, (left, top + blit_top_padding))
+        pg.draw.rect(self.game.screen, 'darkgray', (left, top + top_padding, width, height))
+
+
+    def draw_statistics(self):
+        self.draw_section_text(7, 'Statistics')
+
+        kills_message = f'Kills:   {self.game.player.total_kills}'
+        self.draw_individual_statistic(kills_message, 10, 25)
+
+        enemy_counter_message = f'Enemies Left:   {self.game.object_handler.total_enemies}'
+        self.draw_individual_statistic(enemy_counter_message, 35, 50)
+
+        level_message = f'Level:   {self.game.current_level + 1}'
+        self.draw_individual_statistic(level_message, 60, 75)
+
+
+
 
 
 
