@@ -19,7 +19,8 @@ class Game:
         # todo find a better way to toggle 2D/3D mode
         self.test_mode = False
         # self.test_mode = True
-        self.npc_disabled, self.npc_disabled_walk = True, True
+        self.npc_disabled = True
+        self.npc_disabled_walk = True
         self.sound_disabled = True #IS_TEST
 
         self.screen = screen

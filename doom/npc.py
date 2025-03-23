@@ -102,25 +102,26 @@ class NPC(AnimatedSprite):
 
     def run_logic(self):
         if self.alive:
-            if self.game.npc_disabled_walk:
-                return
             self.ray_casting_value = self.ray_cast_player_npc()
             self.check_hit_in_npc()
             if self.pain:
                 self.animate_pain()
-
             elif self.ray_casting_value:
                 self.player_search_trigger = True
                 self.reset_search_step_count()
 
                 if self.dist < self.attack_dist and not self.game.npc_disabled:
                     self.animate(self.attack_images)
-                    self.attack()
+                    if not self.game.npc_disabled_walk:
+                        self.attack()
+                        return
                 else:
                     self.animate(self.walk_images)
-                    self.movement()
+                    if not self.game.npc_disabled_walk:
+                        self.movement()
+                        return
 
-            elif self.player_search_trigger:
+            elif self.player_search_trigger and not self.game.npc_disabled_walk:
                 self.animate(self.walk_images)
                 self.movement()
                 self.search_step_count += 1
