@@ -6,7 +6,7 @@ class GroundShotgun(GroundItem):
                  path='resources/sprites/weapon/shotgun/ground/0.png',
                  item_type='ground_weapon',
                  pos=(3.5, 3.5),
-                 scale=0.8,
+                 scale=0.5,
                  animation_time=90,
                  weapon_id=2):
         super().__init__(game=game, path=path, item_type=item_type, pos=pos, scale=scale, animation_time=animation_time, weapon_id=weapon_id)
