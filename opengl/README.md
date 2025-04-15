@@ -1,9 +1,11 @@
 # OPENGL
 
-## Formulas
+## OpenGl Formulas
 
-### base_mesh.py
-#### VBO
+- source: https://www.youtube.com/watch?v=Ab8TOSFfNp4
+
+#### base_mesh.py:
+- VBO
 
 ```aiignore
 in_postion
