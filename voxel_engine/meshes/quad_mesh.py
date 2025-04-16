@@ -1,7 +1,6 @@
 import numpy as np
 from settings import *
-from opengl.meshes.base_mesh import BaseMesh
-
+from voxel_engine.meshes.base_mesh import BaseMesh
 
 class QuadMesh(BaseMesh):
     def __init__(self, app):

@@ -6,7 +6,7 @@ from shader_program import ShaderProgram
 from scene import Scene
 from player import Player
 
-class VoxelEngine:
+class OpenGl:
     def __init__(self):
         pg.init()
         pg.display.gl_set_attribute(pg.GL_CONTEXT_MAJOR_VERSION, 3)
@@ -64,5 +64,5 @@ class VoxelEngine:
         sys.exit()
 
 if __name__ == '__main__':
-    app = VoxelEngine()
+    app = OpenGl()
     app.run()
