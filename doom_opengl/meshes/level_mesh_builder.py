@@ -67,6 +67,19 @@ class LevelMeshBuilder:
 
                         index = self.add_data(vertex_data, index, v0, v3, v2, v0, v2, v1)
 
+                    # ceiling
+                    if (x, z) in self.map.ceiling_map:
+                        tex_id = self.map.ceiling_map[(x, z)]
+                        face_id = 1
+
+                        v0 = (x    , 1, z    , tex_id, face_id)
+                        v1 = (x + 1, 1, z    , tex_id, face_id)
+                        v2 = (x + 1, 1, z + 1, tex_id, face_id)
+                        v3 = (x    , 1, z + 1, tex_id, face_id)
+
+                        index = self.add_data(vertex_data, index, v0, v2, v3, v0, v1, v2)
+
+
                 # wall faces
                 if pos_not_in_wall_map:
                     continue

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="16" height="9" tilewidth="256" tileheight="256" infinite="0" nextlayerid="7" nextobjectid="15">
  <tileset firstgid="1" source="test.tsx"/>
- <layer id="5" name="floors" width="16" height="9" visible="0">
+ <layer id="5" name="floors" width="16" height="9">
   <data encoding="csv">
 80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
 80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
@@ -14,7 +14,7 @@
 80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80
 </data>
  </layer>
- <layer id="6" name="ceilings" width="16" height="9" visible="0">
+ <layer id="6" name="ceilings" width="16" height="9">
   <data encoding="csv">
 80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
 80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,

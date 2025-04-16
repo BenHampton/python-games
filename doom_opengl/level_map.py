@@ -10,9 +10,8 @@ class LevelMap:
         self.width = self.tiled_map.width
         self.depth = self.tiled_map.height
 
-        self.wall_map = {}
-        self.floor_map = {}
-        self.ceiling_map = {}
+        self.wall_map, self.floor_map, self.ceiling_map = {}, {}, {}
+
         self.parse_level()
 
     def get_id(self, gid):
