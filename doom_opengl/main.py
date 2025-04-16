@@ -26,8 +26,8 @@ class Game:
         self.time = 0
 
         #Borderd Window
-        pg.event.set_grab(True)
-        pg.mouse.set_visible(False)
+        # pg.event.set_grab(True)
+        # pg.mouse.set_visible(False)
 
         self.is_running = True
         self.fps_value = 0
