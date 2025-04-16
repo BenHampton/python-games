@@ -2,6 +2,13 @@ import pygame as pg
 from camera import Camera
 from settings import *
 
+class PlayerAttribs:
+    def __init__(self):
+        self.num_level = 0
+
+    def update(self):
+        pass
+
 class Player(Camera):
     def __init__(self, eng, position=PLAYER_POS, yaw=-90, pitch=0):
         self.app = eng.app
