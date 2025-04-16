@@ -53,9 +53,26 @@ class LevelMeshBuilder:
 
         for x in range(self.map.width):
             for z in range(self.map.depth):
+                #flats
+                if pos_not_in_wall_map := (x, z) not in self.map.wall_map:
+                    # floor
+                    if (x, z) in self.map.floor_map:
+                        tex_id = self.map.floor_map[(x, z)]
+                        face_id = 0
+
+                        v0 = (x    , 0, z    , tex_id, face_id)
+                        v1 = (x + 1, 0, z    , tex_id, face_id)
+                        v2 = (x + 1, 0, z + 1, tex_id, face_id)
+                        v3 = (x    , 0, z + 1, tex_id, face_id)
+
+                        index = self.add_data(vertex_data, index, v0, v3, v2, v0, v2, v1)
+
                 # wall faces
-                if (x, z) not in self.map.wall_map:
+                if pos_not_in_wall_map:
                     continue
+
+                # if (x, z) not in self.map.wall_map:
+                #     continue
 
                 tex_id = self.map.wall_map[(x, z)]
 

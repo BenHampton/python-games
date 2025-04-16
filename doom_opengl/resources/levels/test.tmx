@@ -1,6 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="16" height="9" tilewidth="256" tileheight="256" infinite="0" nextlayerid="3" nextobjectid="1">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="16" height="9" tilewidth="256" tileheight="256" infinite="0" nextlayerid="7" nextobjectid="15">
  <tileset firstgid="1" source="test.tsx"/>
+ <layer id="5" name="floors" width="16" height="9" visible="0">
+  <data encoding="csv">
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80
+</data>
+ </layer>
+ <layer id="6" name="ceilings" width="16" height="9" visible="0">
+  <data encoding="csv">
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
+80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80
+</data>
+ </layer>
  <layer id="2" name="walls" width="16" height="9">
   <data encoding="csv">
 80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,
@@ -14,4 +40,15 @@
 80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80
 </data>
  </layer>
+ <objectgroup id="3" name="player">
+  <object id="8" name="Player" x="341.701" y="1145.12" width="80.2344" height="18.8438">
+   <text wrap="1">Hello World</text>
+  </object>
+  <object id="9" x="87.1555" y="-1745.79" width="80.2344" height="18.8438">
+   <text wrap="1">Hello World</text>
+  </object>
+  <object id="10" x="359.883" y="1090.58" width="80.2344" height="18.8438">
+   <text wrap="1">Hello World</text>
+  </object>
+ </objectgroup>
 </map>
