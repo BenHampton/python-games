@@ -3,6 +3,7 @@ import moderngl as mgl
 import pygame as pg
 import sys
 from shader_program import ShaderProgram
+from scene import Scene
 
 class VoxelEngine:
     def __init__(self):
@@ -27,15 +28,19 @@ class VoxelEngine:
 
     def on_init(self):
         self.shader_program = ShaderProgram(self)
+        self.scene = Scene(self)
 
     def update(self):
         self.shader_program.update()
+        self.scene.update()
+
         self.delta_time = self.clock.tick()
         self.time = pg.time.get_ticks() * 0.001
         pg.display.set_caption(f'{self.clock.get_fps() :.0f}')
 
     def redner(self):
         self.ctx.clear(color=BG_COLOR)
+        self.scene.render()
         pg.display.flip() #to display a new frame call the flip method
 
     def handle_events(self):

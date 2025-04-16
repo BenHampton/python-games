@@ -1,5 +1,3 @@
-from smtpd import program
-
 from settings import *
 
 class ShaderProgram:
