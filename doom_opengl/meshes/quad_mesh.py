@@ -1,6 +1,6 @@
 import numpy as np
 from settings import *
-from opengl.meshes.base_mesh import BaseMesh
+from doom_opengl.meshes.base_mesh import BaseMesh
 
 
 class QuadMesh(BaseMesh):

@@ -1,5 +1,5 @@
 from settings import *
-from opengl.meshes.quad_mesh import QuadMesh
+from doom_opengl.meshes.quad_mesh import QuadMesh
 
 class Scene:
     def __init__(self, app):
