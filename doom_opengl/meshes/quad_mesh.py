@@ -1,31 +1,37 @@
 from doom_opengl.meshes.base_mesh import BaseMesh
-from settings import *
+from doom_opengl.settings import *
 import numpy as np
 
 
-class QuadMesh(BaseMesh):
+# class QuadMesh(BaseMesh):
+class QuadMesh:
     def __init__(self, app):
-        super().__init__()
+        # super().__init__()
 
         self.app = app
         self.ctx = app.ctx
         self.program = app.shader_program.quad
 
-        self.vbo_format = '3f 3f'
-        self.attrs = ('in_position', 'in_color')
+        self.vbo_format = '4f 2f'
+        self.attrs = ('in_position', 'in_uv')
         self.vao = self.get_vao()
 
-    def get_vertex_data(self):
-        # vertices = [
-        #     (0.5, 0.5, 0.0), (-0.5, 0.5, 0.0), (-0.5, -0.5, 0.0),
-        #     (0.5, 0.5, 0.0), (-0.5, -0.5, 0.0), (0.5, -0.5, 0.0)
-        # ]
-        #
-        # colors = [
-        #     (0, 1, 0), (1, 0, 0), (1, 1, 0),
-        #     (0, 1, 0), (1, 1, 0), (0, 0, 1)
-        # ]
+    def get_vao(self):
+        vertex_data = self.get_vertex_data()
+        vbo = self.ctx.buffer(vertex_data)
+        vao = self.ctx.vertex_array(
+            self.program,
+            [
+                (vbo, self.vbo_format, *self.vbo_attrs)
+            ],
+            skip_errors=True
+        )
+        return vao
 
+    def render(self):
+        self.vao.render()
+
+    def get_vertex_data(self):
         vert_position = (
             [-0.5, 0.0, 0.0, 1.0], [-0.5, 1.0, 0.0, 1.0],
             [0.5, 1.0, 0.0, 1.0], [0.5, 0.0, 0.0, 1.0]
@@ -39,7 +45,6 @@ class QuadMesh(BaseMesh):
             0, 2, 1, 0, 3, 2
         ]
 
-        # vertex_data = np.hstack([vertices, colors], dtype='float32')
         vert_data = []
         for vert_index in vert_indices:
             vert_data += vert_position[vert_index]

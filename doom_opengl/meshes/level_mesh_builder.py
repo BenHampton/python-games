@@ -1,6 +1,5 @@
 from settings import *
 import numpy as np
-#<image source="../../assets/sprite_sheet/sprite_sheet.png" width="256" height="256"/>
 
 class LevelMeshBuilder:
     def __init__(self, mesh):

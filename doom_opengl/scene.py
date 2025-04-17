@@ -1,13 +1,26 @@
+from doom_opengl.meshes.instanced_quad_mesh import InstancedQuadMesh
 from settings import *
 from doom_opengl.meshes.level_mesh import LevelMesh
 
 class Scene:
-    def __init__(self, app):
-        self.app = app
-        self.level_mesh = LevelMesh(self.app)
+    def __init__(self, eng):
+        self.eng = eng
+
+        # level mesh
+        self.level_mesh = LevelMesh(self.eng)
+
+        # door objects
+        self.doors = self.eng.level_map.door_map.values()
+
+        # door mesh
+        self.instanced_door_mesh = InstancedQuadMesh(
+            self.eng, self.doors, self.eng.shader_program.instanced_door
+        )
 
     def update(self):
-        pass
+        for door in self.doors:
+            door.update()
 
     def render(self):
         self.level_mesh.render()
+        self.instanced_door_mesh.render()

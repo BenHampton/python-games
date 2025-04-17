@@ -1,4 +1,6 @@
 import pytmx
+
+from game_objects.door import Door
 from settings import *
 
 class LevelMap:
@@ -11,7 +13,8 @@ class LevelMap:
         self.depth = self.tiled_map.height
 
         self.wall_map, self.floor_map, self.ceiling_map = {}, {}, {}
-
+        self.door_map = {}
+        #
         self.parse_level()
 
     def get_id(self, gid):
@@ -41,3 +44,11 @@ class LevelMap:
                 if gid:= ceilings.data[iz][ix]:
                     # ceiling hash map
                     self.ceiling_map[(ix, iz)] = self.get_id(gid)
+
+        # get doors
+        door_objects = self.tiled_map.get_layer_by_name('doors')
+        for obj in door_objects:
+            # door hash map
+            pos = int(obj.x / TEX_SIZE), int(obj.y / TEX_SIZE)
+            door = Door(self, tex_id=self.get_id(obj.gid), x=pos[0], z=pos[1])
+            self.door_map[pos] = door
