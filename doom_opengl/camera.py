@@ -38,19 +38,46 @@ class Camera:
         self.yaw += delta_x
 
     def move_left(self, velocity):
-        self.position -= self.right * velocity
+        return -self.right.xz * velocity
 
     def move_right(self, velocity):
-        self.position += self.right * velocity
+        return self.right.xz * velocity
 
     def move_up(self, velocity):
         self.position += self.up * velocity
 
     def move_down(self, velocity):
-        self.position += self.up * velocity
+        self.position -= self.up * velocity
 
     def move_forward(self, velocity):
-        self.position += self.forward * velocity
+        return self.forward.xz * velocity
 
     def move_back(self, velocity):
-        self.position -= self.forward * velocity
+        return -self.forward.xz * velocity
+
+    # TODO does not work below, why?
+    #
+    # def rotate_pitch(self, delta_y):
+    #     self.pitch -= delta_y
+    #     self.pitch = glm.clamp(self.pitch, -PITCH_MAX, PITCH_MAX)
+    #
+    # def rotate_yaw(self, delta_x):
+    #     self.yaw += delta_x
+    #
+    # def move_left(self, velocity):
+    #     self.position -= self.right * velocity
+    #
+    # def move_right(self, velocity):
+    #     self.position += self.right * velocity
+    #
+    # def move_up(self, velocity):
+    #     self.position += self.up * velocity
+    #
+    # def move_down(self, velocity):
+    #     self.position -= self.up * velocity
+    #
+    # def move_forward(self, velocity):
+    #     self.position += self.forward * velocity
+    #
+    # def move_back(self, velocity):
+    #     self.position -= self.forward * velocity

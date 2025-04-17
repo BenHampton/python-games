@@ -15,6 +15,9 @@ class Player(Camera):
         self.eng = eng
         super() .__init__(position, yaw, pitch)
 
+        # these maps will update when instantiated LevelMap
+        self.door_map, self.wall_map, self.item_map = None, None, None
+
     def handle_events(self, event):
         pass
 
@@ -33,6 +36,24 @@ class Player(Camera):
     def keyboard_control(self):
         key_state = pg.key.get_pressed()
         vel = PLAYER_SPEED * self.app.delta_time
+        next_step = glm.vec2()
+        #
+        if key_state[KEYS['FORWARD']]:
+            next_step += self.move_forward(vel)
+        if key_state[KEYS['BACK']]:
+            next_step += self.move_back(vel)
+        if key_state[KEYS['STRAFE_R']]:
+            next_step += self.move_right(vel)
+        if key_state[KEYS['STRAFE_L']]:
+            next_step += self.move_left(vel)
+        #
+        self.move(next_step=next_step)
+
+    def keyboard_control_old(self):
+        key_state = pg.key.get_pressed()
+        vel = PLAYER_SPEED * self.app.delta_time
+        next_step = glm.vec2()
+
         if key_state[pg.K_w]:
             self.move_forward(vel)
         if key_state[pg.K_s]:
@@ -45,3 +66,23 @@ class Player(Camera):
             self.move_up(vel)
         if key_state[pg.K_e]:
             self.move_down(vel)
+        #
+        self.move(next_step-next_step)
+
+    def move(self, next_step):
+        if not self.is_collide(dx=next_step[0]):
+            self.position.x += next_step[0]
+
+        if not self.is_collide(dz=next_step[1]):
+            self.position.z += next_step[1]
+
+    def is_collide(self, dx=0, dz=0):
+        int_pos = (
+            int(self.position.x + dx + (
+                PLAYER_SIZE if dx > 0 else -PLAYER_SIZE if dx < 0 else 0)
+                ),
+            int(self.position.z + dz + (
+                PLAYER_SIZE if dz > 0 else -PLAYER_SIZE if dz < 0 else 0)
+                )
+        )
+        return (int_pos in self.wall_map) or (int_pos in self.door_map)
