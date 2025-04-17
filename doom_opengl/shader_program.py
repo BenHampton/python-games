@@ -1,10 +1,10 @@
 from settings import *
 
 class ShaderProgram:
-    def __init__(self, app):
-        self.app = app
-        self.ctx = app.ctx
-        self.player = app.player
+    def __init__(self, eng):
+        self.eng = eng
+        self.ctx = eng.ctx
+        self.player = eng.player
 
         #--------- sharder --------- #
         self.level = self.get_program(shader_name='level')

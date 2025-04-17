@@ -5,15 +5,15 @@ import numpy as np
 
 # class QuadMesh(BaseMesh):
 class QuadMesh:
-    def __init__(self, app):
+    def __init__(self, eng, shader_program):
         # super().__init__()
 
-        self.app = app
-        self.ctx = app.ctx
-        self.program = app.shader_program.quad
+        self.eng = eng
+        self.ctx = eng.ctx
+        self.program = shader_program
 
         self.vbo_format = '4f 2f'
-        self.attrs = ('in_position', 'in_uv')
+        self.vbo_attrs = ('in_position', 'in_uv')
         self.vao = self.get_vao()
 
     def get_vao(self):
