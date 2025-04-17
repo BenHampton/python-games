@@ -97,4 +97,8 @@ class Player(Camera):
                 PLAYER_SIZE if dz > 0 else -PLAYER_SIZE if dz < 0 else 0)
                 )
         )
-        return (int_pos in self.wall_map) or (int_pos in self.door_map)
+        # check doors
+        if int_pos in self.door_map:
+            return self.door_map[int_pos].is_closed
+
+        return int_pos in self.wall_map
