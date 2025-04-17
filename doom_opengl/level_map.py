@@ -1,6 +1,7 @@
 import pytmx
 
 from doom_opengl.game_objects.door import Door
+from doom_opengl.game_objects.item import Item
 from doom_opengl.settings import *
 
 class LevelMap:
@@ -53,6 +54,15 @@ class LevelMap:
             door = Door(self, tex_id=self.get_id(obj.gid), x=pos[0], z=pos[1])
             self.door_map[pos] = door
 
+        # get items
+        items = self.tiled_map.get_layer_by_name("items")
+        for obj in items:
+            # items hash map
+            pos = int(obj.x/ TEX_SIZE), int(obj.y / TEX_SIZE)
+            item = Item(self, tex_id=self.get_id(obj.gid), x=pos[0], z=pos[1])
+            self.item_map[pos] = item
+
         # update player data
         self.eng.player.wall_map = self.wall_map
         self.eng.player.door_map = self.door_map
+        self.eng.player.item_map = self.item_map

@@ -11,10 +11,15 @@ class Scene:
 
         # door objects
         self.doors = self.eng.level_map.door_map.values()
+        self.items = self.eng.level_map.item_map.values()
 
         # door mesh
         self.instanced_door_mesh = InstancedQuadMesh(
             self.eng, self.doors, self.eng.shader_program.instanced_door
+        )
+        # item mesh
+        self.instanced_item_mesh = InstancedQuadMesh(
+            self.eng, self.items, self.eng.shader_program.instanced_billboard
         )
 
     def update(self):
@@ -24,3 +29,4 @@ class Scene:
     def render(self):
         self.level_mesh.render()
         self.instanced_door_mesh.render()
+        self.instanced_item_mesh.render()
