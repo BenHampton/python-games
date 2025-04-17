@@ -62,6 +62,9 @@ class Game:
             if event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
                 self.is_running = False
             #
+            if event.type == self.anim_event:
+                self.anim_trigger = True
+            #
             self.engine.handle_events(event=event)
 
     def run(self):

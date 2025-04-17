@@ -19,12 +19,23 @@ class Player(Camera):
         self.door_map, self.wall_map, self.item_map = None, None, None
 
     def handle_events(self, event):
-        pass
+        if event.type == pg.KEYDOWN:
+            #
+            if event.key == KEYS['INTERACT']:
+                self.interact_with_door()
 
     def update(self):
         self.keyboard_control()
         self.mouse_control()
         super().update()
+
+    def interact_with_door(self):
+        pos = self.position + self.forward
+        int_pos = int(pos.x), int(pos.z)
+        #
+        if int_pos in self.door_map:
+            door = self.door_map[int_pos]
+            door.is_moving = True
 
     def mouse_control(self):
         mouse_dx, mouse_dy = pg.mouse.get_rel()
@@ -49,25 +60,26 @@ class Player(Camera):
         #
         self.move(next_step=next_step)
 
-    def keyboard_control_old(self):
-        key_state = pg.key.get_pressed()
-        vel = PLAYER_SPEED * self.app.delta_time
-        next_step = glm.vec2()
-
-        if key_state[pg.K_w]:
-            self.move_forward(vel)
-        if key_state[pg.K_s]:
-            self.move_back(vel)
-        if key_state[pg.K_d]:
-            self.move_right(vel)
-        if key_state[pg.K_a]:
-            self.move_left(vel)
-        if key_state[pg.K_q]:
-            self.move_up(vel)
-        if key_state[pg.K_e]:
-            self.move_down(vel)
-        #
-        self.move(next_step-next_step)
+    # TODO does not work -> why?
+    # def keyboard_control_old(self):
+    #     key_state = pg.key.get_pressed()
+    #     vel = PLAYER_SPEED * self.app.delta_time
+    #     next_step = glm.vec2()
+    #
+    #     if key_state[pg.K_w]:
+    #         self.move_forward(vel)
+    #     if key_state[pg.K_s]:
+    #         self.move_back(vel)
+    #     if key_state[pg.K_d]:
+    #         self.move_right(vel)
+    #     if key_state[pg.K_a]:
+    #         self.move_left(vel)
+    #     if key_state[pg.K_q]:
+    #         self.move_up(vel)
+    #     if key_state[pg.K_e]:
+    #         self.move_down(vel)
+    #     #
+    #     self.move(next_step-next_step)
 
     def move(self, next_step):
         if not self.is_collide(dx=next_step[0]):
