@@ -1,6 +1,6 @@
-from doom_opengl.meshes.instanced_quad_mesh import InstancedQuadMesh
+from meshes.instanced_quad_mesh import InstancedQuadMesh
 from settings import *
-from doom_opengl.meshes.level_mesh import LevelMesh
+from meshes.level_mesh import LevelMesh
 
 class Scene:
     def __init__(self, eng):

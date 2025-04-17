@@ -27,9 +27,9 @@ class Engine:
     def new_game(self):
         self.player = Player(self)
         self.shader_program = ShaderProgram(self)
-        self.level_map = LevelMap(self)
-        #     self, tmx_file=f'level_{self.player_attribs.num_level}.tmx'
-        # )
+        self.level_map = LevelMap(
+            self, tmx_file=f'test.tmx' #self, tmx_file=f'level_{self.player_attribs.num_level}.tmx'
+        )
         self.scene = Scene(self)
 
     def handle_events(self, event):

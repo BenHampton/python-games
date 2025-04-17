@@ -1,7 +1,7 @@
 import pytmx
 
-from game_objects.door import Door
-from settings import *
+from doom_opengl.game_objects.door import Door
+from doom_opengl.settings import *
 
 class LevelMap:
     def __init__(self, eng, tmx_file='test.tmx'):

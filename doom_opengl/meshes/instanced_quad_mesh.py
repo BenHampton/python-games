@@ -10,7 +10,7 @@ class InstancedQuadMesh:
         self.program = shader_program
         #
         self.objects = objects
-        self.num_instance = len(objects)
+        self.num_instances = len(objects)
 
         # quad vertex buffer
         self.quad_vbo = self.ctx.buffer(QuadMesh.get_vertex_data(self))
@@ -19,7 +19,7 @@ class InstancedQuadMesh:
         self.m_model_vbo: mgl.Buffer = None
         self.tex_id_vbo: mgl.Buffer = None
         #
-        self.vao = self.get_vao() if self.num_instance else None
+        self.vao = self.get_vao() if self.num_instances else None
 
     def update_buffers(self):
         m_model_list, tex_id_list = [], []
