@@ -18,6 +18,31 @@ class Player(Camera):
         # these maps will update when instantiated LevelMap
         self.door_map, self.wall_map, self.item_map = None, None, None
 
+        # attribs
+        self.health = PLAYER_INIT_HEALTH
+        self.ammo = PLAYER_INIT_AMMO
+        #
+        self.tile_pos: Tuple[int, int] = None
+
+    def update_tile_position(self):
+        self.tile_pos = int(self.position.x), int(self.position.z)
+
+    def pick_up_item(self):
+        if self.tile_pos not in self.item_map:
+            return None
+
+        item = self.item_map[self.tile_pos]
+        #
+        if item.tex_id == ID.MED_KIT:
+            self.health += ITEM_SETTINGS[ID.MED_KIT]['value']
+            self.health = min(self.health, MAX_HEALTH_VALUE)
+            #
+        elif item.tex_id == ID.AMMO:
+            self.ammo += ITEM_SETTINGS[ID.AMMO]['value']
+            self.ammo = min(self.ammo, MAX_AMMO_VALUE)
+        #
+        del self.item_map[self.tile_pos]
+
     def handle_events(self, event):
         if event.type == pg.KEYDOWN:
             #
@@ -28,6 +53,9 @@ class Player(Camera):
         self.keyboard_control()
         self.mouse_control()
         super().update()
+        #
+        self.update_tile_position()
+        self.pick_up_item()
 
     def interact_with_door(self):
         pos = self.position + self.forward
