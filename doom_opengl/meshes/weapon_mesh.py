@@ -8,6 +8,10 @@ class WeaponMesh(QuadMesh):
         self.weapon = weapon_instance
         self.program['m_model'].write(self.weapon.m_model)
 
-    def render(self):
+    def set_uniforms(self):
+        self.program['m_model'].write(self.weapon.m_model)
         self.program['tex_id'] = self.weapon.frame + self.weapon.weapon_id
+
+    def render(self):
+        self.set_uniforms()
         self.vao.render()

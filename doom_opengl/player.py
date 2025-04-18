@@ -37,9 +37,9 @@ class Player(Camera):
         self.is_shot = False
 
         # weapon
-        self.weapons = {ID.KNIFE_0: 1, ID.PISTOL_0: 0, ID.RIFLE_0: 0}
-        self.weapon_cycle = cycle(self.weapons.keys())
-        self.weapon_id =ID.KNIFE_0
+        self.weapons = self.eng.player_attribs.weapons
+        self.weapon_id = self.eng.player_attribs.weapon_id
+        self.weapon_cycle = cycle(self.eng.player_attribs.weapons.keys())
         #
         self.is_shot = False
         #
@@ -107,13 +107,20 @@ class Player(Camera):
     def do_shot(self):
         if self.weapon_id == ID.KNIFE_0:
             self.is_shot = True
-        #
+            self.check_hit_on_npc()
+            #
+            self.play(self.sound.player_attack[ID.KNIFE_0])
+
         elif self.ammo:
             consumption = WEAPON_SETTINGS[self.weapon_id]['ammo_consumption']
             if not self.is_shot and self.ammo >= consumption:
                 self.is_shot = True
+                self.check_hit_on_npc()
+                #
                 self.ammo -= consumption
                 self.ammo = max(0, self.ammo)
+                #
+                self.play(self.sound.player_attack[self.weapon_id])
 
     def update_tile_position(self):
         self.tile_pos = int(self.position.x), int(self.position.z)
@@ -159,7 +166,6 @@ class Player(Camera):
 
         if int_pos not in self.door_map:
             return None
-
 
         door = self.door_map[int_pos]
 

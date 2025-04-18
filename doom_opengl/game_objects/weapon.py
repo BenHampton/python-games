@@ -30,3 +30,7 @@ class Weapon:
                 if self.frame == WEAPON_NUM_FRAMES:
                     self.frame = 0
                     self.player.is_shot = False
+
+    def render(self):
+        self.set_uniforms()
+        self.mesh.render()

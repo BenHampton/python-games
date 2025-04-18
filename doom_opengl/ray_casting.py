@@ -1,6 +1,5 @@
 from doom_opengl.settings import *
 
-
 class RayCasting:
     def __init__(self, eng):
         self.eng = eng
