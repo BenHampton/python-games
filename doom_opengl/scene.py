@@ -17,6 +17,7 @@ class Scene:
         # door objects
         self.doors = self.eng.level_map.door_map.values()
         self.items = self.eng.level_map.item_map.values()
+        self.npc = self.eng.level_map.npc_map.values()
         self.weapon = Weapon(eng)
 
         # door mesh
@@ -31,12 +32,18 @@ class Scene:
         self.instanced_hud_mesh = InstancedQuadMesh(
             eng, self.hud.objects, eng.shader_program.instanced_hud
         )
+        # npc mesh
+        self.instanced_npc_mesh = InstancedQuadMesh(
+            eng, self.npc, eng.shader_program.instanced_billboard
+        )
 
         self.weapon_mesh = WeaponMesh(eng, eng.shader_program.weapon, self.weapon)
 
     def update(self):
         for door in self.doors:
             door.update()
+        for npc in self.npc:
+            npc.update()
         self.hud.update()
         self.weapon.update()
 
@@ -45,4 +52,5 @@ class Scene:
         self.instanced_door_mesh.render()
         self.instanced_item_mesh.render()
         self.instanced_hud_mesh.render()
+        self.instanced_npc_mesh.render()
         self.weapon_mesh.render()
