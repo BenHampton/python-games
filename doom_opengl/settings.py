@@ -12,8 +12,8 @@ DEPTH_SIZE = 24
 
 #resolution
 # WIN_RES = glm.vec2(1600, 900)
-# WIN_RES = glm.vec2(1280, 720)
-WIN_RES = glm.vec2(1300, 800) # mac laptop
+WIN_RES = glm.vec2(1280, 720)
+# WIN_RES = glm.vec2(1300, 800) # mac laptop
 
 # control keys
 KEYS = {

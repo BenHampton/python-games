@@ -1,5 +1,5 @@
 from doom_opengl.meshes.level_mesh_builder import LevelMeshBuilder
-from voxel_engine.meshes.base_mesh import BaseMesh
+from doom_opengl.meshes.base_mesh import BaseMesh
 
 
 class LevelMesh:

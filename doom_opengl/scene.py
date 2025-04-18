@@ -1,4 +1,6 @@
 from doom_opengl.game_objects.hud import HUD
+from doom_opengl.game_objects.weapon import Weapon
+from doom_opengl.meshes.WeaponMesh import WeaponMesh
 from meshes.instanced_quad_mesh import InstancedQuadMesh
 from settings import *
 from meshes.level_mesh import LevelMesh
@@ -15,6 +17,7 @@ class Scene:
         # door objects
         self.doors = self.eng.level_map.door_map.values()
         self.items = self.eng.level_map.item_map.values()
+        self.weapon = Weapon(eng)
 
         # door mesh
         self.instanced_door_mesh = InstancedQuadMesh(
@@ -29,13 +32,17 @@ class Scene:
             eng, self.hud.objects, eng.shader_program.instanced_hud
         )
 
+        self.weapon_mesh = WeaponMesh(eng, eng.shader_program.weapon, self.weapon)
+
     def update(self):
         for door in self.doors:
             door.update()
         self.hud.update()
+        self.weapon.update()
 
     def render(self):
         self.level_mesh.render()
         self.instanced_door_mesh.render()
         self.instanced_item_mesh.render()
         self.instanced_hud_mesh.render()
+        self.weapon_mesh.render()

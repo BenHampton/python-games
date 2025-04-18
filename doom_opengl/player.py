@@ -1,6 +1,7 @@
-import pygame as pg
+from itertools import cycle
 from camera import Camera
 from settings import *
+import random
 
 class PlayerAttribs:
     def __init__(self):
@@ -23,6 +24,13 @@ class Player(Camera):
         self.ammo = PLAYER_INIT_AMMO
         #
         self.tile_pos: Tuple[int, int] = None
+        #
+        self.is_shot = False
+
+        # weapon
+        self.weapons = {ID.KNIFE_0: 1, ID.PISTOL_0: 0, ID.RIFLE_0: 0}
+        self.weapon_cycle = cycle(self.weapons.keys())
+        self.weapon_id =ID.KNIFE_0
 
     def update_tile_position(self):
         self.tile_pos = int(self.position.x), int(self.position.z)
@@ -36,10 +44,18 @@ class Player(Camera):
         if item.tex_id == ID.MED_KIT:
             self.health += ITEM_SETTINGS[ID.MED_KIT]['value']
             self.health = min(self.health, MAX_HEALTH_VALUE)
-            #
+        #
         elif item.tex_id == ID.AMMO:
             self.ammo += ITEM_SETTINGS[ID.AMMO]['value']
             self.ammo = min(self.ammo, MAX_AMMO_VALUE)
+        #
+        elif item.tex_id == ID.PISTOL_ICON:
+            self.weapons[ID.PISTOL_0] = 1
+            self.switch_weapon(weapon_id=ID.PISTOL_0)
+        #
+        elif item.tex_id == ID.RIFLE_ICON:
+            self.weapons[ID.RIFLE_0] = 1
+            self.switch_weapon(weapon_id=ID.RIFLE_0)
         #
         del self.item_map[self.tile_pos]
 
@@ -48,6 +64,41 @@ class Player(Camera):
             #
             if event.key == KEYS['INTERACT']:
                 self.interact_with_door()
+
+            # switch weapon by key
+            if event.key == KEYS['WEAPON_1']:
+                self.switch_weapon(weapon_id=ID.KNIFE_0)
+            elif event.key == KEYS['WEAPON_2']:
+                self.switch_weapon(weapon_id=ID.PISTOL_0)
+            elif event.key == KEYS['WEAPON_3']:
+                self.switch_weapon(weapon_id=ID.RIFLE_0)
+
+        # switch weapon by mouse wheel
+        if event.type == pg.MOUSEWHEEL:
+            weapon_id = next(self.weapon_cycle)
+            if self.weapons[weapon_id]:
+                self.switch_weapon(weapon_id=weapon_id)
+
+        # shooting
+        if event.type == pg.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                self.do_shot()
+
+    def switch_weapon(self, weapon_id):
+        if self.weapons[weapon_id]:
+            self.weapon_id = weapon_id
+            self.weapon_instance.weapon_id = self.weapon_id
+
+    def do_shot(self):
+        if self.weapon_id == ID.KNIFE_0:
+            self.is_shot = True
+        #
+        elif self.ammo:
+            consumption = WEAPON_SETTINGS[self.weapon_id]['ammo_consumption']
+            if not self.is_shot and self.ammo >= consumption:
+                self.is_shot = True
+                self.ammo -= consumption
+                self.ammo = max(0, self.ammo)
 
     def update(self):
         self.keyboard_control()
@@ -87,27 +138,6 @@ class Player(Camera):
             next_step += self.move_left(vel)
         #
         self.move(next_step=next_step)
-
-    # TODO does not work -> why?
-    # def keyboard_control_old(self):
-    #     key_state = pg.key.get_pressed()
-    #     vel = PLAYER_SPEED * self.app.delta_time
-    #     next_step = glm.vec2()
-    #
-    #     if key_state[pg.K_w]:
-    #         self.move_forward(vel)
-    #     if key_state[pg.K_s]:
-    #         self.move_back(vel)
-    #     if key_state[pg.K_d]:
-    #         self.move_right(vel)
-    #     if key_state[pg.K_a]:
-    #         self.move_left(vel)
-    #     if key_state[pg.K_q]:
-    #         self.move_up(vel)
-    #     if key_state[pg.K_e]:
-    #         self.move_down(vel)
-    #     #
-    #     self.move(next_step-next_step)
 
     def move(self, next_step):
         if not self.is_collide(dx=next_step[0]):
