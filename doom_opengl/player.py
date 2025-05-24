@@ -197,6 +197,10 @@ class Player(Camera):
         vel = PLAYER_SPEED * self.app.delta_time
         next_step = glm.vec2()
         #
+        if key_state[KEYS['UP']]:
+            self.move_up(vel)
+        if key_state[KEYS['DOWN']]:
+            self.move_down(vel)
         if key_state[KEYS['FORWARD']]:
             next_step += self.move_forward(vel)
         if key_state[KEYS['BACK']]:
