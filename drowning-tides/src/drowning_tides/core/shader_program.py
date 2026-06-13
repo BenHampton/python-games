@@ -1,5 +1,10 @@
+from pathlib import Path
+
 from pyglm import glm
-from settings import *
+
+from drowning_tides.config import settings as cfg
+
+SHADERS_DIR = Path(__file__).resolve().parent.parent / "shaders"
 
 
 def _mix(a, b, t):
@@ -21,19 +26,19 @@ class ShaderProgram:
         self.set_uniforms_on_init()
 
     def set_uniforms_on_init(self):
-        m_proj = glm.perspective(V_FOV, ASPECT_RATIO, NEAR, FAR)
+        m_proj = glm.perspective(cfg.V_FOV, cfg.ASPECT_RATIO, cfg.NEAR, cfg.FAR)
         self.water['m_proj'].write(m_proj)
         self.boat['m_proj'].write(m_proj)
         self.rain['m_proj'].write(m_proj)
 
         # constant key-light direction
-        self.water['sun_dir'].write(SUN_DIR)
-        self.boat['sun_dir'].write(SUN_DIR)
-        self.sky['sun_dir'].write(SUN_DIR)
+        self.water['sun_dir'].write(cfg.SUN_DIR)
+        self.boat['sun_dir'].write(cfg.SUN_DIR)
+        self.sky['sun_dir'].write(cfg.SUN_DIR)
 
         self.console['u_tex'] = 0
         self.post['u_scene'] = 0
-        self.post['u_texel'] = (1.0 / WIN_RES.x, 1.0 / WIN_RES.y)
+        self.post['u_texel'] = (1.0 / cfg.WIN_RES.x, 1.0 / cfg.WIN_RES.y)
 
     def update(self):
         cam = self.app.camera
@@ -42,14 +47,14 @@ class ShaderProgram:
         s = self.app.weather.storm_intensity
 
         # mood lighting: lerp calm <-> storm presets by storm intensity
-        water_color = _mix(WATER_COLOR, WATER_COLOR_STORM, s)
-        water_deep = _mix(WATER_COLOR_DEEP, WATER_COLOR_DEEP_STORM, s)
-        fog_color = _mix(FOG_COLOR, FOG_COLOR_STORM, s)
-        fog_near = _mix(FOG_NEAR, FOG_NEAR_STORM, s)
-        fog_far = _mix(FOG_FAR, FOG_FAR_STORM, s)
-        sky_top = _mix(SKY_TOP_COLOR, SKY_TOP_COLOR_STORM, s)
-        sky_horizon = _mix(SKY_HORIZON_COLOR, SKY_HORIZON_COLOR_STORM, s)
-        sun_strength = _mix(SUN_STRENGTH, SUN_STRENGTH_STORM, s)
+        water_color = _mix(cfg.WATER_COLOR, cfg.WATER_COLOR_STORM, s)
+        water_deep = _mix(cfg.WATER_COLOR_DEEP, cfg.WATER_COLOR_DEEP_STORM, s)
+        fog_color = _mix(cfg.FOG_COLOR, cfg.FOG_COLOR_STORM, s)
+        fog_near = _mix(cfg.FOG_NEAR, cfg.FOG_NEAR_STORM, s)
+        fog_far = _mix(cfg.FOG_FAR, cfg.FOG_FAR_STORM, s)
+        sky_top = _mix(cfg.SKY_TOP_COLOR, cfg.SKY_TOP_COLOR_STORM, s)
+        sky_horizon = _mix(cfg.SKY_HORIZON_COLOR, cfg.SKY_HORIZON_COLOR_STORM, s)
+        sun_strength = _mix(cfg.SUN_STRENGTH, cfg.SUN_STRENGTH_STORM, s)
 
         # water
         self.water['m_view'].write(cam.m_view)
@@ -87,8 +92,8 @@ class ShaderProgram:
         self.post['time'] = t
 
     def get_program(self, shader_name):
-        with open(f'shaders/{shader_name}.vert') as f:
+        with open(SHADERS_DIR / f'{shader_name}.vert') as f:
             vertex_shader = f.read()
-        with open(f'shaders/{shader_name}.frag') as f:
+        with open(SHADERS_DIR / f'{shader_name}.frag') as f:
             fragment_shader = f.read()
         return self.ctx.program(vertex_shader=vertex_shader, fragment_shader=fragment_shader)

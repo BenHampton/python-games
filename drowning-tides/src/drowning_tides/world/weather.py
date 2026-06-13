@@ -1,7 +1,9 @@
 import math
 import random
+
 from pyglm import glm
-from settings import *
+
+from drowning_tides.config import settings as cfg
 
 
 def _smoothstep(x):
@@ -23,7 +25,7 @@ class Weather:
         self.target = 0.0
         self.peak = 0.0
 
-        self.wind_angle = math.atan2(WIND_START_DIR.y, WIND_START_DIR.x)
+        self.wind_angle = math.atan2(cfg.WIND_START_DIR.y, cfg.WIND_START_DIR.x)
         self.wind_dir = glm.vec2(math.cos(self.wind_angle), math.sin(self.wind_angle))
         self.wind_strength = 0.0
 
@@ -34,14 +36,14 @@ class Weather:
         self.phase = phase
         self.elapsed = 0.0
         if phase == 'calm':
-            self.duration = random.uniform(*WEATHER_CALM_RANGE)
+            self.duration = random.uniform(*cfg.WEATHER_CALM_RANGE)
         elif phase == 'buildup':
-            self.peak = random.uniform(*WEATHER_PEAK_RANGE)
-            self.duration = random.uniform(*WEATHER_BUILDUP_RANGE)
+            self.peak = random.uniform(*cfg.WEATHER_PEAK_RANGE)
+            self.duration = random.uniform(*cfg.WEATHER_BUILDUP_RANGE)
         elif phase == 'hold':
-            self.duration = random.uniform(*WEATHER_HOLD_RANGE)
+            self.duration = random.uniform(*cfg.WEATHER_HOLD_RANGE)
         elif phase == 'ease':
-            self.duration = random.uniform(*WEATHER_EASE_RANGE)
+            self.duration = random.uniform(*cfg.WEATHER_EASE_RANGE)
         elif phase == 'kill':
             self.duration = 0.0
 
@@ -61,7 +63,7 @@ class Weather:
         self.elapsed += dt
 
         if self.phase == 'kill':
-            self.target = max(0.0, self.target - STORM_KILL_RATE * dt)
+            self.target = max(0.0, self.target - cfg.STORM_KILL_RATE * dt)
             if self.target <= 1e-3:
                 self._enter('calm')
         else:
@@ -81,12 +83,12 @@ class Weather:
         self.storm_intensity += (self.target - self.storm_intensity) * (1.0 - math.exp(-4.0 * dt))
 
         # slowly wander the wind direction
-        self.wind_angle += random.uniform(-1.0, 1.0) * WIND_WANDER_RATE * dt
+        self.wind_angle += random.uniform(-1.0, 1.0) * cfg.WIND_WANDER_RATE * dt
         self.wind_dir = glm.vec2(math.cos(self.wind_angle), math.sin(self.wind_angle))
-        self.wind_strength = WIND_MAX_STRENGTH * self.storm_intensity
+        self.wind_strength = cfg.WIND_MAX_STRENGTH * self.storm_intensity
 
     # ----------------------------------------------------------------- derived data
     def current_vector(self):
         """World-space push on the boat from the wind-driven current (xz in a vec3)."""
-        c = CURRENT_PUSH * self.storm_intensity
+        c = cfg.CURRENT_PUSH * self.storm_intensity
         return glm.vec3(self.wind_dir.x * c, 0.0, self.wind_dir.y * c)

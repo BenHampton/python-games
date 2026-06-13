@@ -1,6 +1,7 @@
-import numpy as np
 import moderngl as mgl
-from settings import *
+import numpy as np
+
+from drowning_tides.config import settings as cfg
 
 
 class Rain:
@@ -19,8 +20,8 @@ class Rain:
         base = np.array([0.0, 1.0], dtype='f4')
         self.base_vbo = self.ctx.buffer(base.tobytes())
 
-        box = RAIN_BOX
-        offsets = (np.random.rand(RAIN_COUNT, 3).astype('f4') * 2.0 - 1.0)
+        box = cfg.RAIN_BOX
+        offsets = (np.random.rand(cfg.RAIN_COUNT, 3).astype('f4') * 2.0 - 1.0)
         offsets *= np.array([box.x, box.y, box.z], dtype='f4')
         self.inst_vbo = self.ctx.buffer(offsets.tobytes())
 
@@ -33,21 +34,21 @@ class Rain:
 
         # constant uniforms
         self.program['u_box'] = (box.x, box.y, box.z)
-        self.program['u_fall'] = RAIN_FALL_SPEED
-        self.program['u_streak_len'] = RAIN_STREAK_LEN
-        self.program['u_rain_color'] = (RAIN_COLOR.x, RAIN_COLOR.y, RAIN_COLOR.z)
+        self.program['u_fall'] = cfg.RAIN_FALL_SPEED
+        self.program['u_streak_len'] = cfg.RAIN_STREAK_LEN
+        self.program['u_rain_color'] = (cfg.RAIN_COLOR.x, cfg.RAIN_COLOR.y, cfg.RAIN_COLOR.z)
 
     def render(self):
         weather = self.app.weather
-        alpha = RAIN_MAX_ALPHA * weather.storm_intensity
+        alpha = cfg.RAIN_MAX_ALPHA * weather.storm_intensity
         if alpha < 0.01:
             return
 
         cam = self.app.camera.position
-        wind = weather.wind_dir * (weather.wind_strength * RAIN_WIND_SLANT)
+        wind = weather.wind_dir * (weather.wind_strength * cfg.RAIN_WIND_SLANT)
         self.program['u_cam_center'] = (cam.x, cam.y, cam.z)
         self.program['u_wind_vel'] = (wind.x, wind.y)
         self.program['u_time'] = self.app.time
         self.program['u_alpha'] = alpha
 
-        self.vao.render(mode=mgl.LINES, instances=RAIN_COUNT)
+        self.vao.render(mode=mgl.LINES, instances=cfg.RAIN_COUNT)

@@ -1,7 +1,7 @@
 [project]
-name = "claude-game"
+name = "drowning-tides"
 version = "0.1.0"
-description = "Deep-sea ocean fishing game with a dark maritime impressionism aesthetic"
+description = "Low-poly maritime cosmic-horror fishing game with a dark painterly aesthetic"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -10,3 +10,30 @@ dependencies = [
     "pygame>=2.6.1",
     "pyglm>=2.8.3",
 ]
+
+[project.scripts]
+drowning-tides = "drowning_tides.app:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/drowning_tides"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

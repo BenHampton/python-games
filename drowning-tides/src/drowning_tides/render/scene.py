@@ -1,11 +1,11 @@
-import numpy as np
 import moderngl as mgl
-from settings import *
-from mesh import Mesh
-from sky import Sky
-from water import Water
-from rain import Rain
-from console import Console
+import numpy as np
+
+from drowning_tides.config import settings as cfg
+from drowning_tides.core.mesh import Mesh
+from drowning_tides.render.rain import Rain
+from drowning_tides.render.sky import Sky
+from drowning_tides.render.water import Water
 
 
 class Scene:
@@ -24,7 +24,7 @@ class Scene:
         self.console = app.console
 
         # offscreen target for the post pass
-        size = (int(WIN_RES.x), int(WIN_RES.y))
+        size = (int(cfg.WIN_RES.x), int(cfg.WIN_RES.y))
         self.color_tex = self.ctx.texture(size, 4)
         self.color_tex.filter = (mgl.LINEAR, mgl.LINEAR)
         self.depth_tex = self.ctx.depth_texture(size)
@@ -39,7 +39,7 @@ class Scene:
     def render(self):
         # --- scene into the offscreen buffer ---
         self.fbo.use()
-        self.ctx.clear(BG_COLOR.x, BG_COLOR.y, BG_COLOR.z, 1.0)
+        self.ctx.clear(cfg.BG_COLOR.x, cfg.BG_COLOR.y, cfg.BG_COLOR.z, 1.0)
 
         # sky as background: no depth interaction
         self.ctx.disable(mgl.DEPTH_TEST)

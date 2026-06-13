@@ -1,8 +1,8 @@
-# Deep Sea
+# Drowning Tides
 
 A deep-sea ocean fishing game with low-poly 3D and a dark, painted maritime
-impressionism aesthetic. Built with `pygame + moderngl + PyGLM + numpy`, managed
-with `uv`.
+impressionism aesthetic — cozy maritime scenery with a creeping cosmic-horror mood.
+Built with `pygame + moderngl + PyGLM + numpy`, managed with `uv`.
 
 ## Admin / console commands
 
@@ -21,12 +21,29 @@ While the console is open, boat controls are disabled so typing doesn't steer.
 Requires [`uv`](https://docs.astral.sh/uv/).
 
 ```
-cd claude-game
+cd drowning-tides
 uv run python main.py
 ```
 
+(Or, via the installed entry point, `uv run drowning-tides`.)
+
 `uv` resolves and installs dependencies from `pyproject.toml` automatically on the
 first run.
+
+## Project layout
+
+Source lives under `src/drowning_tides/` as an installable package:
+
+| Package  | Contents                                               |
+| -------- | ------------------------------------------------------ |
+| `config` | `settings.py` — all tuning constants                   |
+| `core`   | GL infrastructure: `mesh`, `shader_program`            |
+| `render` | `scene`, `camera`, `sky`, `water`, `rain`              |
+| `world`  | simulation: `boat`, `waves`, `weather`                 |
+| `ui`     | `console`                                              |
+| `shaders`| GLSL `.vert` / `.frag` pairs                           |
+
+Run the tests with `uv run pytest` and lint with `uv run ruff check`.
 
 ## Controls
 

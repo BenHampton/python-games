@@ -1,9 +1,11 @@
 import math
+
 import numpy as np
-from pyglm import glm
 import pygame as pg
-from settings import *
-from mesh import Mesh
+from pyglm import glm
+
+from drowning_tides.config import settings as cfg
+from drowning_tides.core.mesh import Mesh
 
 
 class Boat:
@@ -18,7 +20,7 @@ class Boat:
         self.program = app.shader_program.boat
 
         # physics state
-        self.position = glm.vec3(BOAT_START_POS)
+        self.position = glm.vec3(cfg.BOAT_START_POS)
         self.yaw = 0.0          # radians, heading about +Y
         self.speed = 0.0        # signed scalar along forward
         self.pitch = 0.0        # set by wave sampling (stub for now)
@@ -72,12 +74,12 @@ class Boat:
         secs = [section_points(*s) for s in stations]
 
         # loft the hull sides + bottom between adjacent stations
-        for a, b in zip(secs[:-1], secs[1:]):
+        for a, b in zip(secs[:-1], secs[1:], strict=True):
             for k in range(4):
                 add_quad(a[k], a[k + 1], b[k + 1], b[k], hull_color)
 
         # flat deck following the gunwale outline (top quads between port/starboard)
-        for a, b in zip(secs[:-1], secs[1:]):
+        for a, b in zip(secs[:-1], secs[1:], strict=True):
             add_quad(a[0], b[0], b[4], a[4], deck_color)
 
         # transom cap (close the stern): fan from keel point of the stern section
@@ -134,25 +136,25 @@ class Boat:
         keys = pg.key.get_pressed()
 
         # throttle
-        if controls and keys[KEYS['THROTTLE_UP']]:
-            self.speed += BOAT_ACCEL * dt
-        if controls and keys[KEYS['THROTTLE_DOWN']]:
-            self.speed -= BOAT_REVERSE_ACCEL * dt
+        if controls and keys[cfg.KEYS['THROTTLE_UP']]:
+            self.speed += cfg.BOAT_ACCEL * dt
+        if controls and keys[cfg.KEYS['THROTTLE_DOWN']]:
+            self.speed -= cfg.BOAT_REVERSE_ACCEL * dt
 
         # water drag (exponential decay toward zero when coasting)
-        self.speed *= math.exp(-WATER_DRAG * dt)
-        self.speed = max(-BOAT_MAX_REVERSE, min(BOAT_MAX_SPEED, self.speed))
+        self.speed *= math.exp(-cfg.WATER_DRAG * dt)
+        self.speed = max(-cfg.BOAT_MAX_REVERSE, min(cfg.BOAT_MAX_SPEED, self.speed))
 
         # steering: authority grows with speed -> wide turns fast, sluggish near stop
         turn = 0.0
-        if controls and keys[KEYS['TURN_LEFT']]:
+        if controls and keys[cfg.KEYS['TURN_LEFT']]:
             turn += 1.0
-        if controls and keys[KEYS['TURN_RIGHT']]:
+        if controls and keys[cfg.KEYS['TURN_RIGHT']]:
             turn -= 1.0
-        authority = min(1.0, abs(self.speed) / (BOAT_MAX_SPEED * TURN_SPEED_FACTOR))
+        authority = min(1.0, abs(self.speed) / (cfg.BOAT_MAX_SPEED * cfg.TURN_SPEED_FACTOR))
         # reverse the helm when backing up, like a real boat
         helm_sign = 1.0 if self.speed >= 0.0 else -1.0
-        self.yaw += turn * BOAT_TURN_RATE * authority * helm_sign * dt
+        self.yaw += turn * cfg.BOAT_TURN_RATE * authority * helm_sign * dt
 
         # integrate helm motion, then add the wind-driven current (storm push)
         self.position += self.forward * (self.speed * dt)
@@ -167,10 +169,10 @@ class Boat:
         target_pitch = -math.asin(max(-1.0, min(1.0, glm.dot(normal, fwd))))
         target_roll = math.asin(max(-1.0, min(1.0, glm.dot(normal, right))))
         # clamp so the boat is rocked but can never flip
-        target_pitch = max(-BOAT_MAX_TILT, min(BOAT_MAX_TILT, target_pitch))
-        target_roll = max(-BOAT_MAX_TILT, min(BOAT_MAX_TILT, target_roll))
+        target_pitch = max(-cfg.BOAT_MAX_TILT, min(cfg.BOAT_MAX_TILT, target_pitch))
+        target_roll = max(-cfg.BOAT_MAX_TILT, min(cfg.BOAT_MAX_TILT, target_roll))
         # ease toward the target tilt for smooth rocking
-        a = 1.0 - math.exp(-BOAT_TILT_EASE * dt) if dt > 0.0 else 1.0
+        a = 1.0 - math.exp(-cfg.BOAT_TILT_EASE * dt) if dt > 0.0 else 1.0
         self.pitch += (target_pitch - self.pitch) * a
         self.roll += (target_roll - self.roll) * a
 
@@ -181,7 +183,7 @@ class Boat:
         m = glm.rotate(m, self.yaw, glm.vec3(0, 1, 0))
         m = glm.rotate(m, self.pitch, glm.vec3(1, 0, 0))
         m = glm.rotate(m, self.roll, glm.vec3(0, 0, 1))
-        m = glm.scale(m, glm.vec3(BOAT_SCALE))
+        m = glm.scale(m, glm.vec3(cfg.BOAT_SCALE))
         self.m_model = m
 
     def render(self):

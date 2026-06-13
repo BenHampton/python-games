@@ -1,6 +1,7 @@
 import math
-from pyglm import glm
+
 import pygame as pg
+from pyglm import glm
 
 # opengl
 MAJOR_VERSION = 3

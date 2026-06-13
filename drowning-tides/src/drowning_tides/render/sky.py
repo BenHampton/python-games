@@ -1,6 +1,6 @@
 import numpy as np
-from settings import *
-from mesh import Mesh
+
+from drowning_tides.core.mesh import Mesh
 
 
 class Sky:

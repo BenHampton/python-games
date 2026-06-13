@@ -1,6 +1,8 @@
 import math
+
 from pyglm import glm
-from settings import *
+
+from drowning_tides.config import settings as cfg
 
 FOLLOW = 'follow'
 FIRST_PERSON = 'first_person'
@@ -16,12 +18,12 @@ class Camera:
         self.mode = mode
         self.up = glm.vec3(0, 1, 0)
 
-        self.m_proj = glm.perspective(V_FOV, ASPECT_RATIO, NEAR, FAR)
+        self.m_proj = glm.perspective(cfg.V_FOV, cfg.ASPECT_RATIO, cfg.NEAR, cfg.FAR)
         self.m_view = glm.mat4(1.0)
 
         boat = app.boat
         # start already positioned behind the boat (no opening lurch)
-        self.position = boat.position - boat.forward * CAM_DISTANCE + self.up * CAM_HEIGHT
+        self.position = boat.position - boat.forward * cfg.CAM_DISTANCE + self.up * cfg.CAM_HEIGHT
         self.update(0.0)
 
     def update(self, dt):
@@ -34,11 +36,11 @@ class Camera:
     def _update_follow(self, dt):
         boat = self.app.boat
         target = boat.position
-        desired = target - boat.forward * CAM_DISTANCE + self.up * CAM_HEIGHT
+        desired = target - boat.forward * cfg.CAM_DISTANCE + self.up * cfg.CAM_HEIGHT
         # frame-rate independent smoothing toward the desired pose
-        alpha = 1.0 - math.exp(-CAM_LERP * dt) if dt > 0.0 else 1.0
+        alpha = 1.0 - math.exp(-cfg.CAM_LERP * dt) if dt > 0.0 else 1.0
         self.position = glm.mix(self.position, desired, alpha)
-        self._look_target = target + glm.vec3(0, CAM_LOOK_HEIGHT, 0)
+        self._look_target = target + glm.vec3(0, cfg.CAM_LOOK_HEIGHT, 0)
 
     def _update_first_person(self, dt):
         # TODO: lock to a deck anchor + mouse-look when the on-deck mode lands

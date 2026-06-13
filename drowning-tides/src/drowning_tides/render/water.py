@@ -1,6 +1,7 @@
 import numpy as np
-from settings import *
-from mesh import Mesh
+
+from drowning_tides.config import settings as cfg
+from drowning_tides.core.mesh import Mesh
 
 
 class Water:
@@ -14,11 +15,11 @@ class Water:
         self.app = app
         self.ctx = app.ctx
         self.program = app.shader_program.water
-        self.cell = (2.0 * WATER_SIZE) / WATER_GRID
+        self.cell = (2.0 * cfg.WATER_SIZE) / cfg.WATER_GRID
         self.mesh = Mesh(self.ctx, self.program, self._build(), '2f', ('in_position',))
 
     def _build(self):
-        n, s = WATER_GRID, WATER_SIZE
+        n, s = cfg.WATER_GRID, cfg.WATER_SIZE
         coords = np.linspace(-s, s, n + 1, dtype='f4')
         gx, gz = np.meshgrid(coords, coords, indexing='ij')          # (n+1, n+1)
 
