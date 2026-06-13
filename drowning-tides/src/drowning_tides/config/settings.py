@@ -30,10 +30,20 @@ NEAR = 0.1
 FAR = 2000.0
 
 # camera (third-person follow)
-CAM_DISTANCE = 14.0     # how far behind the boat
-CAM_HEIGHT = 6.0        # how high above the waterline
+CAM_DISTANCE = 14.0     # orbit distance (3D) from the look pivot
+CAM_HEIGHT = 6.0        # legacy: unused by the orbit cam (kept for reference)
 CAM_LOOK_HEIGHT = 1.5   # look-at point above the boat origin
 CAM_LERP = 4.0          # follow smoothing (higher = snappier), used as 1-exp(-k*dt)
+
+# camera mouse-look orbit (world-space yaw so the angle holds as the boat turns)
+MOUSE_SENSITIVITY = 0.0025          # radians of orbit per pixel of mouse motion
+INVERT_Y = False                    # flip vertical look
+CAM_PITCH_START = math.radians(24.0)
+CAM_PITCH_MIN = math.radians(-5.0)  # don't dip the camera under the sea
+CAM_PITCH_MAX = math.radians(80.0)  # don't flip overhead
+CAM_DISTANCE_MIN = 6.0              # closest scroll-zoom
+CAM_DISTANCE_MAX = 40.0             # farthest scroll-zoom
+CAM_ZOOM_STEP = 2.0                 # distance units per scroll notch
 
 # boat physics
 BOAT_MAX_SPEED = 22.0       # units / second forward

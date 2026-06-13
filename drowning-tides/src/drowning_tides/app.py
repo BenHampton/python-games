@@ -49,17 +49,30 @@ class Game:
         self.camera = Camera(self)
         self.scene = Scene(self)
 
+        # grab the mouse for camera look (released while the console is open)
+        self._set_mouse_capture(True)
+
+    def _set_mouse_capture(self, on):
+        pg.mouse.set_visible(not on)
+        pg.event.set_grab(on)
+        pg.mouse.get_rel()  # drop the accumulated delta so re-capturing doesn't jump
+
     def handle_events(self):
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 self.quit()
-            if event.type == pg.KEYDOWN:
+            elif event.type == pg.KEYDOWN:
                 if event.key == cfg.KEYS['CONSOLE']:
                     self.console.toggle()
+                    self._set_mouse_capture(not self.console.active)
                 elif self.console.active:
                     self.console.handle_key(event)
                 elif event.key == cfg.KEYS['QUIT']:
                     self.quit()
+            elif event.type == pg.MOUSEMOTION and not self.console.active:
+                self.camera.add_look(*event.rel)
+            elif event.type == pg.MOUSEWHEEL and not self.console.active:
+                self.camera.zoom(event.y)
 
     def quit(self):
         pg.quit()

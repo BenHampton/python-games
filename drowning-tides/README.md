@@ -54,12 +54,17 @@ Run the tests with `uv run pytest` and lint with `uv run ruff check`.
 
 ## Controls
 
-| Key       | Action                          |
-| --------- | ------------------------------- |
-| `W` / `S` | Throttle forward / reverse      |
-| `A` / `D` | Steer left / right              |
-| `` ` ``   | Toggle dev console              |
-| `Esc`     | Quit (or close the console)     |
+| Key / Input | Action                                          |
+| ----------- | ----------------------------------------------- |
+| `W` / `S`   | Throttle forward / reverse                      |
+| `A` / `D`   | Steer left / right                              |
+| Mouse       | Orbit the camera around the boat (angle holds)  |
+| Scroll      | Zoom the camera in / out                        |
+| `` ` ``     | Toggle dev console                              |
+| `Esc`       | Quit (or close the console)                     |
+
+The mouse is captured for camera look; it's released automatically while the dev console
+is open, and recaptured when you close it.
 
 ## Weather
 
