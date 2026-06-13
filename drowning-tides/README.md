@@ -9,12 +9,19 @@ Built with `pygame + moderngl + PyGLM + numpy`, managed with `uv`.
 Press `` ` `` (backtick) to toggle the dev console at the bottom of the window. Type
 a command and press `Enter`. Press `` ` `` again or `Esc` to close it.
 
-| Command       | Effect                                                        |
-| ------------- | ------------------------------------------------------------- |
-| `/storm-on`   | Rolls a storm in (random peak intensity), overriding the weather scheduler. |
-| `/storm-kill` | Rapidly clears the current storm back to calm.                |
+| Command            | Effect                                                                      |
+| ------------------ | --------------------------------------------------------------------------- |
+| `/storm-on`        | Rolls a storm in (random peak intensity), overriding the weather scheduler. |
+| `/storm-kill`      | Rapidly clears the current storm back to calm.                              |
+| `/fog-on`          | Rolls a fog bank in (random peak), overriding the fog scheduler.            |
+| `/fog-kill`        | Rapidly clears the current fog bank.                                        |
+| `/time <0..1>`     | Jumps the day cycle to a phase (0 = midnight, 0.25 dawn, 0.5 noon, 0.75 dusk). |
+| `/timescale <x>`   | Multiplies how fast the day advances (e.g. `/timescale 20` to fast-forward). |
 
 While the console is open, boat controls are disabled so typing doesn't steer.
+
+> **Note:** All admin/dev-console commands live in `ui/console.py`'s `commands` table.
+> Whenever that table changes, update this section to match.
 
 ## Running the game
 

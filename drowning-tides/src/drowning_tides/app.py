@@ -4,11 +4,13 @@ import moderngl as mgl
 import pygame as pg
 
 from drowning_tides.config import settings as cfg
+from drowning_tides.core.game_state import GameState
 from drowning_tides.core.shader_program import ShaderProgram
 from drowning_tides.render.camera import Camera
 from drowning_tides.render.scene import Scene
 from drowning_tides.ui.console import Console
 from drowning_tides.world.boat import Boat
+from drowning_tides.world.daycycle import DayCycle
 from drowning_tides.world.waves import WaveField
 from drowning_tides.world.weather import Weather
 
@@ -33,6 +35,10 @@ class Game:
         self.clock = pg.time.Clock()
         self.delta_time = 0.0
         self.time = 0.0
+
+        # control mode (HELM by default; ON_FOOT lands with the mount/unmount phase)
+        self.game_state = GameState()
+        self.daycycle = DayCycle()
 
         # init order: weather/waves -> shaders -> boat -> console -> camera -> scene
         self.weather = Weather()
@@ -61,6 +67,7 @@ class Game:
 
     def update(self):
         self.weather.update(self.delta_time)
+        self.daycycle.update(self.delta_time)
         self.wave_field.recompute(self.weather.wind_dir, self.weather.storm_intensity)
         self.boat.update(self.delta_time)
         self.camera.update(self.delta_time)

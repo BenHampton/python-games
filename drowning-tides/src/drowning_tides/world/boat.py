@@ -131,8 +131,8 @@ class Boat:
         return self.app.wave_field.sample(x, z, self.app.time)
 
     def update(self, dt):
-        # ignore helm input while the console is capturing keystrokes
-        controls = not self.app.console.active
+        # take helm input only while driving and the console isn't capturing keystrokes
+        controls = self.app.game_state.is_helm() and not self.app.console.active
         keys = pg.key.get_pressed()
 
         # throttle

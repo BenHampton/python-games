@@ -121,3 +121,73 @@ CONSOLE_FONT_SIZE = 18
 CONSOLE_BG_COLOR = (10, 14, 18, 200)        # rgba, translucent bar
 CONSOLE_TEXT_COLOR = (210, 220, 225)
 CONSOLE_PROMPT = '> '
+
+# ------------------------------------------------------------------- day / night cycle
+DAY_LENGTH = 180.0          # seconds for a full dawn->day->dusk->night loop (short; tune later)
+DAY_TIMESCALE = 1.0         # time multiplier (console: /timescale)
+DAY_START = 0.30            # starting phase in [0,1) (early morning)
+SUN_ARC_TILT = 0.5          # z-component of the sun's arc plane (visual angle of the arc)
+
+SUN_COLOR = glm.vec3(1.00, 0.85, 0.65)     # warm key light / sun disc
+MOON_COLOR = glm.vec3(0.55, 0.62, 0.78)    # cold pale moonlight / moon disc
+SUN_DISC_SIZE = 0.020       # angular size of the sun disc (1 - cos cutoff; bigger = larger)
+MOON_DISC_SIZE = 0.012
+STAR_DENSITY = 120.0        # star grid scale (higher = more, smaller stars)
+STAR_BRIGHTNESS = 0.9
+
+# time-of-day palette keyframes (ascending 't' in [0,1); interpolated, wraps 0.75 -> 0.00)
+DAY_KEYFRAMES = [
+    {  # deep night — eerie dark
+        't': 0.00,
+        'sky_top': glm.vec3(0.010, 0.020, 0.040),
+        'sky_horizon': glm.vec3(0.040, 0.060, 0.100),
+        'water_color': glm.vec3(0.020, 0.040, 0.060),
+        'water_color_deep': glm.vec3(0.005, 0.020, 0.030),
+        'fog_color': glm.vec3(0.050, 0.070, 0.100),
+        'fog_near': 40.0, 'fog_far': 420.0,
+        'sun_strength': 0.18,
+    },
+    {  # dawn
+        't': 0.25,
+        'sky_top': glm.vec3(0.060, 0.090, 0.160),
+        'sky_horizon': glm.vec3(0.420, 0.300, 0.280),
+        'water_color': glm.vec3(0.070, 0.100, 0.130),
+        'water_color_deep': glm.vec3(0.020, 0.050, 0.070),
+        'fog_color': glm.vec3(0.300, 0.270, 0.300),
+        'fog_near': 55.0, 'fog_far': 620.0,
+        'sun_strength': 0.60,
+    },
+    {  # day
+        't': 0.50,
+        'sky_top': glm.vec3(0.100, 0.200, 0.340),
+        'sky_horizon': glm.vec3(0.450, 0.550, 0.600),
+        'water_color': glm.vec3(0.060, 0.130, 0.170),
+        'water_color_deep': glm.vec3(0.020, 0.060, 0.090),
+        'fog_color': glm.vec3(0.300, 0.400, 0.460),
+        'fog_near': 70.0, 'fog_far': 800.0,
+        'sun_strength': 1.00,
+    },
+    {  # dusk
+        't': 0.75,
+        'sky_top': glm.vec3(0.060, 0.070, 0.130),
+        'sky_horizon': glm.vec3(0.500, 0.260, 0.220),
+        'water_color': glm.vec3(0.060, 0.090, 0.120),
+        'water_color_deep': glm.vec3(0.020, 0.040, 0.060),
+        'fog_color': glm.vec3(0.280, 0.200, 0.220),
+        'fog_near': 55.0, 'fog_far': 600.0,
+        'sun_strength': 0.50,
+    },
+]
+
+# ------------------------------------------------------------------- fog banks
+# Independent of storms; can roll in day or night. Scheduler mirrors the storm one.
+FOG_CALM_RANGE = (25.0, 70.0)       # clear gap between fog banks
+FOG_BUILDUP_RANGE = (8.0, 18.0)     # roll-in
+FOG_HOLD_RANGE = (10.0, 30.0)       # sustained
+FOG_EASE_RANGE = (8.0, 20.0)        # fade-out
+FOG_PEAK_RANGE = (0.4, 1.0)         # random peak fog_intensity
+FOG_MAX_DURATION = 60.0             # cap on a bank's active time (TODO: more realistic later)
+FOG_KILL_RATE = 0.5                 # fast decay used by /fog-kill (/sec)
+FOG_DENSE_NEAR = 12.0               # fog_near at full fog_intensity
+FOG_DENSE_FAR = 140.0               # fog_far at full fog_intensity
+FOG_TINT = glm.vec3(0.16, 0.18, 0.20)   # fog-bank colour blended into the fog

@@ -24,10 +24,15 @@ class Console:
         self.message = ''
         self._dirty = True
 
-        # command table (extend here for /storm 0.7, thunder, etc.)
+        # command table; handlers take a list of string args.
+        # NOTE: when this table changes, update the README "Admin / console commands" section.
         self.commands = {
             '/storm-on': self._cmd_storm_on,
             '/storm-kill': self._cmd_storm_kill,
+            '/fog-on': self._cmd_fog_on,
+            '/fog-kill': self._cmd_fog_kill,
+            '/time': self._cmd_time,
+            '/timescale': self._cmd_timescale,
         }
 
         self.W = int(cfg.WIN_RES.x)
@@ -75,20 +80,43 @@ class Console:
         self.text = ''
         if not cmd:
             return
-        name = cmd.split()[0]
+        parts = cmd.split()
+        name, args = parts[0], parts[1:]
         fn = self.commands.get(name)
         if fn:
-            fn()
+            fn(args)
         else:
             self.message = f'unknown command: {name}'
 
-    def _cmd_storm_on(self):
+    def _cmd_storm_on(self, args):
         self.app.weather.start_storm()
         self.message = 'storm rolling in...'
 
-    def _cmd_storm_kill(self):
+    def _cmd_storm_kill(self, args):
         self.app.weather.kill_storm()
         self.message = 'storm clearing...'
+
+    def _cmd_fog_on(self, args):
+        self.app.weather.start_fog()
+        self.message = 'fog rolling in...'
+
+    def _cmd_fog_kill(self, args):
+        self.app.weather.kill_fog()
+        self.message = 'fog clearing...'
+
+    def _cmd_time(self, args):
+        try:
+            self.app.daycycle.set_time(float(args[0]))
+            self.message = f'time set to {self.app.daycycle.t:.2f}'
+        except (IndexError, ValueError):
+            self.message = 'usage: /time <0..1>'
+
+    def _cmd_timescale(self, args):
+        try:
+            self.app.daycycle.timescale = float(args[0])
+            self.message = f'timescale = {self.app.daycycle.timescale:g}'
+        except (IndexError, ValueError):
+            self.message = 'usage: /timescale <multiplier>'
 
     # --------------------------------------------------------------------- render
     def _rebuild_texture(self):

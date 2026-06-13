@@ -19,6 +19,7 @@ class ShaderProgram:
         self.sky = self.get_program('sky')
         self.water = self.get_program('water')
         self.boat = self.get_program('boat')
+        self.model = self.get_program('model')
         self.rain = self.get_program('rain')
         self.console = self.get_program('console')
         self.post = self.get_program('post')
@@ -29,12 +30,10 @@ class ShaderProgram:
         m_proj = glm.perspective(cfg.V_FOV, cfg.ASPECT_RATIO, cfg.NEAR, cfg.FAR)
         self.water['m_proj'].write(m_proj)
         self.boat['m_proj'].write(m_proj)
+        self.model['m_proj'].write(m_proj)
         self.rain['m_proj'].write(m_proj)
 
-        # constant key-light direction
-        self.water['sun_dir'].write(cfg.SUN_DIR)
-        self.boat['sun_dir'].write(cfg.SUN_DIR)
-        self.sky['sun_dir'].write(cfg.SUN_DIR)
+        # light direction + sun/moon discs now move with the day cycle (written per frame)
 
         self.console['u_tex'] = 0
         self.post['u_scene'] = 0
@@ -45,20 +44,33 @@ class ShaderProgram:
         cam_pos = cam.position
         t = self.app.time
         s = self.app.weather.storm_intensity
+        fog_i = self.app.weather.fog_intensity
+        day = self.app.daycycle
+        pal = day.palette
 
-        # mood lighting: lerp calm <-> storm presets by storm intensity
-        water_color = _mix(cfg.WATER_COLOR, cfg.WATER_COLOR_STORM, s)
-        water_deep = _mix(cfg.WATER_COLOR_DEEP, cfg.WATER_COLOR_DEEP_STORM, s)
-        fog_color = _mix(cfg.FOG_COLOR, cfg.FOG_COLOR_STORM, s)
-        fog_near = _mix(cfg.FOG_NEAR, cfg.FOG_NEAR_STORM, s)
-        fog_far = _mix(cfg.FOG_FAR, cfg.FOG_FAR_STORM, s)
-        sky_top = _mix(cfg.SKY_TOP_COLOR, cfg.SKY_TOP_COLOR_STORM, s)
-        sky_horizon = _mix(cfg.SKY_HORIZON_COLOR, cfg.SKY_HORIZON_COLOR_STORM, s)
-        sun_strength = _mix(cfg.SUN_STRENGTH, cfg.SUN_STRENGTH_STORM, s)
+        # base mood comes from the time of day; storms lerp it toward the storm presets...
+        water_color = _mix(pal.water_color, cfg.WATER_COLOR_STORM, s)
+        water_deep = _mix(pal.water_color_deep, cfg.WATER_COLOR_DEEP_STORM, s)
+        sky_top = _mix(pal.sky_top, cfg.SKY_TOP_COLOR_STORM, s)
+        sky_horizon = _mix(pal.sky_horizon, cfg.SKY_HORIZON_COLOR_STORM, s)
+        sun_strength = _mix(pal.sun_strength, cfg.SUN_STRENGTH_STORM, s)
+
+        # ...then fog banks (independent of storms) close the horizon further
+        fog_color = _mix(pal.fog_color, cfg.FOG_COLOR_STORM, s)
+        fog_color = _mix(fog_color, cfg.FOG_TINT, fog_i)
+        fog_near = _mix(_mix(pal.fog_near, cfg.FOG_NEAR_STORM, s), cfg.FOG_DENSE_NEAR, fog_i)
+        fog_far = _mix(_mix(pal.fog_far, cfg.FOG_FAR_STORM, s), cfg.FOG_DENSE_FAR, fog_i)
+
+        light_dir = day.light_dir
+        light_color = day.light_color
+        star_alpha = day.star_alpha * (1.0 - 0.7 * s) * (1.0 - 0.6 * fog_i)
 
         # water
         self.water['m_view'].write(cam.m_view)
         self.water['cam_pos'].write(cam_pos)
+        self.water['light_dir'].write(light_dir)
+        self.water['light_color'].write(light_color)
+        self.water['sky_color'].write(sky_horizon)
         self.water['water_color'].write(water_color)
         self.water['water_color_deep'].write(water_deep)
         self.water['fog_color'].write(fog_color)
@@ -69,13 +81,15 @@ class ShaderProgram:
         self.water['time'] = t
         self.app.wave_field.write_uniforms(self.water, t)
 
-        # boat
-        self.boat['m_view'].write(cam.m_view)
-        self.boat['cam_pos'].write(cam_pos)
-        self.boat['fog_color'].write(fog_color)
-        self.boat['fog_near'] = fog_near
-        self.boat['fog_far'] = fog_far
-        self.boat['sun_strength'] = sun_strength
+        # boat + loaded models share the moving key light and mood fog
+        for prog in (self.boat, self.model):
+            prog['m_view'].write(cam.m_view)
+            prog['cam_pos'].write(cam_pos)
+            prog['sun_dir'].write(light_dir)
+            prog['fog_color'].write(fog_color)
+            prog['fog_near'] = fog_near
+            prog['fog_far'] = fog_far
+            prog['sun_strength'] = sun_strength
 
         # sky
         inv_vp = glm.inverse(cam.m_proj * cam.m_view)
@@ -84,6 +98,11 @@ class ShaderProgram:
         self.sky['horizon_color'].write(sky_horizon)
         self.sky['top_color'].write(sky_top)
         self.sky['fog_color'].write(fog_color)
+        self.sky['sun_dir'].write(day.sun_dir)
+        self.sky['moon_dir'].write(day.moon_dir)
+        self.sky['sun_color'].write(cfg.SUN_COLOR)
+        self.sky['moon_color'].write(cfg.MOON_COLOR)
+        self.sky['star_alpha'] = star_alpha
 
         # rain
         self.rain['m_view'].write(cam.m_view)
