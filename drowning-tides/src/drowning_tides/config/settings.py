@@ -9,7 +9,8 @@ MINOR_VERSION = 3
 DEPTH_SIZE = 24
 
 # resolution
-WIN_RES = glm.vec2(1280, 720)
+FULLSCREEN = True               # use the native desktop resolution; False uses WIN_RES below
+WIN_RES = glm.vec2(1280, 720)   # windowed size / fallback (overwritten at startup in fullscreen)
 
 # control keys
 KEYS = {
@@ -55,6 +56,16 @@ BOAT_TURN_RATE = 1.4        # max yaw rad/sec at full turn authority
 # turn authority scales with how fast we're moving: sluggish near stop, wide at speed
 TURN_SPEED_FACTOR = 0.65    # fraction of max speed at which turning is fully authoritative
 BOAT_START_POS = glm.vec3(0.0, 0.0, 0.0)
+BOAT_COLLISION_RADIUS = 2.0     # boat's collision disc radius (world units)
+BOAT_COLLISION_BLEED = 0.3      # speed retained after hitting land
+
+# islands (low-poly glTF model, placed + scaled in the world; radius is the collision disc)
+ISLAND_MODEL = 'island.glb'
+ISLANDS = [
+    {'pos': (70.0, 0.0, -55.0), 'scale': 20.0, 'yaw': 0.4, 'radius': 20.0},
+    {'pos': (-90.0, 0.0, -30.0), 'scale': 14.0, 'yaw': 1.7, 'radius': 14.0},
+    {'pos': (20.0, 0.0, 130.0), 'scale': 28.0, 'yaw': 2.9, 'radius': 28.0},
+]
 
 # water (grid follows the camera in the vertex shader so a high-res patch always
 # surrounds the view; world-space phase keeps the waves from swimming)

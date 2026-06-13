@@ -48,6 +48,8 @@ class Scene:
         # world geometry
         self.ctx.enable(mgl.DEPTH_TEST)
         self.water.render()
+        for island in self.app.islands:
+            island.render()
         self.boat.render()
 
         # rain: depth-tested against the scene but no depth writes, alpha blended

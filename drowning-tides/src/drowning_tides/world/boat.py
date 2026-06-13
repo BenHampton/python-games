@@ -6,6 +6,7 @@ from pyglm import glm
 
 from drowning_tides.config import settings as cfg
 from drowning_tides.core.mesh import Mesh
+from drowning_tides.world.island import resolve_collision
 
 
 class Boat:
@@ -159,6 +160,14 @@ class Boat:
         # integrate helm motion, then add the wind-driven current (storm push)
         self.position += self.forward * (self.speed * dt)
         self.position += self.app.weather.current_vector() * dt
+
+        # keep off the land: push out of island discs and bleed speed on impact
+        x, z, hit = resolve_collision(
+            self.position.x, self.position.z, self.app.islands, cfg.BOAT_COLLISION_RADIUS
+        )
+        self.position.x, self.position.z = x, z
+        if hit:
+            self.speed *= cfg.BOAT_COLLISION_BLEED
 
         # ride the waves: sit at the surface height and tilt toward its slope
         h, normal = self.sample_surface(self.position.x, self.position.z)

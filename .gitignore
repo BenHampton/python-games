@@ -133,3 +133,7 @@ dmypy.json
 */*.iws
 */*.iml
 */*.ipr
+
+
+# assets
+/drowning-tides/src/drowning_tides/assets/image_references/

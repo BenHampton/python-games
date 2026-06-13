@@ -2,6 +2,7 @@ import sys
 
 import moderngl as mgl
 import pygame as pg
+from pyglm import glm
 
 from drowning_tides.config import settings as cfg
 from drowning_tides.core.game_state import GameState
@@ -11,6 +12,7 @@ from drowning_tides.render.scene import Scene
 from drowning_tides.ui.console import Console
 from drowning_tides.world.boat import Boat
 from drowning_tides.world.daycycle import DayCycle
+from drowning_tides.world.island import load_islands
 from drowning_tides.world.waves import WaveField
 from drowning_tides.world.weather import Weather
 
@@ -23,10 +25,19 @@ class Game:
         pg.display.gl_set_attribute(pg.GL_CONTEXT_PROFILE_MASK, pg.GL_CONTEXT_PROFILE_CORE)
         pg.display.gl_set_attribute(pg.GL_DEPTH_SIZE, cfg.DEPTH_SIZE)
 
-        pg.display.set_mode(
-            (int(cfg.WIN_RES.x), int(cfg.WIN_RES.y)), flags=pg.OPENGL | pg.DOUBLEBUF
-        )
+        flags = pg.OPENGL | pg.DOUBLEBUF
+        if cfg.FULLSCREEN:
+            info = pg.display.Info()
+            win_w, win_h = info.current_w, info.current_h
+            flags |= pg.FULLSCREEN
+        else:
+            win_w, win_h = int(cfg.WIN_RES.x), int(cfg.WIN_RES.y)
+        pg.display.set_mode((win_w, win_h), flags=flags)
         pg.display.set_caption('Drowning Tides')
+
+        # lock the configured resolution + aspect to the actual window (fullscreen native res)
+        cfg.WIN_RES = glm.vec2(win_w, win_h)
+        cfg.ASPECT_RATIO = win_w / win_h
 
         self.ctx = mgl.create_context()
         self.ctx.enable(flags=mgl.DEPTH_TEST | mgl.BLEND)
@@ -44,6 +55,7 @@ class Game:
         self.weather = Weather()
         self.wave_field = WaveField()
         self.shader_program = ShaderProgram(self)
+        self.islands = load_islands(self)
         self.boat = Boat(self)
         self.console = Console(self)
         self.camera = Camera(self)
