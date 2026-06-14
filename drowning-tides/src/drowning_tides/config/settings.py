@@ -18,8 +18,9 @@ KEYS = {
     'THROTTLE_DOWN': pg.K_s,
     'TURN_LEFT': pg.K_a,
     'TURN_RIGHT': pg.K_d,
-    'QUIT': pg.K_ESCAPE,
+    'QUIT': pg.K_ESCAPE,        # opens the pause menu (Resume to unpause)
     'CONSOLE': pg.K_BACKQUOTE,
+    'FULLSCREEN': pg.K_F11,     # toggle fullscreen / windowed
 }
 
 # camera (projection)

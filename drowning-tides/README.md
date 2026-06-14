@@ -63,7 +63,9 @@ Run the tests with `uv run pytest` and lint with `uv run ruff check`.
 | Mouse       | Orbit the camera around the boat (angle holds)  |
 | Scroll      | Zoom the camera in / out                        |
 | `` ` ``     | Toggle dev console                              |
-| `Esc`       | Quit (or close the console)                     |
+| `Esc`       | Pause / resume (opens the pause menu)           |
+| `F11`       | Toggle fullscreen / windowed                    |
+| Click       | Resume / Quit buttons (while paused)            |
 
 The mouse is captured for camera look; it's released automatically while the dev console
 is open, and recaptured when you close it.

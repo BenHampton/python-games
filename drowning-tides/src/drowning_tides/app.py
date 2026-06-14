@@ -10,6 +10,7 @@ from drowning_tides.core.shader_program import ShaderProgram
 from drowning_tides.render.camera import Camera
 from drowning_tides.render.scene import Scene
 from drowning_tides.ui.console import Console
+from drowning_tides.ui.pause_menu import PauseMenu
 from drowning_tides.world.boat import Boat
 from drowning_tides.world.daycycle import DayCycle
 from drowning_tides.world.island import IslandField
@@ -61,14 +62,26 @@ class Game:
         self.console = Console(self)
         self.camera = Camera(self)
         self.scene = Scene(self)
+        self.paused = False
+        self.pause_menu = PauseMenu(self)
 
-        # grab the mouse for camera look (released while the console is open)
+        # grab the mouse for camera look (released while the console/pause menu is open)
         self._set_mouse_capture(True)
 
     def _set_mouse_capture(self, on):
         pg.mouse.set_visible(not on)
         pg.event.set_grab(on)
         pg.mouse.get_rel()  # drop the accumulated delta so re-capturing doesn't jump
+
+    def _refresh_capture(self):
+        # mouse is captured for camera look only while actively playing
+        self._set_mouse_capture(not self.console.active and not self.paused)
+
+    def toggle_pause(self):
+        self.paused = not self.paused
+        self.pause_menu.active = self.paused
+        self.pause_menu._dirty = True
+        self._refresh_capture()
 
     def handle_events(self):
         for event in pg.event.get():
@@ -77,14 +90,24 @@ class Game:
             elif event.type == pg.KEYDOWN:
                 if event.key == cfg.KEYS['CONSOLE']:
                     self.console.toggle()
-                    self._set_mouse_capture(not self.console.active)
+                    self._refresh_capture()
                 elif self.console.active:
                     self.console.handle_key(event)
+                    self._refresh_capture()
+                elif event.key == cfg.KEYS['FULLSCREEN']:
+                    pg.display.toggle_fullscreen()
                 elif event.key == cfg.KEYS['QUIT']:
-                    self.quit()
-            elif event.type == pg.MOUSEMOTION and not self.console.active:
+                    self.toggle_pause()
+            elif event.type == pg.MOUSEBUTTONDOWN and self.paused:
+                if event.button == 1:
+                    action = self.pause_menu.click(pg.mouse.get_pos())
+                    if action == 'resume':
+                        self.toggle_pause()
+                    elif action == 'quit':
+                        self.quit()
+            elif event.type == pg.MOUSEMOTION and not self.console.active and not self.paused:
                 self.camera.add_look(*event.rel)
-            elif event.type == pg.MOUSEWHEEL and not self.console.active:
+            elif event.type == pg.MOUSEWHEEL and not self.console.active and not self.paused:
                 self.camera.zoom(event.y)
 
     def quit(self):
@@ -101,15 +124,18 @@ class Game:
 
     def render(self):
         self.scene.render()
+        self.pause_menu.render()
         pg.display.flip()
 
     def run(self):
         while True:
             self.handle_events()
-            self.update()
+            if not self.paused:
+                self.update()
+                self.time += self.delta_time
             self.render()
-            self.delta_time = self.clock.tick(60) / 1000.0
-            self.time += self.delta_time
+            # clamp dt so a long pause (or hitch) doesn't jump the sim on resume
+            self.delta_time = min(self.clock.tick(60) / 1000.0, 0.1)
 
 
 def main():

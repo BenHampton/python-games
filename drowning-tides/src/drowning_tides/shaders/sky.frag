@@ -96,12 +96,13 @@ void main() {
     col = mix(col, moon_color, smoothstep(0.988, 0.9964, md) * moon_up);
 
     // --- drifting clouds on the sky dome ---
-    if (dir.y > 0.01) {
-        vec2 cuv = dir.xz / max(dir.y, 0.10) * u_cloud_scale + u_wind_dir * u_time * u_cloud_speed;
+    if (dir.y > 0.02) {
+        // soft dome projection (offset denominator) so clouds don't smear at the horizon
+        vec2 cuv = dir.xz / (dir.y + 0.35) * u_cloud_scale + u_wind_dir * u_time * u_cloud_speed;
         float d = fbm(cuv);
         float thresh = mix(0.78, 0.18, u_cloud_cover);
         float cov = smoothstep(thresh, thresh + 0.22, d);
-        cov *= smoothstep(0.02, 0.18, dir.y);          // fade into the horizon haze
+        cov *= smoothstep(0.05, 0.22, dir.y);          // clouds reach down toward the horizon haze
         float lit = smoothstep(thresh, thresh + 0.45, d);
         vec3 cloud = mix(u_cloud_dark, u_cloud_lit, lit);
         cloud += sun_color * 0.10 * pow(sd, 4.0) * sun_up;   // rim toward the sun
