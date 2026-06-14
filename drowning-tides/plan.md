@@ -122,6 +122,7 @@ Tweak aberration strength/falloff and creature behavior.
 - [x] Phase 0 — Foundations (glTF loader, model shader, ASSETS_DIR, control-state machine)
 - [x] Phase 0.5 — World environment (day/night cycle, sky bodies, water light, fog banks)
 - [x] Phase 1 — Islands / terrain + boat collision
+  - [x] Reference-driven unique islands (beach/rock/grass, trees, spires, dock), map-1 archipelago layout, frustum+distance culling & LOD, shallows tint
 - [ ] Phase 2 — First-person on-foot + E mount/unmount
 - [ ] Phase 3 — Town: buildings, NPCs, NPC boats, dialogue stub
 - [ ] Phase 4 — Fishing mechanics (no economy)

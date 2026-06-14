@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 from pyglm import glm
 
 from drowning_tides.config import settings as cfg
@@ -37,7 +38,24 @@ class ShaderProgram:
 
         self.console['u_tex'] = 0
         self.post['u_scene'] = 0
+        self.post['u_bloom'] = 1
+        self.post['u_bloom_intensity'] = cfg.BLOOM_INTENSITY
         self.post['u_texel'] = (1.0 / cfg.WIN_RES.x, 1.0 / cfg.WIN_RES.y)
+
+    def set_shallows(self, islands):
+        """Upload the (static) island disc data the water shader uses for shallows tint."""
+        cap = cfg.MAX_SHALLOW_ISLANDS
+        n = min(len(islands), cap)
+        xz = np.zeros((cap, 2), dtype='f4')
+        rad = np.zeros(cap, dtype='f4')
+        for i in range(n):
+            xz[i] = (islands[i].position.x, islands[i].position.z)
+            rad[i] = islands[i].radius
+        self.water['u_island_count'] = n
+        self.water['u_island_xz'].write(xz.tobytes())
+        self.water['u_island_radius'].write(rad.tobytes())
+        self.water['u_shallow_color'].write(cfg.SHALLOW_COLOR)
+        self.water['u_shallow_band'] = cfg.SHALLOW_BAND
 
     def update(self):
         cam = self.app.camera
@@ -71,6 +89,7 @@ class ShaderProgram:
         self.water['light_dir'].write(light_dir)
         self.water['light_color'].write(light_color)
         self.water['sky_color'].write(sky_horizon)
+        self.water['sky_top'].write(sky_top)
         self.water['water_color'].write(water_color)
         self.water['water_color_deep'].write(water_deep)
         self.water['fog_color'].write(fog_color)

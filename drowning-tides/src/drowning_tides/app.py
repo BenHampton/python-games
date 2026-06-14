@@ -12,7 +12,7 @@ from drowning_tides.render.scene import Scene
 from drowning_tides.ui.console import Console
 from drowning_tides.world.boat import Boat
 from drowning_tides.world.daycycle import DayCycle
-from drowning_tides.world.island import load_islands
+from drowning_tides.world.island import IslandField
 from drowning_tides.world.waves import WaveField
 from drowning_tides.world.weather import Weather
 
@@ -55,7 +55,8 @@ class Game:
         self.weather = Weather()
         self.wave_field = WaveField()
         self.shader_program = ShaderProgram(self)
-        self.islands = load_islands(self)
+        self.islands = IslandField(self)
+        self.shader_program.set_shallows(self.islands.islands)
         self.boat = Boat(self)
         self.console = Console(self)
         self.camera = Camera(self)

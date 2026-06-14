@@ -10,12 +10,20 @@ uniform vec3 water_color_deep;
 uniform vec3 fog_color;
 uniform vec3 light_dir;     // key light (sun by day, moon by night), points toward the light
 uniform vec3 light_color;   // warm by day, cold by night
-uniform vec3 sky_color;     // current horizon colour, reflected by the surface
+uniform vec3 sky_color;     // current horizon colour
+uniform vec3 sky_top;       // current zenith colour (for the reflection gradient)
 uniform float sun_strength;
 uniform float fog_near;
 uniform float fog_far;
 uniform float storm_intensity;
 uniform float time;
+
+// turquoise shallow-water shelf near islands
+uniform int u_island_count;
+uniform vec2 u_island_xz[24];
+uniform float u_island_radius[24];
+uniform vec3 u_shallow_color;
+uniform float u_shallow_band;
 
 float hash(vec2 p) {
     p = fract(p * vec2(123.34, 345.45));
@@ -63,9 +71,22 @@ void main() {
     foam *= 0.5 + 0.5 * n;   // break it up so it reads as flecks, not a sheet
     col = mix(col, vec3(0.55, 0.60, 0.62), clamp(foam, 0.0, 1.0) * 0.3);
 
-    // fresnel: grazing angles reflect the sky/horizon colour so water shifts with the day
-    float fres = pow(1.0 - max(dot(N, V), 0.0), 4.0);
-    col = mix(col, sky_color, fres * 0.5);
+    // fake sky reflection: sample the sky gradient along the reflected view ray (Fresnel)
+    vec3 R = reflect(-V, N);
+    vec3 refl = mix(sky_color, sky_top, clamp(R.y, 0.0, 1.0));
+    float fres = 0.04 + 0.96 * pow(1.0 - max(dot(N, V), 0.0), 4.0);
+    col = mix(col, refl, fres * 0.6);
+
+    // turquoise shallows + a frothy foam ring where the sea meets each island
+    float shallow = 0.0;
+    float foam_edge = 0.0;
+    for (int i = 0; i < u_island_count; ++i) {
+        float dd = distance(v_world.xz, u_island_xz[i]) - u_island_radius[i];
+        shallow = max(shallow, 1.0 - clamp(dd / u_shallow_band, 0.0, 1.0));
+        foam_edge = max(foam_edge, 1.0 - clamp(abs(dd - 1.5) / 4.5, 0.0, 1.0));
+    }
+    col = mix(col, u_shallow_color, shallow * 0.55);
+    col = mix(col, vec3(0.72, 0.78, 0.80), foam_edge * (0.5 + 0.5 * n) * 0.5);
 
     // distance fog
     float fogf = clamp((dist - fog_near) / (fog_far - fog_near), 0.0, 1.0);

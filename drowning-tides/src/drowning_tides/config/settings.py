@@ -55,17 +55,42 @@ WATER_DRAG = 0.9            # linear drag coefficient (per second, exp decay)
 BOAT_TURN_RATE = 1.4        # max yaw rad/sec at full turn authority
 # turn authority scales with how fast we're moving: sluggish near stop, wide at speed
 TURN_SPEED_FACTOR = 0.65    # fraction of max speed at which turning is fully authoritative
-BOAT_START_POS = glm.vec3(0.0, 0.0, 0.0)
+BOAT_START_POS = glm.vec3(0.0, 0.0, -280.0)  # south of Freeport, bow (+Z) pointed at it
 BOAT_COLLISION_RADIUS = 2.0     # boat's collision disc radius (world units)
 BOAT_COLLISION_BLEED = 0.3      # speed retained after hitting land
 
-# islands (low-poly glTF model, placed + scaled in the world; radius is the collision disc)
-ISLAND_MODEL = 'island.glb'
-ISLANDS = [
-    {'pos': (70.0, 0.0, -55.0), 'scale': 20.0, 'yaw': 0.4, 'radius': 20.0},
-    {'pos': (-90.0, 0.0, -30.0), 'scale': 14.0, 'yaw': 1.7, 'radius': 14.0},
-    {'pos': (20.0, 0.0, 130.0), 'scale': 28.0, 'yaw': 2.9, 'radius': 28.0},
+# ------------------------------------------------------------------------ islands / map
+# Designed archipelago after map-1 ("Sea of Treasures"). Each island is a unique seeded
+# model baked by tools/gen_islands.py -> assets/models/islands/<name>_lod{0,1}.glb.
+# kind: 'home' (gets a dock), 'island', or 'reef' (low, mostly submerged rocks).
+# 'radius' is the collision disc (world units, ~= scale).
+# (name, x, z, scale, yaw, seed, kind); collision radius == scale
+_ISLAND_TABLE = [
+    ('freeport',          0.0, -180.0, 26.0, 0.3, 11, 'home'),
+    ('haven',          -260.0, -320.0, 20.0, 1.1, 22, 'island'),
+    ('fogholms',       -120.0, -560.0, 16.0, 2.4, 33, 'island'),
+    ('cedar_march',     380.0, -430.0, 40.0, 0.7, 44, 'island'),
+    ('west_watch',      640.0, -360.0, 18.0, 2.0, 55, 'island'),
+    ('wrights_isle',    520.0, -150.0, 12.0, 1.5, 66, 'island'),
+    ('chain_town',      210.0,  140.0, 24.0, 2.8, 77, 'island'),
+    ('ring_of_thorns', -180.0,  220.0, 30.0, 0.2, 88, 'island'),
+    ('hags_rock',       430.0,  260.0, 10.0, 1.9, 99, 'island'),
+    ('kingbreaker_reef',760.0,   60.0, 34.0, 0.0, 13, 'reef'),
+    ('dagons_isle',     380.0,  620.0, 22.0, 1.3, 17, 'island'),
 ]
+ISLANDS = [
+    {'name': n, 'pos': (x, 0.0, z), 'scale': s, 'yaw': y, 'seed': sd, 'kind': k, 'radius': s}
+    for (n, x, z, s, y, sd, k) in _ISLAND_TABLE
+]
+
+# culling / level-of-detail (industry-standard: frustum + distance cull, distance LOD swap)
+ISLAND_LOD_DIST = 260.0         # within this camera distance use LOD0 (full), else LOD1
+ISLAND_CULL_DIST = 1100.0       # beyond this (minus radius) the island is skipped entirely
+
+# turquoise shallow-water shelf tinted into the sea near land (water.frag)
+SHALLOW_COLOR = glm.vec3(0.10, 0.36, 0.40)   # muted teal lagoon shelf
+SHALLOW_BAND = 26.0             # how far past an island's radius the shelf reaches
+MAX_SHALLOW_ISLANDS = 24        # uniform array cap in the water shader
 
 # water (grid follows the camera in the vertex shader so a high-res patch always
 # surrounds the view; world-space phase keeps the waves from swimming)
@@ -136,6 +161,12 @@ BOAT_SCALE = 1.4
 BOAT_MAX_TILT = glm.radians(12.0)   # never-flip clamp on wave-induced pitch/roll
 BOAT_TILT_EASE = 4.0                # how fast tilt tracks the wave slope (/sec)
 
+# authored boat model: drop a CC0 glTF (e.g. Kenney Watercraft Kit) into assets/models/
+# and set BOAT_MODEL to its filename to replace the procedural hull. Tune scale/yaw to fit.
+BOAT_MODEL = 'boat-fishing.glb'     # Kenney Watercraft Kit (CC0); None -> procedural hull
+BOAT_MODEL_SCALE = 1.8             # world scale applied to the authored model
+BOAT_MODEL_YAW = 0.0               # radians; offset if the model's bow isn't +Z
+
 # ------------------------------------------------------------------------ console
 CONSOLE_HEIGHT = 30             # px height of the input bar
 CONSOLE_FONT_SIZE = 18
@@ -143,60 +174,66 @@ CONSOLE_BG_COLOR = (10, 14, 18, 200)        # rgba, translucent bar
 CONSOLE_TEXT_COLOR = (210, 220, 225)
 CONSOLE_PROMPT = '> '
 
+# ------------------------------------------------------------------- post / bloom
+BLOOM_THRESHOLD = 0.6       # luminance above which pixels bloom
+BLOOM_INTENSITY = 0.85      # how much bloom is added back in the composite
+BLOOM_PASSES = 3            # separable blur ping-pong iterations (wider, softer glow)
+
 # ------------------------------------------------------------------- day / night cycle
 DAY_LENGTH = 180.0          # seconds for a full dawn->day->dusk->night loop (short; tune later)
 DAY_TIMESCALE = 1.0         # time multiplier (console: /timescale)
 DAY_START = 0.30            # starting phase in [0,1) (early morning)
 SUN_ARC_TILT = 0.5          # z-component of the sun's arc plane (visual angle of the arc)
 
-SUN_COLOR = glm.vec3(1.00, 0.85, 0.65)     # warm key light / sun disc
+SUN_COLOR = glm.vec3(0.98, 0.86, 0.70)     # softened, overcast warm key light / sun disc
 MOON_COLOR = glm.vec3(0.55, 0.62, 0.78)    # cold pale moonlight / moon disc
 SUN_DISC_SIZE = 0.020       # angular size of the sun disc (1 - cos cutoff; bigger = larger)
 MOON_DISC_SIZE = 0.012
 STAR_DENSITY = 120.0        # star grid scale (higher = more, smaller stars)
 STAR_BRIGHTNESS = 0.9
 
-# time-of-day palette keyframes (ascending 't' in [0,1); interpolated, wraps 0.75 -> 0.00)
+# time-of-day palette keyframes (ascending 't' in [0,1); interpolated, wraps 0.75 -> 0.00).
+# Tuned toward DREDGE's muted, overcast, fog-closed maritime mood (low saturation, low contrast).
 DAY_KEYFRAMES = [
-    {  # deep night — eerie dark
+    {  # deep night — eerie dark, misty
         't': 0.00,
-        'sky_top': glm.vec3(0.010, 0.020, 0.040),
-        'sky_horizon': glm.vec3(0.040, 0.060, 0.100),
-        'water_color': glm.vec3(0.020, 0.040, 0.060),
-        'water_color_deep': glm.vec3(0.005, 0.020, 0.030),
-        'fog_color': glm.vec3(0.050, 0.070, 0.100),
-        'fog_near': 40.0, 'fog_far': 420.0,
-        'sun_strength': 0.18,
+        'sky_top': glm.vec3(0.012, 0.020, 0.035),
+        'sky_horizon': glm.vec3(0.045, 0.065, 0.090),
+        'water_color': glm.vec3(0.020, 0.038, 0.052),
+        'water_color_deep': glm.vec3(0.006, 0.018, 0.026),
+        'fog_color': glm.vec3(0.045, 0.065, 0.085),
+        'fog_near': 38.0, 'fog_far': 360.0,
+        'sun_strength': 0.16,
     },
-    {  # dawn
+    {  # dawn — pale, misty, desaturated
         't': 0.25,
-        'sky_top': glm.vec3(0.060, 0.090, 0.160),
-        'sky_horizon': glm.vec3(0.420, 0.300, 0.280),
-        'water_color': glm.vec3(0.070, 0.100, 0.130),
-        'water_color_deep': glm.vec3(0.020, 0.050, 0.070),
-        'fog_color': glm.vec3(0.300, 0.270, 0.300),
-        'fog_near': 55.0, 'fog_far': 620.0,
-        'sun_strength': 0.60,
-    },
-    {  # day
-        't': 0.50,
-        'sky_top': glm.vec3(0.100, 0.200, 0.340),
-        'sky_horizon': glm.vec3(0.450, 0.550, 0.600),
-        'water_color': glm.vec3(0.060, 0.130, 0.170),
-        'water_color_deep': glm.vec3(0.020, 0.060, 0.090),
-        'fog_color': glm.vec3(0.300, 0.400, 0.460),
-        'fog_near': 70.0, 'fog_far': 800.0,
-        'sun_strength': 1.00,
-    },
-    {  # dusk
-        't': 0.75,
-        'sky_top': glm.vec3(0.060, 0.070, 0.130),
-        'sky_horizon': glm.vec3(0.500, 0.260, 0.220),
-        'water_color': glm.vec3(0.060, 0.090, 0.120),
-        'water_color_deep': glm.vec3(0.020, 0.040, 0.060),
-        'fog_color': glm.vec3(0.280, 0.200, 0.220),
-        'fog_near': 55.0, 'fog_far': 600.0,
+        'sky_top': glm.vec3(0.075, 0.095, 0.140),
+        'sky_horizon': glm.vec3(0.340, 0.300, 0.300),
+        'water_color': glm.vec3(0.060, 0.090, 0.110),
+        'water_color_deep': glm.vec3(0.018, 0.045, 0.060),
+        'fog_color': glm.vec3(0.300, 0.300, 0.320),
+        'fog_near': 45.0, 'fog_far': 480.0,
         'sun_strength': 0.50,
+    },
+    {  # day — overcast, muted grey-teal (not bright tropical blue)
+        't': 0.50,
+        'sky_top': glm.vec3(0.130, 0.190, 0.260),
+        'sky_horizon': glm.vec3(0.420, 0.470, 0.490),
+        'water_color': glm.vec3(0.055, 0.110, 0.140),
+        'water_color_deep': glm.vec3(0.018, 0.050, 0.070),
+        'fog_color': glm.vec3(0.340, 0.400, 0.430),
+        'fog_near': 60.0, 'fog_far': 620.0,
+        'sun_strength': 0.82,
+    },
+    {  # dusk — muted, melancholic orange-grey
+        't': 0.75,
+        'sky_top': glm.vec3(0.060, 0.070, 0.115),
+        'sky_horizon': glm.vec3(0.420, 0.260, 0.240),
+        'water_color': glm.vec3(0.055, 0.085, 0.110),
+        'water_color_deep': glm.vec3(0.018, 0.038, 0.055),
+        'fog_color': glm.vec3(0.270, 0.210, 0.220),
+        'fog_near': 48.0, 'fog_far': 520.0,
+        'sun_strength': 0.45,
     },
 ]
 

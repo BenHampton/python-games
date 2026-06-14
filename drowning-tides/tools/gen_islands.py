@@ -1,0 +1,308 @@
+"""Generate the archipelago: one unique seeded low-poly island per cfg.ISLANDS placement,
+each at two LOD levels, into src/drowning_tides/assets/models/islands/<name>_lod{0,1}.glb.
+
+Each island is built procedurally from a noisy surface-of-revolution terrain (sand/rock/grass
+bands), with scattered trees/palms, offshore rock spires, and a dock on the home island. LOD1
+is the terrain silhouette only (coarser, no props). Colours are baked as glTF vertex colours
+(COLOR_0), read by core/model.py. Re-run after tweaking cfg.ISLANDS or the tuning below:
+
+    uv run python tools/gen_islands.py
+"""
+import math
+import random
+import sys
+from pathlib import Path
+
+import numpy as np
+import pygltflib as g
+from pygltflib import (
+    GLTF2,
+    Accessor,
+    Attributes,
+    Buffer,
+    BufferView,
+    Mesh,
+    Node,
+    Primitive,
+    Scene,
+)
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+
+from drowning_tides.config import settings as cfg  # noqa: E402
+
+OUT_DIR = Path(__file__).resolve().parent.parent / "src/drowning_tides/assets/models/islands"
+
+# muted, cold maritime palette tuned toward DREDGE (low saturation, mossy/slate)
+SAND = (0.54, 0.49, 0.38)
+ROCK = (0.25, 0.27, 0.28)
+ROCK_DARK = (0.16, 0.18, 0.20)
+GRASS = (0.18, 0.28, 0.17)
+TRUNK = (0.18, 0.13, 0.09)
+FOLIAGE = (0.14, 0.26, 0.16)
+PALM = (0.18, 0.33, 0.20)
+DOCK = (0.30, 0.21, 0.13)
+REEF = (0.19, 0.23, 0.24)
+
+
+def _norm(a, b, c):
+    a, b, c = np.array(a), np.array(b), np.array(c)
+    n = np.cross(b - a, c - a)
+    ln = np.linalg.norm(n)
+    return (n / ln) if ln > 1e-9 else np.array([0.0, 1.0, 0.0])
+
+
+class Acc:
+    """Accumulates flat-shaded, per-vertex-coloured triangles."""
+
+    def __init__(self):
+        self.pos, self.nrm, self.col = [], [], []
+
+    def tri(self, a, b, c, color, normal=None):
+        n = _norm(a, b, c) if normal is None else np.asarray(normal, dtype=float)
+        for p in (a, b, c):
+            self.pos.append(p)
+            self.nrm.append(n)
+            self.col.append(color)
+
+    def quad(self, a, b, c, d, color, normal=None):
+        self.tri(a, b, c, color, normal)
+        self.tri(a, c, d, color, normal)
+
+    def arrays(self):
+        pos = np.array(self.pos, dtype="float32")
+        nrm = np.array(self.nrm, dtype="float32")
+        col = np.array(self.col, dtype="float32")
+        rgba = np.ones((len(col), 4), dtype="float32")
+        rgba[:, :3] = col
+        return pos, nrm, rgba
+
+
+# ------------------------------------------------------------------------- terrain
+def _profile(kind):
+    if kind == "reef":
+        return [(1.00, -0.05), (0.90, -0.01), (0.60, 0.03), (0.30, 0.06)], 0.10
+    return [(1.00, -0.06), (0.97, 0.02), (0.85, 0.10), (0.66, 0.24),
+            (0.45, 0.42), (0.24, 0.62)], 0.80
+
+
+def _terrain(acc, rng, kind, seg, lod):
+    prof, apex_h = _profile(kind)
+    peak = (rng.uniform(0.75, 1.15) if kind != "reef" else 1.0)
+    aspect = (rng.uniform(0.72, 1.3), rng.uniform(0.72, 1.3))
+    phases = [rng.uniform(0, math.tau) for _ in range(3)]
+
+    def rmul(ang):
+        return (1.0 + 0.18 * math.sin(ang * 3 + phases[0])
+                + 0.12 * math.sin(ang * 5 + phases[1])
+                + 0.07 * math.sin(ang * 7 + phases[2]))
+
+    rings = []
+    for rf, h in prof:
+        verts = []
+        for s in range(seg):
+            ang = math.tau * s / seg
+            r = rf * rmul(ang)
+            verts.append((r * math.cos(ang) * aspect[0],
+                          h * peak,
+                          r * math.sin(ang) * aspect[1]))
+        rings.append(verts)
+    apex = (rng.uniform(-0.04, 0.04), apex_h * peak, rng.uniform(-0.04, 0.04))
+    peak_y = apex[1]
+
+    def color(cy, ny):
+        if kind == "reef":
+            return SAND if cy < 0.0 else REEF
+        if ny < 0.5:
+            return ROCK if cy > 0.18 else ROCK_DARK
+        if cy < 0.06:
+            return SAND
+        if cy < 0.32 * peak_y:
+            return ROCK
+        return GRASS
+
+    for k in range(len(rings) - 1):
+        lo, hi = rings[k], rings[k + 1]
+        for s in range(seg):
+            s2 = (s + 1) % seg
+            for a, b, c in ((lo[s], lo[s2], hi[s2]), (lo[s], hi[s2], hi[s])):
+                n = _norm(a, b, c)
+                if n[1] < 0:
+                    n = -n
+                cy = (a[1] + b[1] + c[1]) / 3.0
+                acc.tri(a, b, c, color(cy, n[1]), n)
+    top = rings[-1]
+    for s in range(seg):
+        a, b, c = top[s], top[(s + 1) % seg], apex
+        n = _norm(a, b, c)
+        if n[1] < 0:
+            n = -n
+        acc.tri(a, b, c, color((a[1] + b[1] + c[1]) / 3.0, n[1]), n)
+
+    # base cap (underside, faces down)
+    base = rings[0]
+    center = (0.0, prof[0][1] * peak - 0.04, 0.0)
+    for s in range(seg):
+        acc.tri(base[(s + 1) % seg], base[s], center, ROCK_DARK, (0, -1, 0))
+
+    # grassy candidates for trees (gentle, high ground), and the shore radius for the dock
+    grass = [v for ring in rings for v in ring if v[1] > 0.30 * peak_y]
+    return grass, peak_y
+
+
+# ----------------------------------------------------------------------- props
+def _cone(acc, cx, cz, base_y, radius, height, color, seg=6):
+    apex = (cx, base_y + height, cz)
+    ring = [(cx + radius * math.cos(math.tau * i / seg),
+             base_y, cz + radius * math.sin(math.tau * i / seg)) for i in range(seg)]
+    for i in range(seg):
+        a, b = ring[i], ring[(i + 1) % seg]
+        n = _norm(a, b, apex)
+        if (n[0] * (a[0] - cx) + n[2] * (a[2] - cz)) < 0:
+            n = -n
+        acc.tri(a, b, apex, color, n)
+
+
+def _box(acc, cx, cz, y0, y1, half, color):
+    xs = (cx - half, cx + half)
+    zs = (cz - half, cz + half)
+    corners = {
+        (0, 0): (xs[0], zs[0]), (1, 0): (xs[1], zs[0]),
+        (1, 1): (xs[1], zs[1]), (0, 1): (xs[0], zs[1]),
+    }
+    loop = [(0, 0), (1, 0), (1, 1), (0, 1)]
+    for i in range(4):
+        x0, z0 = corners[loop[i]]
+        x1, z1 = corners[loop[(i + 1) % 4]]
+        acc.quad((x0, y0, z0), (x1, y0, z1), (x1, y1, z1), (x0, y1, z0), color)
+    acc.quad((xs[0], y1, zs[0]), (xs[1], y1, zs[0]),
+             (xs[1], y1, zs[1]), (xs[0], y1, zs[1]), color, (0, 1, 0))
+
+
+def _tree(acc, x, z, y, rng, palmy):
+    if palmy:
+        h = rng.uniform(0.10, 0.16)
+        _box(acc, x, z, y, y + h, 0.008, TRUNK)
+        for i in range(5):
+            ang = math.tau * i / 5 + rng.uniform(-0.2, 0.2)
+            tip = (x + 0.09 * math.cos(ang), y + h - 0.02, z + 0.09 * math.sin(ang))
+            side = (x + 0.02 * math.cos(ang + 1.2), y + h, z + 0.02 * math.sin(ang + 1.2))
+            acc.tri((x, y + h, z), side, tip, PALM)
+    else:
+        h = rng.uniform(0.05, 0.09)
+        _box(acc, x, z, y, y + h, 0.012, TRUNK)
+        _cone(acc, x, z, y + h * 0.7, rng.uniform(0.05, 0.08), rng.uniform(0.09, 0.14), FOLIAGE)
+
+
+def _add_trees(acc, rng, grass, palmy):
+    if not grass:
+        return
+    count = rng.randint(8, 18)
+    for _ in range(count):
+        v = rng.choice(grass)
+        _tree(acc, v[0] + rng.uniform(-0.03, 0.03), v[2] + rng.uniform(-0.03, 0.03),
+              v[1] - 0.01, rng, palmy)
+
+
+def _add_rocks(acc, rng, grass):
+    """Scatter small rock lumps over the island for ground detail."""
+    if not grass:
+        return
+    for _ in range(rng.randint(8, 16)):
+        v = rng.choice(grass)
+        r = rng.uniform(0.03, 0.07)
+        _cone(acc, v[0] + rng.uniform(-0.05, 0.05), v[2] + rng.uniform(-0.05, 0.05),
+              v[1] - 0.02, r, rng.uniform(0.02, 0.05), ROCK if rng.random() < 0.5 else ROCK_DARK)
+
+
+def _add_spires(acc, rng):
+    for _ in range(rng.randint(3, 6)):
+        ang = rng.uniform(0, math.tau)
+        r = rng.uniform(0.95, 1.35)
+        cx, cz = r * math.cos(ang), r * math.sin(ang)
+        h = rng.uniform(0.18, 0.5)
+        half = rng.uniform(0.05, 0.1)
+        # tapered 4-sided pillar
+        top = h
+        for i in range(4):
+            a0 = math.tau * i / 4
+            a1 = math.tau * (i + 1) / 4
+            b0 = (cx + half * math.cos(a0), -0.05, cz + half * math.sin(a0))
+            b1 = (cx + half * math.cos(a1), -0.05, cz + half * math.sin(a1))
+            t0 = (cx + half * 0.3 * math.cos(a0), top, cz + half * 0.3 * math.sin(a0))
+            t1 = (cx + half * 0.3 * math.cos(a1), top, cz + half * 0.3 * math.sin(a1))
+            acc.quad(b0, b1, t1, t0, ROCK)
+
+
+def _add_dock(acc, rng):
+    ang = rng.uniform(0, math.tau)
+    dx, dz = math.cos(ang), math.sin(ang)
+    px, pz = -dz, dx          # perpendicular (plank width axis)
+    w = 0.07
+    r0, r1, y = 0.6, 1.25, 0.04
+    a = (dx * r0 + px * w, y, dz * r0 + pz * w)
+    b = (dx * r0 - px * w, y, dz * r0 - pz * w)
+    c = (dx * r1 - px * w, y, dz * r1 - pz * w)
+    d = (dx * r1 + px * w, y, dz * r1 + pz * w)
+    acc.quad(a, b, c, d, DOCK, (0, 1, 0))
+    # stilts
+    for (sx, sz) in ((dx * r1, dz * r1), (dx * (r0 + r1) * 0.5, dz * (r0 + r1) * 0.5)):
+        _box(acc, sx, sz, -0.08, y, 0.02, DOCK)
+
+
+# ------------------------------------------------------------------------- glb io
+def gen_island(spec, lod):
+    rng = random.Random(spec["seed"] * 100 + lod)
+    acc = Acc()
+    seg = 20 if lod == 0 else 10
+    grass, _ = _terrain(acc, rng, spec["kind"], seg, lod)
+    if lod == 0 and spec["kind"] != "reef":
+        _add_trees(acc, rng, grass, palmy=(spec["seed"] % 2 == 0))
+        _add_rocks(acc, rng, grass)
+        _add_spires(acc, rng)
+        if spec["kind"] == "home":
+            _add_dock(acc, rng)
+    return acc.arrays()
+
+
+def write_glb(path, pos, nrm, rgba):
+    blob = pos.tobytes() + nrm.tobytes() + rgba.tobytes()
+    off_n = pos.nbytes
+    off_c = pos.nbytes + nrm.nbytes
+    gltf = GLTF2(
+        scenes=[Scene(nodes=[0])],
+        nodes=[Node(mesh=0)],
+        meshes=[Mesh(primitives=[
+            Primitive(attributes=Attributes(POSITION=0, NORMAL=1, COLOR_0=2))
+        ])],
+        accessors=[
+            Accessor(bufferView=0, componentType=g.FLOAT, count=len(pos), type="VEC3",
+                     min=pos.min(0).tolist(), max=pos.max(0).tolist()),
+            Accessor(bufferView=1, componentType=g.FLOAT, count=len(nrm), type="VEC3"),
+            Accessor(bufferView=2, componentType=g.FLOAT, count=len(rgba), type="VEC4"),
+        ],
+        bufferViews=[
+            BufferView(buffer=0, byteOffset=0, byteLength=pos.nbytes, target=g.ARRAY_BUFFER),
+            BufferView(buffer=0, byteOffset=off_n, byteLength=nrm.nbytes, target=g.ARRAY_BUFFER),
+            BufferView(buffer=0, byteOffset=off_c, byteLength=rgba.nbytes, target=g.ARRAY_BUFFER),
+        ],
+        buffers=[Buffer(byteLength=len(blob))],
+    )
+    gltf.set_binary_blob(blob)
+    gltf.save_binary(str(path))
+
+
+def main():
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    for spec in cfg.ISLANDS:
+        tris = {}
+        for lod in (0, 1):
+            pos, nrm, rgba = gen_island(spec, lod)
+            write_glb(OUT_DIR / f"{spec['name']}_lod{lod}.glb", pos, nrm, rgba)
+            tris[lod] = len(pos) // 3
+        print(f"{spec['name']:16s} {spec['kind']:7s} lod0={tris[0]:4d} lod1={tris[1]:4d} tris")
+    print(f"wrote {len(cfg.ISLANDS) * 2} glbs to {OUT_DIR}")
+
+
+if __name__ == "__main__":
+    main()

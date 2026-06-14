@@ -93,3 +93,30 @@ def test_raises_when_no_primitives(tmp_path):
     gltf.save_binary(str(p))
     with pytest.raises(ValueError):
         load_vertices(p)
+
+
+def test_load_reads_vertex_colors(tmp_path):
+    pos = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]], dtype="float32")
+    col = np.array([[0.1, 0.2, 0.3, 1.0]] * 3, dtype="float32")
+    blob = pos.tobytes() + col.tobytes()
+    gltf = GLTF2(
+        scenes=[Scene(nodes=[0])],
+        nodes=[Node(mesh=0)],
+        meshes=[Mesh(primitives=[Primitive(attributes=Attributes(POSITION=0, COLOR_0=1))])],
+        accessors=[
+            Accessor(bufferView=0, componentType=g.FLOAT, count=3, type="VEC3"),
+            Accessor(bufferView=1, componentType=g.FLOAT, count=3, type="VEC4"),
+        ],
+        bufferViews=[
+            BufferView(buffer=0, byteOffset=0, byteLength=pos.nbytes, target=g.ARRAY_BUFFER),
+            BufferView(buffer=0, byteOffset=pos.nbytes, byteLength=col.nbytes,
+                       target=g.ARRAY_BUFFER),
+        ],
+        buffers=[Buffer(byteLength=len(blob))],
+    )
+    gltf.set_binary_blob(blob)
+    p = tmp_path / "colored.glb"
+    gltf.save_binary(str(p))
+
+    rows = load_vertices(p).reshape(-1, 9)
+    assert np.allclose(rows[:, 6:9], [0.1, 0.2, 0.3])  # COLOR_0 rgb, alpha dropped

@@ -6,19 +6,34 @@ from pyglm import glm
 
 from drowning_tides.config import settings as cfg
 from drowning_tides.core.mesh import Mesh
-from drowning_tides.world.island import resolve_collision
+from drowning_tides.core.model import MODELS_DIR, load_vertices
 
 
 class Boat:
-    """Procedural low-poly fishing boat + physics-driven movement.
+    """Low-poly fishing boat + physics-driven movement.
 
-    Local space: bow points toward +Z. Heading yaw=0 => forward = +Z.
+    Local space: bow points toward +Z. Heading yaw=0 => forward = +Z. Geometry is an
+    authored glTF model when cfg.BOAT_MODEL points at one (e.g. a CC0 boat dropped into
+    assets/models/), otherwise the built-in procedural hull.
     """
 
     def __init__(self, app):
         self.app = app
         self.ctx = app.ctx
-        self.program = app.shader_program.boat
+
+        # geometry: authored model if configured + present, else the procedural hull
+        model_path = (MODELS_DIR / cfg.BOAT_MODEL) if cfg.BOAT_MODEL else None
+        self.using_model = bool(model_path and model_path.exists())
+        if self.using_model:
+            self.program = app.shader_program.model
+            verts = load_vertices(model_path)
+            self.draw_scale = cfg.BOAT_MODEL_SCALE
+            self.yaw_offset = cfg.BOAT_MODEL_YAW
+        else:
+            self.program = app.shader_program.boat
+            verts = self._build()
+            self.draw_scale = cfg.BOAT_SCALE
+            self.yaw_offset = 0.0
 
         # physics state
         self.position = glm.vec3(cfg.BOAT_START_POS)
@@ -28,7 +43,7 @@ class Boat:
         self.roll = 0.0
 
         self.mesh = Mesh(
-            self.ctx, self.program, self._build(), '3f 3f 3f',
+            self.ctx, self.program, verts, '3f 3f 3f',
             ('in_position', 'in_normal', 'in_color'),
         )
         self.m_model = glm.mat4(1.0)
@@ -162,8 +177,8 @@ class Boat:
         self.position += self.app.weather.current_vector() * dt
 
         # keep off the land: push out of island discs and bleed speed on impact
-        x, z, hit = resolve_collision(
-            self.position.x, self.position.z, self.app.islands, cfg.BOAT_COLLISION_RADIUS
+        x, z, hit = self.app.islands.collide(
+            self.position.x, self.position.z, cfg.BOAT_COLLISION_RADIUS
         )
         self.position.x, self.position.z = x, z
         if hit:
@@ -189,10 +204,10 @@ class Boat:
 
     def _update_model(self):
         m = glm.translate(glm.mat4(1.0), self.position)
-        m = glm.rotate(m, self.yaw, glm.vec3(0, 1, 0))
+        m = glm.rotate(m, self.yaw + self.yaw_offset, glm.vec3(0, 1, 0))
         m = glm.rotate(m, self.pitch, glm.vec3(1, 0, 0))
         m = glm.rotate(m, self.roll, glm.vec3(0, 0, 1))
-        m = glm.scale(m, glm.vec3(cfg.BOAT_SCALE))
+        m = glm.scale(m, glm.vec3(self.draw_scale))
         self.m_model = m
 
     def render(self):
