@@ -65,3 +65,33 @@ def test_kill_fog_decays_intensity():
     assert w.fog.phase == 'kill'
     w.update(0.2)
     assert w.fog.target < 0.9
+
+
+def test_cloud_cover_stays_in_unit_range():
+    random.seed(3)
+    w = Weather()
+    for _ in range(3000):
+        w.update(0.016)
+        assert 0.0 <= w.cloud_cover <= 1.0
+
+
+def test_lightning_stays_in_range_and_calm_is_dark():
+    w = Weather()
+    w.storm_intensity = 0.0
+    for _ in range(500):
+        w._update_lightning(0.016)
+    assert w.lightning < 1e-3           # no spontaneous flashes out of a storm
+
+    random.seed(8)
+    w.start_storm()
+    for _ in range(3000):
+        w.update(0.016)
+        assert 0.0 <= w.lightning <= 1.0
+
+
+def test_strike_flashes_and_spawns_bolt():
+    w = Weather()
+    w.strike()
+    assert w.bolt_active
+    w._update_lightning(0.0)            # first flicker spike fires immediately
+    assert w.lightning > 0.5

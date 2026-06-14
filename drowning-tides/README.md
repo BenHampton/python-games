@@ -17,6 +17,8 @@ a command and press `Enter`. Press `` ` `` again or `Esc` to close it.
 | `/fog-kill`        | Rapidly clears the current fog bank.                                        |
 | `/time <0..1>`     | Jumps the day cycle to a phase (0 = midnight, 0.25 dawn, 0.5 noon, 0.75 dusk). |
 | `/timescale <x>`   | Multiplies how fast the day advances (e.g. `/timescale 20` to fast-forward). |
+| `/lightning`       | Triggers a lightning flash + bolt now.                                      |
+| `/clouds <0..1>`   | Sets the cloud-cover target (0 clear … 1 full overcast).                    |
 
 While the console is open, boat controls are disabled so typing doesn't steer.
 

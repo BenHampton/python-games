@@ -258,3 +258,34 @@ FOG_KILL_RATE = 0.5                 # fast decay used by /fog-kill (/sec)
 FOG_DENSE_NEAR = 12.0               # fog_near at full fog_intensity
 FOG_DENSE_FAR = 140.0               # fog_far at full fog_intensity
 FOG_TINT = glm.vec3(0.16, 0.18, 0.20)   # fog-bank colour blended into the fog
+
+# ------------------------------------------------------------------- clouds
+# Cover (0..1) wanders through the day; storms force overcast (see weather.py).
+CLOUD_WANDER_RANGE = (20.0, 60.0)       # seconds before a new random cover target
+CLOUD_EASE = 0.15                       # how fast cover transitions (/sec)
+CLOUD_SCALE = 1.6                       # cloud noise frequency on the sky dome
+CLOUD_SPEED = 0.02                      # drift speed (scrolls with the wind)
+CLOUD_COLOR = glm.vec3(0.80, 0.82, 0.85)        # sunlit cloud top
+CLOUD_COLOR_DARK = glm.vec3(0.30, 0.33, 0.37)   # shadowed cloud base
+CLOUD_COLOR_STORM = glm.vec3(0.12, 0.13, 0.15)  # heavy overcast in storms
+
+# ------------------------------------------------------------------- aurora (cosmic night)
+AURORA_STRENGTH = 0.25                  # subtle/creeping
+AURORA_COLOR_A = glm.vec3(0.10, 0.45, 0.35)     # eerie teal
+AURORA_COLOR_B = glm.vec3(0.30, 0.15, 0.45)     # violet
+
+# ------------------------------------------------------------------- lightning
+LIGHTNING_RATE = 0.35                   # flash attempts/sec at full storm (scaled by intensity)
+LIGHTNING_DECAY = 9.0                   # flash brightness decay (/sec)
+LIGHTNING_COLOR = glm.vec3(0.70, 0.78, 1.0)     # cool flash tint added across the scene
+LIGHTNING_SCENE_BOOST = 0.9             # how much a flash brightens sea/land/boat
+BOLT_CHANCE = 0.4                       # fraction of flashes that draw a visible bolt
+BOLT_LIFETIME = 0.18                    # seconds a bolt stays visible
+BOLT_SEGMENTS = 14                      # jagged segments per bolt
+BOLT_COLOR = glm.vec3(0.85, 0.90, 1.0)
+
+# ------------------------------------------------------------------- god rays (post)
+GODRAY_SAMPLES = 48
+GODRAY_DECAY = 0.96
+GODRAY_WEIGHT = 0.5
+GODRAY_INTENSITY = 0.6

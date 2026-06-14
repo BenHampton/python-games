@@ -5,6 +5,7 @@ out vec4 frag_color;
 
 uniform sampler2D u_scene;
 uniform sampler2D u_bloom;
+uniform sampler2D u_godrays;
 uniform vec2 u_texel;     // 1.0 / resolution
 uniform float time;
 uniform float u_bloom_intensity;
@@ -31,8 +32,9 @@ void main() {
     col += texture(u_scene, v_uv + jit.yx * vec2(1.0, -1.0)).rgb * 0.15;
     col += texture(u_scene, v_uv + jit.yx * vec2(-1.0, 1.0)).rgb * 0.15;
 
-    // additive bloom (soft glow on bright water/sky/glints)
+    // additive bloom (soft glow on bright water/sky/glints) + god-ray shafts
     col += texture(u_bloom, v_uv).rgb * u_bloom_intensity;
+    col += texture(u_godrays, v_uv).rgb;
 
     // filmic tonemap brings the HDR scene + bloom back into range
     col = aces(col);

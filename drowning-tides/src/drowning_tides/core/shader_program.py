@@ -24,6 +24,8 @@ class ShaderProgram:
         self.rain = self.get_program('rain')
         self.console = self.get_program('console')
         self.post = self.get_program('post')
+        self.godrays = self.get_program('godrays')
+        self.bolt = self.get_program('bolt')
 
         self.set_uniforms_on_init()
 
@@ -33,14 +35,33 @@ class ShaderProgram:
         self.boat['m_proj'].write(m_proj)
         self.model['m_proj'].write(m_proj)
         self.rain['m_proj'].write(m_proj)
+        self.bolt['m_proj'].write(m_proj)
+        self.bolt['u_color'].write(cfg.BOLT_COLOR)
+
+        # god rays (constants; sun_uv + intensity written per frame by the scene)
+        self.godrays['u_scene'] = 0
+        self.godrays['u_samples'] = cfg.GODRAY_SAMPLES
+        self.godrays['u_decay'] = cfg.GODRAY_DECAY
+        self.godrays['u_weight'] = cfg.GODRAY_WEIGHT
 
         # light direction + sun/moon discs now move with the day cycle (written per frame)
 
         self.console['u_tex'] = 0
         self.post['u_scene'] = 0
         self.post['u_bloom'] = 1
+        self.post['u_godrays'] = 2
         self.post['u_bloom_intensity'] = cfg.BLOOM_INTENSITY
         self.post['u_texel'] = (1.0 / cfg.WIN_RES.x, 1.0 / cfg.WIN_RES.y)
+
+        # sky: cloud + aurora constants (set once)
+        self.sky['u_cloud_scale'] = cfg.CLOUD_SCALE
+        self.sky['u_cloud_speed'] = cfg.CLOUD_SPEED
+        self.sky['u_cloud_lit'].write(cfg.CLOUD_COLOR)
+        self.sky['u_cloud_dark'].write(cfg.CLOUD_COLOR_DARK)
+        self.sky['u_cloud_storm'].write(cfg.CLOUD_COLOR_STORM)
+        self.sky['u_aurora'] = cfg.AURORA_STRENGTH
+        self.sky['u_aurora_a'].write(cfg.AURORA_COLOR_A)
+        self.sky['u_aurora_b'].write(cfg.AURORA_COLOR_B)
 
         # water: scene/depth samplers + realism constants (set once)
         self.water['u_scene'] = 0
@@ -74,8 +95,10 @@ class ShaderProgram:
         cam = self.app.camera
         cam_pos = cam.position
         t = self.app.time
-        s = self.app.weather.storm_intensity
-        fog_i = self.app.weather.fog_intensity
+        weather = self.app.weather
+        s = weather.storm_intensity
+        fog_i = weather.fog_intensity
+        lightning = weather.lightning
         day = self.app.daycycle
         pal = day.palette
 
@@ -110,6 +133,7 @@ class ShaderProgram:
         self.water['fog_far'] = fog_far
         self.water['sun_strength'] = sun_strength
         self.water['storm_intensity'] = s
+        self.water['u_lightning'] = lightning
         self.water['time'] = t
         self.app.wave_field.write_uniforms(self.water, t)
 
@@ -122,6 +146,7 @@ class ShaderProgram:
             prog['fog_near'] = fog_near
             prog['fog_far'] = fog_far
             prog['sun_strength'] = sun_strength
+            prog['u_lightning'] = lightning
 
         # sky
         inv_vp = glm.inverse(cam.m_proj * cam.m_view)
@@ -135,6 +160,11 @@ class ShaderProgram:
         self.sky['sun_color'].write(cfg.SUN_COLOR)
         self.sky['moon_color'].write(cfg.MOON_COLOR)
         self.sky['star_alpha'] = star_alpha
+        self.sky['u_time'] = t
+        self.sky['u_wind_dir'] = (weather.wind_dir.x, weather.wind_dir.y)
+        self.sky['u_cloud_cover'] = weather.cloud_cover
+        self.sky['u_storm'] = s
+        self.sky['u_lightning'] = lightning
 
         # rain
         self.rain['m_view'].write(cam.m_view)

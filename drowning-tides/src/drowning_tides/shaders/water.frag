@@ -18,6 +18,7 @@ uniform float fog_near;
 uniform float fog_far;
 uniform float storm_intensity;
 uniform float time;
+uniform float u_lightning;   // whole-scene lightning flash (0..1)
 
 // scene behind the water (for refraction + depth-based transparency)
 uniform sampler2D u_scene;
@@ -133,6 +134,9 @@ void main() {
     }
     col = mix(col, u_shallow_color, shallow * 0.30);
     col = mix(col, vec3(0.72, 0.78, 0.80), foam_edge * (0.5 + 0.5 * n) * 0.5);
+
+    // --- lightning flash lights the sea (before fog so distant water still attenuates) ---
+    col += vec3(0.60, 0.66, 0.85) * u_lightning * 0.7;
 
     // --- distance fog ---
     float fogf = clamp((dist - fog_near) / (fog_far - fog_near), 0.0, 1.0);

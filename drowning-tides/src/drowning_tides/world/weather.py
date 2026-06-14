@@ -99,6 +99,19 @@ class Weather:
 
         self.fog = FogBank()
 
+        # cloud cover (0..1): wanders through the day, forced overcast by storms
+        self.cloud_cover = 0.4
+        self._cloud_target = random.uniform(0.2, 0.7)
+        self._cloud_timer = random.uniform(*cfg.CLOUD_WANDER_RANGE)
+
+        # lightning: a decaying flash (with flicker spikes) + an occasional drawn bolt
+        self.lightning = 0.0
+        self._flicker_spikes = 0
+        self._flicker_timer = 0.0
+        self.bolt_active = False
+        self.bolt_seed = 0
+        self.bolt_life = 0.0
+
         self._enter('calm')
 
     @property
@@ -138,6 +151,48 @@ class Weather:
     def kill_fog(self):
         self.fog.kill()
 
+    def strike(self):
+        """Force a lightning flash + bolt now (used by the dev console)."""
+        self._flicker_spikes = random.randint(2, 3)
+        self._flicker_timer = 0.0
+        self.bolt_active = True
+        self.bolt_seed = random.randint(0, 1 << 30)
+        self.bolt_life = cfg.BOLT_LIFETIME
+
+    def set_clouds(self, amount):
+        self._cloud_target = max(0.0, min(1.0, amount))
+        self._cloud_timer = random.uniform(*cfg.CLOUD_WANDER_RANGE)
+
+    # ------------------------------------------------------------------ clouds + lightning
+    def _update_clouds(self, dt):
+        self._cloud_timer -= dt
+        if self._cloud_timer <= 0.0:
+            self._cloud_target = random.uniform(0.15, 0.85)
+            self._cloud_timer = random.uniform(*cfg.CLOUD_WANDER_RANGE)
+        target = max(self._cloud_target, self.storm_intensity)
+        self.cloud_cover += (target - self.cloud_cover) * (1.0 - math.exp(-cfg.CLOUD_EASE * dt))
+
+    def _update_lightning(self, dt):
+        self.lightning *= math.exp(-cfg.LIGHTNING_DECAY * dt)
+        if self._flicker_spikes > 0:
+            self._flicker_timer -= dt
+            if self._flicker_timer <= 0.0:
+                self.lightning = 1.0
+                self._flicker_spikes -= 1
+                self._flicker_timer = random.uniform(0.04, 0.12)
+        elif self.storm_intensity > 0.3:
+            if random.random() < cfg.LIGHTNING_RATE * self.storm_intensity * dt:
+                self._flicker_spikes = random.randint(2, 3)
+                self._flicker_timer = 0.0
+                if random.random() < cfg.BOLT_CHANCE:
+                    self.bolt_active = True
+                    self.bolt_seed = random.randint(0, 1 << 30)
+                    self.bolt_life = cfg.BOLT_LIFETIME
+        if self.bolt_active:
+            self.bolt_life -= dt
+            if self.bolt_life <= 0.0:
+                self.bolt_active = False
+
     # -------------------------------------------------------------------- per-frame
     def update(self, dt):
         self.fog.update(dt)
@@ -167,6 +222,9 @@ class Weather:
         self.wind_angle += random.uniform(-1.0, 1.0) * cfg.WIND_WANDER_RATE * dt
         self.wind_dir = glm.vec2(math.cos(self.wind_angle), math.sin(self.wind_angle))
         self.wind_strength = cfg.WIND_MAX_STRENGTH * self.storm_intensity
+
+        self._update_clouds(dt)
+        self._update_lightning(dt)
 
     # ----------------------------------------------------------------- derived data
     def current_vector(self):

@@ -1,8 +1,10 @@
 import moderngl as mgl
 import numpy as np
+from pyglm import glm
 
 from drowning_tides.config import settings as cfg
 from drowning_tides.core.mesh import Mesh
+from drowning_tides.render.lightning import Bolt
 from drowning_tides.render.rain import Rain
 from drowning_tides.render.sky import Sky
 from drowning_tides.render.water import Water
@@ -22,6 +24,7 @@ class Scene:
         self.water = Water(app)
         self.boat = app.boat
         self.rain = Rain(app)
+        self.bolt = Bolt(app)
         self.console = app.console
 
         size = (int(cfg.WIN_RES.x), int(cfg.WIN_RES.y))
@@ -46,6 +49,11 @@ class Scene:
         self.bloom_fbo_a = self.ctx.framebuffer(color_attachments=[self.bloom_a])
         self.bloom_fbo_b = self.ctx.framebuffer(color_attachments=[self.bloom_b])
 
+        # half-res god-ray buffer (crepuscular light shafts from the sun)
+        self.godray_tex = self._bloom_tex((bw, bh))
+        self.godray_fbo = self.ctx.framebuffer(color_attachments=[self.godray_tex])
+        self.godrays = sp.godrays
+
         self.bright = sp.get_program('bright')
         self.blur = sp.get_program('blur')
         self.bright['u_scene'] = 0
@@ -55,6 +63,7 @@ class Scene:
         self.post_quad = Mesh(self.ctx, sp.post, tri, '2f', ('in_position',))
         self.bright_quad = Mesh(self.ctx, self.bright, tri, '2f', ('in_position',))
         self.blur_quad = Mesh(self.ctx, self.blur, tri, '2f', ('in_position',))
+        self.godray_quad = Mesh(self.ctx, self.godrays, tri, '2f', ('in_position',))
 
     def _bloom_tex(self, size):
         t = self.ctx.texture(size, 4, dtype='f2')
@@ -82,6 +91,7 @@ class Scene:
         self.depth_tex.use(location=1)      # u_depth  (scene depth, for water thickness)
         self.water.render()
         self.rain.render()
+        self.bolt.render()
 
         # --- bloom: bright-pass then separable blur ping-pong at half res ---
         self.bloom_fbo_a.use()
@@ -98,11 +108,33 @@ class Scene:
             self.blur['u_dir'] = (0.0, self.bloom_texel[1])
             self.blur_quad.render()
 
-        # --- composite (painterly + bloom + filmic grade) to the screen ---
+        # --- god rays: radial light shafts from the sun (occluded by geometry) ---
+        self.godray_fbo.use()
+        sun_uv, intensity = self._sun_screen()
+        self.godrays['u_sun_uv'] = sun_uv
+        self.godrays['u_intensity'] = intensity
+        self.scene_color.use(location=0)
+        self.godray_quad.render()
+
+        # --- composite (painterly + bloom + god rays + filmic grade) to the screen ---
         self.ctx.screen.use()
         self.scene_color.use(location=0)
         self.bloom_a.use(location=1)
+        self.godray_tex.use(location=2)
         self.post_quad.render()
 
         # UI overlays (crisp, after post)
         self.console.render()
+
+    def _sun_screen(self):
+        """Sun screen-space position + god-ray intensity (0 when sun down / overcast / behind)."""
+        cam = self.app.camera
+        day = self.app.daycycle
+        sun_world = cam.position + day.sun_dir * 1000.0
+        clip = cam.m_proj * cam.m_view * glm.vec4(sun_world, 1.0)
+        if clip.w <= 0.0:
+            return (0.5, 0.5), 0.0
+        uv = (clip.x / clip.w * 0.5 + 0.5, clip.y / clip.w * 0.5 + 0.5)
+        sun_up = max(0.0, min(1.0, day.sun_dir.y / 0.25))
+        gate = sun_up * (1.0 - 0.7 * self.app.weather.cloud_cover)
+        return uv, cfg.GODRAY_INTENSITY * gate

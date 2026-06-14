@@ -11,6 +11,7 @@ uniform vec3 sun_dir;
 uniform float sun_strength;
 uniform float fog_near;
 uniform float fog_far;
+uniform float u_lightning;   // whole-scene lightning flash (0..1)
 
 void main() {
     vec3 N = normalize(v_normal);
@@ -25,6 +26,8 @@ void main() {
     // subtle cool rim to lift the silhouette off the dark sea
     float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0);
     col += vec3(0.10, 0.14, 0.16) * rim;
+
+    col += vec3(0.60, 0.66, 0.85) * u_lightning * 0.7;
 
     float dist = length(cam_pos - v_world);
     float fogf = clamp((dist - fog_near) / (fog_far - fog_near), 0.0, 1.0);

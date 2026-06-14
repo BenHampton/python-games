@@ -33,6 +33,8 @@ class Console:
             '/fog-kill': self._cmd_fog_kill,
             '/time': self._cmd_time,
             '/timescale': self._cmd_timescale,
+            '/lightning': self._cmd_lightning,
+            '/clouds': self._cmd_clouds,
         }
 
         self.W = int(cfg.WIN_RES.x)
@@ -117,6 +119,17 @@ class Console:
             self.message = f'timescale = {self.app.daycycle.timescale:g}'
         except (IndexError, ValueError):
             self.message = 'usage: /timescale <multiplier>'
+
+    def _cmd_lightning(self, args):
+        self.app.weather.strike()
+        self.message = 'lightning!'
+
+    def _cmd_clouds(self, args):
+        try:
+            self.app.weather.set_clouds(float(args[0]))
+            self.message = f'cloud cover -> {float(args[0]):.2f}'
+        except (IndexError, ValueError):
+            self.message = 'usage: /clouds <0..1>'
 
     # --------------------------------------------------------------------- render
     def _rebuild_texture(self):
