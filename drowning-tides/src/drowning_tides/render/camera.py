@@ -35,7 +35,11 @@ class Camera:
         self.orbit_yaw += dx * cfg.MOUSE_SENSITIVITY
         sign = 1.0 if cfg.INVERT_Y else -1.0
         self.orbit_pitch += sign * dy * cfg.MOUSE_SENSITIVITY
-        self.orbit_pitch = max(cfg.CAM_PITCH_MIN, min(cfg.CAM_PITCH_MAX, self.orbit_pitch))
+        if self.mode == FIRST_PERSON:
+            lo, hi = cfg.FP_PITCH_MIN, cfg.FP_PITCH_MAX
+        else:
+            lo, hi = cfg.CAM_PITCH_MIN, cfg.CAM_PITCH_MAX
+        self.orbit_pitch = max(lo, min(hi, self.orbit_pitch))
 
     def zoom(self, steps):
         self.distance -= steps * cfg.CAM_ZOOM_STEP
@@ -69,7 +73,12 @@ class Camera:
         self._look_target = self._pivot()
 
     def _update_first_person(self, dt):
-        # TODO: lock to a deck anchor + mouse-look when the on-deck mode lands
-        boat = self.app.boat
-        self.position = boat.position + glm.vec3(0, 1.4, 0)
-        self._look_target = self.position + boat.forward
+        # eye at the on-foot player; look from the mouse-driven yaw/pitch
+        self.position = self.app.player.position + glm.vec3(0.0, cfg.PLAYER_EYE_HEIGHT, 0.0)
+        cp = math.cos(self.orbit_pitch)
+        look = glm.vec3(
+            math.sin(self.orbit_yaw) * cp,
+            math.sin(self.orbit_pitch),
+            math.cos(self.orbit_yaw) * cp,
+        )
+        self._look_target = self.position + look

@@ -22,6 +22,16 @@ class Island:
         self.position = glm.vec3(*spec["pos"])
         self.radius = spec["radius"]          # collision disc
         scale, yaw = spec["scale"], spec["yaw"]
+        self.kind = spec["kind"]
+        self.dockable = spec["kind"] != "reef"        # can't disembark onto a reef
+        if self.kind == "home":                       # big flat island
+            self.land_y = scale * cfg.HOME_LAND_FRAC
+            self.walk_frac = cfg.HOME_WALK_FRAC
+            self.spawn_frac = cfg.HOME_SPAWN_FRAC
+        else:                                          # mesa: walk the summit
+            self.land_y = scale * cfg.ISLAND_LAND_FRAC
+            self.walk_frac = cfg.ISLAND_WALK_FRAC
+            self.spawn_frac = cfg.ISLAND_SPAWN_FRAC
 
         self.lods = [
             Model(app.ctx, app.shader_program.model, ISLANDS_DIR / f"{self.name}_lod{lod}.glb",
@@ -33,6 +43,19 @@ class Island:
         m = self.lods[0].m_model
         self.center = glm.vec3(m * glm.vec4(self.lods[0].local_center, 1.0))
         self.cull_radius = self.lods[0].local_radius * scale
+
+    def ground_y(self, x, z):
+        """Walkable ground height at (x, z). The home island ramps from the shore up to its
+        flat plateau so you can walk up the beach; other islands use a flat summit plane."""
+        if self.kind != 'home':
+            return self.land_y
+        r = math.hypot(x - self.position.x, z - self.position.z) / self.radius
+        if r <= cfg.HOME_FLAT_FRAC:
+            return self.land_y
+        if r >= 1.0:
+            return cfg.HOME_SHORE_Y
+        t = (r - cfg.HOME_FLAT_FRAC) / (1.0 - cfg.HOME_FLAT_FRAC)
+        return self.land_y * (1.0 - t) + cfg.HOME_SHORE_Y * t
 
     def render(self, lod):
         self.lods[lod].render()
@@ -56,6 +79,17 @@ class IslandField:
 
     def collide(self, x, z, boat_radius):
         return resolve_collision(x, z, self.islands, boat_radius)
+
+    def nearest_dockable(self, pos):
+        """Nearest dockable island whose shore is within cfg.DOCK_RANGE of pos, else None."""
+        best, best_d = None, cfg.DOCK_RANGE
+        for isl in self.islands:
+            if not isl.dockable:
+                continue
+            d = math.hypot(pos.x - isl.position.x, pos.z - isl.position.z) - isl.radius
+            if d < best_d:
+                best, best_d = isl, d
+        return best
 
 
 def resolve_collision(x, z, islands, boat_radius):

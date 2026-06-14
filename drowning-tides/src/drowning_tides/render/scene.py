@@ -82,6 +82,9 @@ class Scene:
         self.ctx.enable(mgl.DEPTH_TEST)
         self.app.islands.render(self.app.camera)
         self.boat.render()
+        self.app.town.render()
+        self.app.npcs.render()
+        self.app.npc_boats.render()
 
         # seed the final buffer with the opaque scene, then composite transparent water on top
         self.ctx.copy_framebuffer(self.scene_fbo, self.opaque_fbo)

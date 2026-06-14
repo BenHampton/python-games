@@ -58,9 +58,11 @@ Run the tests with `uv run pytest` and lint with `uv run ruff check`.
 
 | Key / Input | Action                                          |
 | ----------- | ----------------------------------------------- |
-| `W` / `S`   | Throttle forward / reverse                      |
-| `A` / `D`   | Steer left / right                              |
-| Mouse       | Orbit the camera around the boat (angle holds)  |
+| `W` / `S`   | Throttle fwd / reverse (at helm) · walk fwd / back (on foot) |
+| `A` / `D`   | Steer left / right (at helm) · strafe (on foot) |
+| `E`         | Board / disembark — only near land to step onto an island   |
+| `F`         | Fish (at the helm over open water) · talk to a nearby NPC (on foot) |
+| Mouse       | Orbit the camera (helm) · look around (on foot) |
 | Scroll      | Zoom the camera in / out                        |
 | `` ` ``     | Toggle dev console                              |
 | `Esc`       | Pause / resume (opens the pause menu)           |

@@ -132,6 +132,9 @@ class Acc:
 def _profile(kind):
     if kind == "reef":
         return [(1.00, -0.05), (0.90, -0.01), (0.60, 0.03), (0.30, 0.06)], 0.09
+    if kind == "home":
+        # big flat-topped plateau with a wide walkable beach ramp (flat inside r~0.58)
+        return [(1.00, -0.03), (0.80, 0.05), (0.58, 0.12), (0.10, 0.12)], 0.12
     # flatter, less conical: wider mid terraces, a low rounded top
     return [(1.00, -0.06), (0.96, 0.03), (0.82, 0.13), (0.62, 0.27),
             (0.42, 0.40), (0.26, 0.48)], 0.55
@@ -139,11 +142,11 @@ def _profile(kind):
 
 def _terrain(acc, rng, kind, seg, lod):
     prof, apex_h = _profile(kind)
-    peak = (rng.uniform(0.75, 1.15) if kind != "reef" else 1.0)
+    peak = 1.0 if kind in ("reef", "home") else rng.uniform(0.75, 1.15)
     aspect = (rng.uniform(0.72, 1.3), rng.uniform(0.72, 1.3))
     phases = [rng.uniform(0, math.tau) for _ in range(7)]
     hfreq = rng.uniform(2.0, 3.3)
-    hamp = 0.02 if kind == "reef" else 0.105   # vertical bumpiness (rocky relief)
+    hamp = {"reef": 0.02, "home": 0.0}.get(kind, 0.105)   # vertical bumpiness (0 = flat)
 
     def rmul(ang):
         # jagged coastline: more + higher-frequency radial variation
@@ -350,6 +353,8 @@ def gen_island(spec, lod):
     seg = 20 if lod == 0 else 10
     grass, _ = _terrain(acc, rng, spec["kind"], seg, lod)
     if lod == 0 and spec["kind"] != "reef":
+        if spec["kind"] == "home":
+            grass = [v for v in grass if v[0] * v[0] + v[2] * v[2] > 0.45 * 0.45]  # clear village
         _add_trees(acc, rng, grass, palmy=(spec["seed"] % 2 == 0))
         _add_rocks(acc, rng, grass)
         _add_offshore_rocks(acc, rng)

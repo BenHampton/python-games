@@ -9,6 +9,7 @@ uniform sampler2D u_godrays;
 uniform vec2 u_texel;     // 1.0 / resolution
 uniform float time;
 uniform float u_bloom_intensity;
+uniform float u_aberration;   // chromatic aberration (radial per-channel UV offset)
 
 float hash(vec2 p) {
     p = fract(p * vec2(123.34, 345.45));
@@ -26,7 +27,15 @@ void main() {
     float ang = hash(v_uv * 512.0) * 6.2831853;
     vec2 jit = vec2(cos(ang), sin(ang)) * u_texel * 1.6;
 
-    vec3 col = texture(u_scene, v_uv).rgb * 0.40;
+    // chromatic aberration: split R/B radially from centre by the uncanny amount
+    vec2 ca = (v_uv - 0.5) * u_aberration;
+    vec3 base = vec3(
+        texture(u_scene, v_uv + ca).r,
+        texture(u_scene, v_uv).g,
+        texture(u_scene, v_uv - ca).b
+    );
+
+    vec3 col = base * 0.40;
     col += texture(u_scene, v_uv + jit).rgb * 0.15;
     col += texture(u_scene, v_uv - jit).rgb * 0.15;
     col += texture(u_scene, v_uv + jit.yx * vec2(1.0, -1.0)).rgb * 0.15;

@@ -7,13 +7,20 @@ from pyglm import glm
 from drowning_tides.config import settings as cfg
 from drowning_tides.core.game_state import GameState
 from drowning_tides.core.shader_program import ShaderProgram
-from drowning_tides.render.camera import Camera
+from drowning_tides.render.camera import FIRST_PERSON, FOLLOW, Camera
 from drowning_tides.render.scene import Scene
 from drowning_tides.ui.console import Console
+from drowning_tides.ui.hud import Hud
 from drowning_tides.ui.pause_menu import PauseMenu
+from drowning_tides.world.aberration import Aberration
 from drowning_tides.world.boat import Boat
 from drowning_tides.world.daycycle import DayCycle
+from drowning_tides.world.fishing import Fishing
 from drowning_tides.world.island import IslandField
+from drowning_tides.world.npc import NpcCrowd
+from drowning_tides.world.npc_boat import NpcBoats
+from drowning_tides.world.player import Player
+from drowning_tides.world.town import Town
 from drowning_tides.world.waves import WaveField
 from drowning_tides.world.weather import Weather
 
@@ -61,6 +68,13 @@ class Game:
         self.boat = Boat(self)
         self.console = Console(self)
         self.camera = Camera(self)
+        self.player = Player(self)
+        self.aberration = Aberration(self)
+        self.hud = Hud(self)
+        self.town = Town(self)
+        self.npcs = NpcCrowd(self)
+        self.npc_boats = NpcBoats(self)
+        self.fishing = Fishing(self)
         self.scene = Scene(self)
         self.paused = False
         self.pause_menu = PauseMenu(self)
@@ -83,6 +97,30 @@ class Game:
         self.pause_menu._dirty = True
         self._refresh_capture()
 
+    def toggle_mount(self):
+        """E: disembark onto nearby land, or re-board the boat when on foot near it."""
+        if self.game_state.is_helm():
+            island = self.islands.nearest_dockable(self.boat.position)
+            if island is not None:
+                self.player.spawn(island, self.boat.position)
+                self.boat.docked_pos = glm.vec2(self.boat.position.x, self.boat.position.z)
+                self.game_state.to_on_foot()
+                self.camera.mode = FIRST_PERSON
+        elif self.game_state.is_on_foot():
+            # docked at one island -> E returns to the boat at the shore
+            self.boat.docked_pos = None
+            self.game_state.to_helm()
+            self.camera.mode = FOLLOW
+
+    def _interact(self):
+        """F: fish at the helm over water, or talk to a nearby NPC on foot."""
+        if self.game_state.is_helm():
+            self.fishing.cast()
+        elif self.game_state.is_on_foot():
+            line = self.npcs.try_talk(self.player.position)
+            if line is not None:
+                self.hud.show(line, 4.5)
+
     def handle_events(self):
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -96,6 +134,10 @@ class Game:
                     self._refresh_capture()
                 elif event.key == cfg.KEYS['FULLSCREEN']:
                     pg.display.toggle_fullscreen()
+                elif event.key == cfg.KEYS['MOUNT'] and not self.paused:
+                    self.toggle_mount()
+                elif event.key == cfg.KEYS['INTERACT'] and not self.paused:
+                    self._interact()
                 elif event.key == cfg.KEYS['QUIT']:
                     self.toggle_pause()
             elif event.type == pg.MOUSEBUTTONDOWN and self.paused:
@@ -119,11 +161,20 @@ class Game:
         self.daycycle.update(self.delta_time)
         self.wave_field.recompute(self.weather.wind_dir, self.weather.storm_intensity)
         self.boat.update(self.delta_time)
+        self.player.update(self.delta_time)
+        self.npc_boats.update(self.delta_time)
         self.camera.update(self.delta_time)
+        self.aberration.update(self.delta_time)
+        self.fishing.update(self.delta_time)
+        self.hud.update(self.delta_time)
+        near_land = (self.game_state.is_helm()
+                     and self.islands.nearest_dockable(self.boat.position) is not None)
+        self.hud.set_prompt('Press E to dock' if near_land else '')
         self.shader_program.update()
 
     def render(self):
         self.scene.render()
+        self.hud.render()
         self.pause_menu.render()
         pg.display.flip()
 

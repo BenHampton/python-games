@@ -51,6 +51,7 @@ class ShaderProgram:
         self.post['u_bloom'] = 1
         self.post['u_godrays'] = 2
         self.post['u_bloom_intensity'] = cfg.BLOOM_INTENSITY
+        self.post['u_aberration'] = 0.0
         self.post['u_texel'] = (1.0 / cfg.WIN_RES.x, 1.0 / cfg.WIN_RES.y)
 
         # sky: cloud + aurora constants (set once)
@@ -171,6 +172,7 @@ class ShaderProgram:
 
         # post
         self.post['time'] = t
+        self.post['u_aberration'] = self.app.aberration.amount() * cfg.ABERRATION_STRENGTH
 
     def get_program(self, shader_name):
         with open(SHADERS_DIR / f'{shader_name}.vert') as f:

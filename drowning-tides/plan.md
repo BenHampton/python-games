@@ -123,7 +123,11 @@ Tweak aberration strength/falloff and creature behavior.
 - [x] Phase 0.5 — World environment (day/night cycle, sky bodies, water light, fog banks)
 - [x] Phase 1 — Islands / terrain + boat collision
   - [x] Reference-driven unique islands (beach/rock/grass, trees, spires, dock), map-1 archipelago layout, frustum+distance culling & LOD, shallows tint
-- [ ] Phase 2 — First-person on-foot + E mount/unmount
-- [ ] Phase 3 — Town: buildings, NPCs, NPC boats, dialogue stub
-- [ ] Phase 4 — Fishing mechanics (no economy)
-- [ ] Phase 5 — Aberrated creatures + chromatic aberration
+- [x] Phase 2 — First-person on-foot + E mount/unmount (walk on land when docked; placeholder summit, terrain-walk is future)
+- [x] Phase 3 — Town: houses + dock, NPCs (folklore dialogue on F), wandering NPC boats (placeholder village on the summit)
+- [x] Phase 4 — Fishing mechanics (F at helm → cast → catch from fish table; no economy)
+- [x] Phase 5 — Aberrated creatures (aberrated fish) + chromatic aberration (ramps with night/storm/aberrated catch)
+
+All planned phases complete. Touch-ups / future: real walkable terrain + waterline harbour,
+diving / "The Deep" pillar, night instability, boat-corruption arc, anomaly set-pieces (see
+the-sea-remembers-game-theme.md and the cc0 art swap-ins).

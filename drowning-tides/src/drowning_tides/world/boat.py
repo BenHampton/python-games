@@ -43,6 +43,7 @@ class Boat:
         self.speed = 0.0        # signed scalar along forward
         self.pitch = 0.0        # set by wave sampling (stub for now)
         self.roll = 0.0
+        self.docked_pos = None  # glm.vec2(x, z) anchor while disembarked; None when sailing
 
         self.mesh = Mesh(
             self.ctx, self.program, verts, '3f 3f 3f',
@@ -149,42 +150,47 @@ class Boat:
         return self.app.wave_field.sample(x, z, self.app.time)
 
     def update(self, dt):
-        # take helm input only while driving and the console isn't capturing keystrokes
-        controls = self.app.game_state.is_helm() and not self.app.console.active
-        keys = pg.key.get_pressed()
+        if self.app.game_state.is_helm():
+            # take helm input only while the console isn't capturing keystrokes
+            controls = not self.app.console.active
+            keys = pg.key.get_pressed()
 
-        # throttle
-        if controls and keys[cfg.KEYS['THROTTLE_UP']]:
-            self.speed += cfg.BOAT_ACCEL * dt
-        if controls and keys[cfg.KEYS['THROTTLE_DOWN']]:
-            self.speed -= cfg.BOAT_REVERSE_ACCEL * dt
+            if controls and keys[cfg.KEYS['THROTTLE_UP']]:
+                self.speed += cfg.BOAT_ACCEL * dt
+            if controls and keys[cfg.KEYS['THROTTLE_DOWN']]:
+                self.speed -= cfg.BOAT_REVERSE_ACCEL * dt
 
-        # water drag (exponential decay toward zero when coasting)
-        self.speed *= math.exp(-cfg.WATER_DRAG * dt)
-        self.speed = max(-cfg.BOAT_MAX_REVERSE, min(cfg.BOAT_MAX_SPEED, self.speed))
+            # water drag (exponential decay toward zero when coasting)
+            self.speed *= math.exp(-cfg.WATER_DRAG * dt)
+            self.speed = max(-cfg.BOAT_MAX_REVERSE, min(cfg.BOAT_MAX_SPEED, self.speed))
 
-        # steering: authority grows with speed -> wide turns fast, sluggish near stop
-        turn = 0.0
-        if controls and keys[cfg.KEYS['TURN_LEFT']]:
-            turn += 1.0
-        if controls and keys[cfg.KEYS['TURN_RIGHT']]:
-            turn -= 1.0
-        authority = min(1.0, abs(self.speed) / (cfg.BOAT_MAX_SPEED * cfg.TURN_SPEED_FACTOR))
-        # reverse the helm when backing up, like a real boat
-        helm_sign = 1.0 if self.speed >= 0.0 else -1.0
-        self.yaw += turn * cfg.BOAT_TURN_RATE * authority * helm_sign * dt
+            # steering: authority grows with speed -> wide turns fast, sluggish near stop
+            turn = 0.0
+            if controls and keys[cfg.KEYS['TURN_LEFT']]:
+                turn += 1.0
+            if controls and keys[cfg.KEYS['TURN_RIGHT']]:
+                turn -= 1.0
+            authority = min(1.0, abs(self.speed) / (cfg.BOAT_MAX_SPEED * cfg.TURN_SPEED_FACTOR))
+            helm_sign = 1.0 if self.speed >= 0.0 else -1.0   # reverse helm when backing up
+            self.yaw += turn * cfg.BOAT_TURN_RATE * authority * helm_sign * dt
 
-        # integrate helm motion, then add the wind-driven current (storm push)
-        self.position += self.forward * (self.speed * dt)
-        self.position += self.app.weather.current_vector() * dt
+            # integrate helm motion, then add the wind-driven current (storm push)
+            self.position += self.forward * (self.speed * dt)
+            self.position += self.app.weather.current_vector() * dt
 
-        # keep off the land: push out of island discs and bleed speed on impact
-        x, z, hit = self.app.islands.collide(
-            self.position.x, self.position.z, cfg.BOAT_COLLISION_RADIUS
-        )
-        self.position.x, self.position.z = x, z
-        if hit:
-            self.speed *= cfg.BOAT_COLLISION_BLEED
+            # keep off the land: push out of island discs and bleed speed on impact
+            x, z, hit = self.app.islands.collide(
+                self.position.x, self.position.z, cfg.BOAT_COLLISION_RADIUS
+            )
+            self.position.x, self.position.z = x, z
+            if hit:
+                self.speed *= cfg.BOAT_COLLISION_BLEED
+        else:
+            # docked / disembarked: anchored to the docked spot — no drift, just bobs
+            self.speed = 0.0
+            if self.docked_pos is not None:
+                self.position.x = self.docked_pos.x
+                self.position.z = self.docked_pos.y
 
         # ride the waves: sit at the surface height and tilt toward its slope
         h, normal = self.sample_surface(self.position.x, self.position.z)

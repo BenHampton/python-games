@@ -21,6 +21,8 @@ KEYS = {
     'QUIT': pg.K_ESCAPE,        # opens the pause menu (Resume to unpause)
     'CONSOLE': pg.K_BACKQUOTE,
     'FULLSCREEN': pg.K_F11,     # toggle fullscreen / windowed
+    'MOUNT': pg.K_e,            # board / disembark the boat (only near land to disembark)
+    'INTERACT': pg.K_f,         # context: fish (at helm over water) / talk to NPC (on foot)
 }
 
 # camera (projection)
@@ -46,6 +48,22 @@ CAM_PITCH_MAX = math.radians(80.0)  # don't flip overhead
 CAM_DISTANCE_MIN = 6.0              # closest scroll-zoom
 CAM_DISTANCE_MAX = 40.0             # farthest scroll-zoom
 CAM_ZOOM_STEP = 2.0                 # distance units per scroll notch
+FP_PITCH_MIN = math.radians(-85.0)  # first-person look-down limit
+FP_PITCH_MAX = math.radians(85.0)   # first-person look-up limit
+
+# on-foot (first-person, walk on land when docked)
+DOCK_RANGE = 14.0                   # how close the boat must be to an island shore to disembark
+PLAYER_SPEED = 9.0                  # walk speed (units/sec)
+PLAYER_EYE_HEIGHT = 1.7             # camera eye height above the land plane
+ISLAND_LAND_FRAC = 0.42            # mesa islands: stand on the grassy cap (frac of scale)
+ISLAND_WALK_FRAC = 0.35            # mesa: walkable summit radius (frac of island radius)
+ISLAND_SPAWN_FRAC = 0.15          # mesa: spawn near the summit centre
+# the home island is a big FLAT-topped island so the village is easy to reach + visible
+HOME_LAND_FRAC = 0.12             # flat plateau height (frac of scale): flat top, visible from sea
+HOME_FLAT_FRAC = 0.58            # inside this radius fraction the top is flat; outside ramps down
+HOME_SHORE_Y = 0.4              # ground height at the shore (just above water; ramp foot)
+HOME_WALK_FRAC = 0.95            # walk out to near the shore
+HOME_SPAWN_FRAC = 0.92           # disembark low on the beach, walk up the ramp to the village
 
 # boat physics
 BOAT_MAX_SPEED = 22.0       # units / second forward
@@ -67,7 +85,7 @@ BOAT_COLLISION_BLEED = 0.3      # speed retained after hitting land
 # 'radius' is the collision disc (world units, ~= scale).
 # (name, x, z, scale, yaw, seed, kind); collision radius == scale
 _ISLAND_TABLE = [
-    ('freeport',          0.0, -180.0, 26.0, 0.3, 11, 'home'),
+    ('freeport',          0.0, -185.0, 45.0, 0.3, 11, 'home'),
     ('haven',          -260.0, -320.0, 20.0, 1.1, 22, 'island'),
     ('fogholms',       -120.0, -560.0, 16.0, 2.4, 33, 'island'),
     ('cedar_march',     380.0, -430.0, 40.0, 0.7, 44, 'island'),
@@ -290,3 +308,32 @@ GODRAY_SAMPLES = 48
 GODRAY_DECAY = 0.96
 GODRAY_WEIGHT = 0.5
 GODRAY_INTENSITY = 0.6
+
+# ------------------------------------------------------------------- town / NPCs (phase 3)
+TOWN_HOUSE_COUNT = 6
+HOUSE_WALL_COLOR = (0.52, 0.43, 0.31)       # driftwood brown
+HOUSE_ROOF_COLOR = (0.55, 0.30, 0.20)       # muted orange-red
+DOCK_COLOR = (0.34, 0.25, 0.16)
+NPC_COUNT = 4
+NPC_BODY_COLOR = (0.30, 0.34, 0.42)
+NPC_HEAD_COLOR = (0.62, 0.50, 0.42)
+NPC_INTERACT_RANGE = 6.0
+NPC_BOAT_COUNT = 3
+NPC_BOAT_SPEED = 4.5
+
+# ------------------------------------------------------------------- fishing (phase 4)
+# (name, rarity weight, aberrated)
+FISH_TABLE = [
+    ('Herring', 30, False), ('Cod', 25, False), ('Mackerel', 20, False),
+    ('Sea Bass', 12, False), ('Lantern Eel', 7, False),
+    ('Pale Drifter', 4, True), ('Hollow Catch', 2, True),
+]
+FISH_CAST_TIME = 1.6                         # seconds from cast to bite
+
+# ------------------------------------------------------------------- aberration (phase 5)
+ABERRATION_NIGHT = 0.35                      # night ramps chromatic aberration
+ABERRATION_STORM = 0.40                      # storms ramp it
+ABERRATION_CATCH = 1.0                       # spike when an aberrated fish is caught
+ABERRATION_DECAY = 0.6                       # catch-spike fade (/sec)
+ABERRATION_MAX = 1.2
+ABERRATION_STRENGTH = 0.004                  # max per-channel UV offset at aberration = 1
