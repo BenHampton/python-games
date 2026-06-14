@@ -30,6 +30,7 @@ from pygltflib import (
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from drowning_tides.config import settings as cfg  # noqa: E402
+from drowning_tides.core.model import MODELS_DIR, load_vertices  # noqa: E402
 
 OUT_DIR = Path(__file__).resolve().parent.parent / "src/drowning_tides/assets/models/islands"
 
@@ -43,6 +44,31 @@ FOLIAGE = (0.14, 0.26, 0.16)
 PALM = (0.18, 0.33, 0.20)
 DOCK = (0.30, 0.21, 0.13)
 REEF = (0.19, 0.23, 0.24)
+
+# CC0 Kenney Nature Kit props baked into the islands (with procedural fallback if missing)
+NATURE_DIR = MODELS_DIR / "nature"
+TREE_MODELS = ['tree_pineDefaultA.glb', 'tree_pineDefaultB.glb', 'tree_pineRoundA.glb',
+               'tree_pineRoundB.glb', 'tree_default.glb', 'tree_detailed.glb']
+ROCK_MODELS = ['rock_smallA.glb', 'rock_smallB.glb', 'rock_smallC.glb', 'rock_smallD.glb']
+BIG_ROCK_MODELS = ['rock_largeA.glb', 'rock_largeB.glb', 'rock_largeC.glb',
+                   'rock_tallC.glb', 'rock_tallE.glb']
+_ALL_PROPS = TREE_MODELS + ROCK_MODELS + BIG_ROCK_MODELS
+PROPS_AVAILABLE = all((NATURE_DIR / m).exists() for m in _ALL_PROPS)
+PROP_MUTE = 0.35            # desaturate Kenney's bright palette toward our muted mood
+_PROP_CACHE = {}
+
+
+def _prop(name):
+    """Load a nature glb -> (pos, nrm, col, height), centred on XZ with its base at y=0."""
+    if name not in _PROP_CACHE:
+        v = load_vertices(NATURE_DIR / name).reshape(-1, 9)
+        pos = v[:, :3].copy()
+        pos[:, 0] -= (pos[:, 0].min() + pos[:, 0].max()) * 0.5
+        pos[:, 2] -= (pos[:, 2].min() + pos[:, 2].max()) * 0.5
+        pos[:, 1] -= pos[:, 1].min()
+        height = float(pos[:, 1].max()) or 1.0
+        _PROP_CACHE[name] = (pos, v[:, 3:6].copy(), v[:, 6:9].copy(), height)
+    return _PROP_CACHE[name]
 
 
 def _norm(a, b, c):
@@ -68,6 +94,20 @@ class Acc:
     def quad(self, a, b, c, d, color, normal=None):
         self.tri(a, b, c, color, normal)
         self.tri(a, c, d, color, normal)
+
+    def add_transformed(self, pos, nrm, col, scale, yaw, tx, ty, tz, mute=0.0):
+        """Append a prop's triangles, Y-rotated + uniformly scaled + translated into place."""
+        ca, sa = math.cos(yaw), math.sin(yaw)
+        rot = np.array([[ca, 0.0, sa], [0.0, 1.0, 0.0], [-sa, 0.0, ca]])
+        p = pos @ rot.T * scale + np.array([tx, ty, tz])
+        n = nrm @ rot.T
+        c = col
+        if mute:
+            lum = (c @ np.array([0.299, 0.587, 0.114]))[:, None]
+            c = (c * (1.0 - mute) + lum * mute) * 0.92
+        self.pos.extend(map(tuple, p))
+        self.nrm.extend(map(tuple, n))
+        self.col.extend(map(tuple, c))
 
     def arrays(self):
         pos = np.array(self.pos, dtype="float32")
@@ -197,17 +237,53 @@ def _tree(acc, x, z, y, rng, palmy):
 def _add_trees(acc, rng, grass, palmy):
     if not grass:
         return
-    count = rng.randint(8, 18)
-    for _ in range(count):
+    if not PROPS_AVAILABLE:
+        return _add_trees_procedural(acc, rng, grass, palmy)
+    for _ in range(rng.randint(10, 22)):
+        v = rng.choice(grass)
+        pos, nrm, col, h = _prop(rng.choice(TREE_MODELS))
+        target = rng.uniform(0.10, 0.17)
+        acc.add_transformed(pos, nrm, col, target / h, rng.uniform(0.0, math.tau),
+                            v[0] + rng.uniform(-0.03, 0.03), v[1] - 0.01,
+                            v[2] + rng.uniform(-0.03, 0.03), mute=PROP_MUTE)
+
+
+def _add_rocks(acc, rng, grass):
+    """Scatter small rocks over the island for ground detail."""
+    if not grass:
+        return
+    if not PROPS_AVAILABLE:
+        return _add_rocks_procedural(acc, rng, grass)
+    for _ in range(rng.randint(10, 20)):
+        v = rng.choice(grass)
+        pos, nrm, col, h = _prop(rng.choice(ROCK_MODELS))
+        target = rng.uniform(0.04, 0.09)
+        acc.add_transformed(pos, nrm, col, target / h, rng.uniform(0.0, math.tau),
+                            v[0] + rng.uniform(-0.05, 0.05), v[1] - 0.02,
+                            v[2] + rng.uniform(-0.05, 0.05), mute=PROP_MUTE)
+
+
+def _add_offshore_rocks(acc, rng):
+    """Large rock formations around the shoreline (replaces the procedural spires)."""
+    if not PROPS_AVAILABLE:
+        return _add_spires_procedural(acc, rng)
+    for _ in range(rng.randint(3, 6)):
+        ang = rng.uniform(0.0, math.tau)
+        r = rng.uniform(0.9, 1.4)
+        pos, nrm, col, h = _prop(rng.choice(BIG_ROCK_MODELS))
+        target = rng.uniform(0.22, 0.55)
+        acc.add_transformed(pos, nrm, col, target / h, rng.uniform(0.0, math.tau),
+                            r * math.cos(ang), -0.05, r * math.sin(ang), mute=PROP_MUTE)
+
+
+def _add_trees_procedural(acc, rng, grass, palmy):
+    for _ in range(rng.randint(8, 18)):
         v = rng.choice(grass)
         _tree(acc, v[0] + rng.uniform(-0.03, 0.03), v[2] + rng.uniform(-0.03, 0.03),
               v[1] - 0.01, rng, palmy)
 
 
-def _add_rocks(acc, rng, grass):
-    """Scatter small rock lumps over the island for ground detail."""
-    if not grass:
-        return
+def _add_rocks_procedural(acc, rng, grass):
     for _ in range(rng.randint(8, 16)):
         v = rng.choice(grass)
         r = rng.uniform(0.03, 0.07)
@@ -215,15 +291,13 @@ def _add_rocks(acc, rng, grass):
               v[1] - 0.02, r, rng.uniform(0.02, 0.05), ROCK if rng.random() < 0.5 else ROCK_DARK)
 
 
-def _add_spires(acc, rng):
+def _add_spires_procedural(acc, rng):
     for _ in range(rng.randint(3, 6)):
         ang = rng.uniform(0, math.tau)
         r = rng.uniform(0.95, 1.35)
         cx, cz = r * math.cos(ang), r * math.sin(ang)
-        h = rng.uniform(0.18, 0.5)
+        top = rng.uniform(0.18, 0.5)
         half = rng.uniform(0.05, 0.1)
-        # tapered 4-sided pillar
-        top = h
         for i in range(4):
             a0 = math.tau * i / 4
             a1 = math.tau * (i + 1) / 4
@@ -259,7 +333,7 @@ def gen_island(spec, lod):
     if lod == 0 and spec["kind"] != "reef":
         _add_trees(acc, rng, grass, palmy=(spec["seed"] % 2 == 0))
         _add_rocks(acc, rng, grass)
-        _add_spires(acc, rng)
+        _add_offshore_rocks(acc, rng)
         if spec["kind"] == "home":
             _add_dock(acc, rng)
     return acc.arrays()
