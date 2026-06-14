@@ -98,6 +98,14 @@ WATER_LEVEL = 0.0
 WATER_SIZE = 500.0      # half-extent of the moving water patch
 WATER_GRID = 200        # subdivisions per axis (cell ~5 units -> waves resolve)
 
+# water realism (water.frag): micro-ripple normals, refraction, depth transparency, reflection
+WATER_DETAIL = 0.5                       # micro-ripple normal strength (sun glitter)
+WATER_DETAIL_SCALE = 0.5                 # ripple frequency (world units)
+WATER_REFRACTION = 0.025                 # seabed refraction wobble amount
+WATER_CLARITY = 0.20                     # absorption k; higher = water turns opaque sooner
+WATER_ABSORB = glm.vec3(0.45, 0.70, 0.72)  # underwater tint on the seabed seen through water
+WATER_SUN_REFLECT_SHININESS = 800.0      # tightness of the reflected sun/moon disc
+
 # atmosphere / dark maritime palette (CALM presets; storm presets below)
 BG_COLOR = glm.vec3(0.06, 0.09, 0.12)
 WATER_COLOR = glm.vec3(0.05, 0.10, 0.13)
@@ -142,8 +150,8 @@ GRAVITY = 9.8
 WAVE_WAVELENGTHS = (60.0, 37.0, 23.0, 13.0)
 WAVE_AMP_RATIOS = (1.0, 0.6, 0.35, 0.2)     # relative amplitude per component
 WAVE_DIR_SPREAD = 0.6                        # radians fanned around the wind dir
-WAVE_STEEPNESS = 0.7                         # Gerstner Q (sharpness); <1 avoids loops
-WAVE_CALM_AMP = 0.05                          # gentle swell even in calm
+WAVE_STEEPNESS = 0.85                        # Gerstner Q (sharpness); <1 avoids loops
+WAVE_CALM_AMP = 0.07                          # gentle swell even in calm
 WAVE_STORM_AMP = 1.6                          # base amplitude scale at full storm
 WAVE_MAX_AMPLITUDE = 1.8                      # hard playability cap on total height
 
@@ -164,8 +172,9 @@ BOAT_TILT_EASE = 4.0                # how fast tilt tracks the wave slope (/sec)
 # authored boat model: drop a CC0 glTF (e.g. Kenney Watercraft Kit) into assets/models/
 # and set BOAT_MODEL to its filename to replace the procedural hull. Tune scale/yaw to fit.
 BOAT_MODEL = 'boat-fishing.glb'     # Kenney Watercraft Kit (CC0); None -> procedural hull
-BOAT_MODEL_SCALE = 1.8             # world scale applied to the authored model
+BOAT_MODEL_SCALE = 1.7             # world scale applied to the authored model
 BOAT_MODEL_YAW = 0.0               # radians; offset if the model's bow isn't +Z
+BOAT_MODEL_Y_OFFSET = -0.85        # sink the hull into the waterline (world units)
 
 # ------------------------------------------------------------------------ console
 CONSOLE_HEIGHT = 30             # px height of the input bar

@@ -25,13 +25,18 @@ class Scene:
         self.console = app.console
 
         size = (int(cfg.WIN_RES.x), int(cfg.WIN_RES.y))
-        # HDR scene target (f2 so bright sky/glints exceed 1.0 for bloom + tonemapping)
-        self.color_tex = self.ctx.texture(size, 4, dtype='f2')
-        self.color_tex.filter = (mgl.LINEAR, mgl.LINEAR)
+        # opaque pass target (HDR f2 so bright sky/glints exceed 1.0 for bloom + tonemapping)
+        self.opaque_color = self.ctx.texture(size, 4, dtype='f2')
+        self.opaque_color.filter = (mgl.LINEAR, mgl.LINEAR)
         self.depth_tex = self.ctx.depth_texture(size)
-        self.fbo = self.ctx.framebuffer(
-            color_attachments=[self.color_tex], depth_attachment=self.depth_tex
+        self.depth_tex.compare_func = ''     # sample raw depth, not shadow-compare
+        self.opaque_fbo = self.ctx.framebuffer(
+            color_attachments=[self.opaque_color], depth_attachment=self.depth_tex
         )
+        # final scene target: opaque copy + transparent water composited on top
+        self.scene_color = self.ctx.texture(size, 4, dtype='f2')
+        self.scene_color.filter = (mgl.LINEAR, mgl.LINEAR)
+        self.scene_fbo = self.ctx.framebuffer(color_attachments=[self.scene_color])
 
         # half-res ping-pong buffers for the bloom blur
         bw, bh = size[0] // 2, size[1] // 2
@@ -58,27 +63,30 @@ class Scene:
         return t
 
     def render(self):
-        # --- scene into the offscreen HDR buffer ---
-        self.fbo.use()
+        # --- opaque pass: sky + land/boat into opaque_color (+ depth) ---
+        self.opaque_fbo.use()
         self.ctx.clear(cfg.BG_COLOR.x, cfg.BG_COLOR.y, cfg.BG_COLOR.z, 1.0)
 
         self.ctx.disable(mgl.DEPTH_TEST)
         self.sky.render()
 
         self.ctx.enable(mgl.DEPTH_TEST)
-        self.water.render()
         self.app.islands.render(self.app.camera)
         self.boat.render()
 
-        self.ctx.depth_mask = False
+        # seed the final buffer with the opaque scene, then composite transparent water on top
+        self.ctx.copy_framebuffer(self.scene_fbo, self.opaque_fbo)
+        self.scene_fbo.use()
+        self.ctx.disable(mgl.DEPTH_TEST)
+        self.opaque_color.use(location=0)   # u_scene  (seabed behind the water, for refraction)
+        self.depth_tex.use(location=1)      # u_depth  (scene depth, for water thickness)
+        self.water.render()
         self.rain.render()
-        self.ctx.depth_mask = True
 
         # --- bloom: bright-pass then separable blur ping-pong at half res ---
-        self.ctx.disable(mgl.DEPTH_TEST)
         self.bloom_fbo_a.use()
         self.bright['u_threshold'] = cfg.BLOOM_THRESHOLD
-        self.color_tex.use(location=0)
+        self.scene_color.use(location=0)
         self.bright_quad.render()
         for _ in range(cfg.BLOOM_PASSES):
             self.bloom_fbo_b.use()
@@ -92,7 +100,7 @@ class Scene:
 
         # --- composite (painterly + bloom + filmic grade) to the screen ---
         self.ctx.screen.use()
-        self.color_tex.use(location=0)
+        self.scene_color.use(location=0)
         self.bloom_a.use(location=1)
         self.post_quad.render()
 

@@ -29,11 +29,13 @@ class Boat:
             verts = load_vertices(model_path)
             self.draw_scale = cfg.BOAT_MODEL_SCALE
             self.yaw_offset = cfg.BOAT_MODEL_YAW
+            self.y_offset = cfg.BOAT_MODEL_Y_OFFSET
         else:
             self.program = app.shader_program.boat
             verts = self._build()
             self.draw_scale = cfg.BOAT_SCALE
             self.yaw_offset = 0.0
+            self.y_offset = 0.0
 
         # physics state
         self.position = glm.vec3(cfg.BOAT_START_POS)
@@ -203,7 +205,7 @@ class Boat:
         self._update_model()
 
     def _update_model(self):
-        m = glm.translate(glm.mat4(1.0), self.position)
+        m = glm.translate(glm.mat4(1.0), self.position + glm.vec3(0.0, self.y_offset, 0.0))
         m = glm.rotate(m, self.yaw + self.yaw_offset, glm.vec3(0, 1, 0))
         m = glm.rotate(m, self.pitch, glm.vec3(1, 0, 0))
         m = glm.rotate(m, self.roll, glm.vec3(0, 0, 1))

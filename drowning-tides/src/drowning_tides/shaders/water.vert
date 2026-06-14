@@ -16,6 +16,7 @@ uniform float u_time;
 
 out vec3 v_world;
 out vec3 v_normal;
+out float v_view_z;   // positive view-space distance (for depth/thickness)
 
 void main() {
     vec2 base = in_position + u_center;   // world xz before displacement
@@ -46,5 +47,7 @@ void main() {
     v_world = world;
     v_normal = normalize(vec3(-nx, 1.0 - ny_sub, -nz));
 
-    gl_Position = m_proj * m_view * vec4(world, 1.0);
+    vec4 view = m_view * vec4(world, 1.0);
+    v_view_z = -view.z;
+    gl_Position = m_proj * view;
 }

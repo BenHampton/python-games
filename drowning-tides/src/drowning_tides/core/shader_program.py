@@ -42,6 +42,19 @@ class ShaderProgram:
         self.post['u_bloom_intensity'] = cfg.BLOOM_INTENSITY
         self.post['u_texel'] = (1.0 / cfg.WIN_RES.x, 1.0 / cfg.WIN_RES.y)
 
+        # water: scene/depth samplers + realism constants (set once)
+        self.water['u_scene'] = 0
+        self.water['u_depth'] = 1
+        self.water['u_resolution'] = (cfg.WIN_RES.x, cfg.WIN_RES.y)
+        self.water['u_near'] = cfg.NEAR
+        self.water['u_far'] = cfg.FAR
+        self.water['u_refraction'] = cfg.WATER_REFRACTION
+        self.water['u_clarity'] = cfg.WATER_CLARITY
+        self.water['u_absorb'].write(cfg.WATER_ABSORB)
+        self.water['u_detail'] = cfg.WATER_DETAIL
+        self.water['u_detail_scale'] = cfg.WATER_DETAIL_SCALE
+        self.water['u_sun_reflect_shininess'] = cfg.WATER_SUN_REFLECT_SHININESS
+
     def set_shallows(self, islands):
         """Upload the (static) island disc data the water shader uses for shallows tint."""
         cap = cfg.MAX_SHALLOW_ISLANDS

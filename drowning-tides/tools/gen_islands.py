@@ -78,6 +78,16 @@ def _norm(a, b, c):
     return (n / ln) if ln > 1e-9 else np.array([0.0, 1.0, 0.0])
 
 
+def _fbm(x, z, phases):
+    """Cheap seeded multi-octave value noise (summed sines) for terrain displacement."""
+    v, amp, freq = 0.0, 1.0, 1.0
+    for i in range(3):
+        v += amp * math.sin(x * freq + phases[i]) * math.cos(z * freq * 1.3 + phases[i + 1])
+        amp *= 0.5
+        freq *= 2.1
+    return v
+
+
 class Acc:
     """Accumulates flat-shaded, per-vertex-coloured triangles."""
 
@@ -121,31 +131,40 @@ class Acc:
 # ------------------------------------------------------------------------- terrain
 def _profile(kind):
     if kind == "reef":
-        return [(1.00, -0.05), (0.90, -0.01), (0.60, 0.03), (0.30, 0.06)], 0.10
-    return [(1.00, -0.06), (0.97, 0.02), (0.85, 0.10), (0.66, 0.24),
-            (0.45, 0.42), (0.24, 0.62)], 0.80
+        return [(1.00, -0.05), (0.90, -0.01), (0.60, 0.03), (0.30, 0.06)], 0.09
+    # flatter, less conical: wider mid terraces, a low rounded top
+    return [(1.00, -0.06), (0.96, 0.03), (0.82, 0.13), (0.62, 0.27),
+            (0.42, 0.40), (0.26, 0.48)], 0.55
 
 
 def _terrain(acc, rng, kind, seg, lod):
     prof, apex_h = _profile(kind)
     peak = (rng.uniform(0.75, 1.15) if kind != "reef" else 1.0)
     aspect = (rng.uniform(0.72, 1.3), rng.uniform(0.72, 1.3))
-    phases = [rng.uniform(0, math.tau) for _ in range(3)]
+    phases = [rng.uniform(0, math.tau) for _ in range(7)]
+    hfreq = rng.uniform(2.0, 3.3)
+    hamp = 0.02 if kind == "reef" else 0.105   # vertical bumpiness (rocky relief)
 
     def rmul(ang):
-        return (1.0 + 0.18 * math.sin(ang * 3 + phases[0])
-                + 0.12 * math.sin(ang * 5 + phases[1])
-                + 0.07 * math.sin(ang * 7 + phases[2]))
+        # jagged coastline: more + higher-frequency radial variation
+        return (1.0 + 0.26 * math.sin(ang * 3 + phases[0])
+                + 0.16 * math.sin(ang * 5 + phases[1])
+                + 0.11 * math.sin(ang * 8 + phases[2])
+                + 0.06 * math.sin(ang * 13 + phases[3]))
 
+    n_ring = len(prof)
     rings = []
-    for rf, h in prof:
+    for k, (rf, h) in enumerate(prof):
+        t = k / (n_ring - 1)
+        band = 4.0 * t * (1.0 - t)          # 0 at base/apex, 1 mid -> cliffs bump most
         verts = []
         for s in range(seg):
             ang = math.tau * s / seg
             r = rf * rmul(ang)
-            verts.append((r * math.cos(ang) * aspect[0],
-                          h * peak,
-                          r * math.sin(ang) * aspect[1]))
+            x = r * math.cos(ang) * aspect[0]
+            z = r * math.sin(ang) * aspect[1]
+            y = h * peak + _fbm(x * hfreq, z * hfreq, phases) * hamp * (0.4 + 0.6 * band)
+            verts.append((x, y, z))
         rings.append(verts)
     apex = (rng.uniform(-0.04, 0.04), apex_h * peak, rng.uniform(-0.04, 0.04))
     peak_y = apex[1]
