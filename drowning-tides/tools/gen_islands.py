@@ -141,10 +141,11 @@ def _profile(kind):
     if kind == "reef":
         return [(1.00, -0.05), (0.90, -0.01), (0.60, 0.03), (0.30, 0.06)], 0.09
     if kind == "home":
-        # flat shelf out to ~r0.82 (level walk to the village), then a short beach to the water;
-        # several flat rings keep foliage distributed across the top. Sync HOME_LAND_FRAC.
-        return [(1.00, -0.02), (0.90, 0.00), (0.82, 0.03), (0.62, 0.03),
-                (0.45, 0.03), (0.28, 0.03), (0.10, 0.03)], 0.03
+        # flat shelf then a short beach; many flat rings so the hill/mountain relief added in
+        # _terrain has vertices to shape (the town strip is masked flat). Sync HOME_LAND_FRAC.
+        return [(1.00, -0.02), (0.92, 0.00), (0.84, 0.03), (0.74, 0.03), (0.64, 0.03),
+                (0.54, 0.03), (0.44, 0.03), (0.34, 0.03), (0.24, 0.03), (0.14, 0.03),
+                (0.06, 0.03)], 0.03
     # flatter, less conical: wider mid terraces, a low rounded top
     return [(1.00, -0.06), (0.96, 0.03), (0.82, 0.13), (0.62, 0.27),
             (0.42, 0.40), (0.26, 0.48)], 0.55
@@ -172,6 +173,18 @@ def _terrain(acc, rng, kind, seg, lod):
                 + 0.11 * math.sin(ang * 8 + phases[2])
                 + 0.06 * math.sin(ang * 13 + phases[3]))
 
+    def home_relief(x, z, rf):
+        # home island: a central mountain + rolling hills everywhere EXCEPT the flat harbor town
+        # strip, faded out near the coast so the beach/waterline stays clean.
+        if not home:
+            return 0.0
+        mountain = max(0.0, 0.52 - rf) * 0.70           # central peak, gone beyond r~0.52
+        hills = _fbm(x * 3.0, z * 3.0, phases) * 0.06    # rolling hills
+        coast = min(1.0, max(0.0, (0.86 - rf) / 0.18))   # keep the coast/beach clean
+        keep = max(abs(x) - 0.36, z + 0.30)              # <=0 over the flat town strip
+        tmask = 0.0 if keep <= 0.0 else min(1.0, keep / 0.16)
+        return (mountain + hills) * coast * tmask
+
     n_ring = len(prof)
     rings = []
     for k, (rf, h) in enumerate(prof):
@@ -183,17 +196,21 @@ def _terrain(acc, rng, kind, seg, lod):
             r = rf * rmul(ang)
             x = r * math.cos(ang) * aspect[0]
             z = r * math.sin(ang) * aspect[1]
-            y = h * peak + _fbm(x * hfreq, z * hfreq, phases) * hamp * (0.4 + 0.6 * band)
+            y = (h * peak + _fbm(x * hfreq, z * hfreq, phases) * hamp * (0.4 + 0.6 * band)
+                 + home_relief(x, z, rf))
             verts.append((x, y, z))
         rings.append(verts)
     apex = (rng.uniform(-0.04, 0.04), apex_h * peak, rng.uniform(-0.04, 0.04))
+    apex = (apex[0], apex[1] + home_relief(apex[0], apex[2], 0.0), apex[2])
     peak_y = apex[1]
 
     def color(cx, cy, cz, ny):
         if kind == "home":
-            if cz < 0.02 and abs(cx) < HOME_PATH_HALF:   # dirt path down to the -z dock
-                return HOME_DIRT
-            return HOME_SAND if cy < 0.02 else GRASS     # lower beach -> grassy shelf
+            if cy < 0.02:
+                return HOME_SAND                         # lower beach
+            if cy > 0.18:
+                return ROCK                              # rocky mountain upper slopes
+            return GRASS                                 # forested shelf + hills
         if kind == "reef":
             return SAND if cy < 0.0 else REEF
         if ny < 0.5:
@@ -229,9 +246,27 @@ def _terrain(acc, rng, kind, seg, lod):
     for s in range(seg):
         acc.tri(base[(s + 1) % seg], base[s], center, ROCK_DARK, (0, -1, 0))
 
-    # grassy candidates for trees (gentle, high ground), and the shore radius for the dock
-    grass = [v for ring in rings for v in ring if v[1] > 0.30 * peak_y]
-    return grass, peak_y
+    # candidates for trees/rocks: all land verts (home: shelf + hills), else high ground
+    thr = 0.01 if home else 0.30 * peak_y
+    grass = [v for ring in rings for v in ring if v[1] > thr]
+
+    def height_at(x, z):
+        # model surface height at (x, z) — used so scattered foliage/rocks sit on the terrain
+        # instead of floating (exact for the home island: rmul=1, aspect=1, hamp=0).
+        r = math.hypot(x, z)
+        if r >= prof[0][0]:
+            h = prof[0][1]
+        elif r <= prof[-1][0]:
+            h = prof[-1][1]
+        else:
+            h = prof[-1][1]
+            for (r0, h0), (r1, h1) in zip(prof, prof[1:], strict=False):
+                if r1 <= r <= r0:
+                    h = h1 + (h0 - h1) * (r - r1) / (r0 - r1)
+                    break
+        return h * peak + home_relief(x, z, r)
+
+    return grass, peak_y, height_at
 
 
 # ----------------------------------------------------------------------- props
@@ -369,9 +404,9 @@ def _add_dock(acc, rng):
 
 
 # ----------------------------------------------------------------- home foliage detail
-def _add_trees_clustered(acc, rng, grass, palmy, scale):
-    """Trees in a few clumps; sized in WORLD units (target/scale) so they don't scale up
-    with a bigger island."""
+def _add_trees_clustered(acc, rng, grass, palmy, scale, height_at):
+    """Trees in clumps (a forest); world-sized and seated on the terrain via height_at so they
+    don't float over the hills."""
     if not (grass and PROPS_AVAILABLE):
         return _add_trees(acc, rng, grass, palmy)
     spread = 13.0 / scale
@@ -380,13 +415,14 @@ def _add_trees_clustered(acc, rng, grass, palmy, scale):
         for _ in range(rng.randint(3, 5)):
             pos, nrm, col, h = _prop(rng.choice(TREE_MODELS))
             target = rng.uniform(5.5, 9.0) / scale
+            fx = cv[0] + rng.uniform(-spread, spread)
+            fz = cv[2] + rng.uniform(-spread, spread)
             acc.add_transformed(pos, nrm, col, target / h, rng.uniform(0.0, math.tau),
-                                cv[0] + rng.uniform(-spread, spread), cv[1] - 0.01,
-                                cv[2] + rng.uniform(-spread, spread), mute=PROP_MUTE)
+                                fx, height_at(fx, fz) - 0.02, fz, mute=PROP_MUTE)
 
 
-def _add_groundcover(acc, rng, grass, scale):
-    """Scatter bushes, flowers and grass tufts (CC0 Nature Kit), sized in WORLD units."""
+def _add_groundcover(acc, rng, grass, scale, height_at):
+    """Scatter bushes, flowers and grass tufts (CC0 Nature Kit), world-sized, seated on terrain."""
     if not (grass and GROUNDCOVER_OK):
         return
     jit = 7.0 / scale
@@ -399,9 +435,10 @@ def _add_groundcover(acc, rng, grass, scale):
             v = rng.choice(grass)
             pos, nrm, col, h = _prop(rng.choice(models))
             target = rng.uniform(lo, hi) / scale
+            fx = v[0] + rng.uniform(-jit, jit)
+            fz = v[2] + rng.uniform(-jit, jit)
             acc.add_transformed(pos, nrm, col, target / h, rng.uniform(0.0, math.tau),
-                                v[0] + rng.uniform(-jit, jit), v[1] - 0.005,
-                                v[2] + rng.uniform(-jit, jit), mute=PROP_MUTE)
+                                fx, height_at(fx, fz) - 0.01, fz, mute=PROP_MUTE)
 
 
 # --------------------------------------------------------------------- heightfield
@@ -443,12 +480,39 @@ def _bake_heightmap(verts, grid=256):
     return heights.astype("float32"), ext
 
 
+def _add_island_rocks(acc, rng, grass, scale, height_at):
+    """Boulders + rocks on the home island (world-sized) plus shoreline boulders, all seated on the
+    terrain; skips the south harbor sector so the dock stays clear."""
+    if not (grass and PROPS_AVAILABLE):
+        return
+    for _ in range(rng.randint(24, 36)):                 # rocks/boulders on the land + hills
+        v = rng.choice(grass)
+        big = rng.random() < 0.45
+        pos, nrm, col, h = _prop(rng.choice(BIG_ROCK_MODELS if big else ROCK_MODELS))
+        target = (rng.uniform(3.5, 8.0) if big else rng.uniform(1.0, 2.5)) / scale
+        fx = v[0] + rng.uniform(-0.03, 0.03)
+        fz = v[2] + rng.uniform(-0.03, 0.03)
+        acc.add_transformed(pos, nrm, col, target / h, rng.uniform(0.0, math.tau),
+                            fx, height_at(fx, fz) - 0.05, fz, mute=PROP_MUTE)
+    for _ in range(rng.randint(10, 16)):                 # shoreline boulders (not in the harbor)
+        ang = rng.uniform(0.0, math.tau)
+        cxr, czr = math.cos(ang), math.sin(ang)
+        if czr < -0.3 and abs(cxr) < 0.5:
+            continue
+        rr = rng.uniform(0.86, 0.98)
+        fx, fz = rr * cxr, rr * czr
+        pos, nrm, col, h = _prop(rng.choice(BIG_ROCK_MODELS))
+        target = rng.uniform(4.0, 9.0) / scale
+        acc.add_transformed(pos, nrm, col, target / h, rng.uniform(0.0, math.tau),
+                            fx, height_at(fx, fz) - 0.1, fz, mute=PROP_MUTE)
+
+
 # ------------------------------------------------------------------------- glb io
 def gen_island(spec, lod):
     rng = random.Random(spec["seed"] * 100 + lod)
     acc = Acc()
-    seg = (26 if spec["kind"] == "home" else 20) if lod == 0 else 10
-    grass, _ = _terrain(acc, rng, spec["kind"], seg, lod)
+    seg = (36 if spec["kind"] == "home" else 20) if lod == 0 else 10
+    grass, _, height_at = _terrain(acc, rng, spec["kind"], seg, lod)
     heightmap = _bake_heightmap(acc.pos) if lod == 0 else None   # terrain-only (pre-foliage)
     if lod == 0 and spec["kind"] != "reef":
         palmy = spec["seed"] % 2 == 0
@@ -456,8 +520,9 @@ def gen_island(spec, lod):
             # forest the island, but keep foliage OUT of the harbor town (south-central strip,
             # model space: |x|<0.36 and z<-0.30) so the buildings/docks read cleanly
             grass = [v for v in grass if not (v[2] < -0.30 and abs(v[0]) < 0.36)]
-            _add_trees_clustered(acc, rng, grass, palmy, spec["scale"])
-            _add_groundcover(acc, rng, grass, spec["scale"])
+            _add_trees_clustered(acc, rng, grass, palmy, spec["scale"], height_at)
+            _add_groundcover(acc, rng, grass, spec["scale"], height_at)
+            _add_island_rocks(acc, rng, grass, spec["scale"], height_at)
         else:
             _add_trees(acc, rng, grass, palmy)
             _add_rocks(acc, rng, grass)

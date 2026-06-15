@@ -64,7 +64,7 @@ class Town:
         hx = 18.0
         z_open = cz - 0.79 * R               # courtyard opening (dock side, near the shelf edge)
         z_back = z_open + 32.0               # north/back wall (inland)
-        z_edge = cz - 0.82 * R               # shelf edge (cobble the apron out to the stair top)
+        z_edge = cz - 0.84 * R               # shelf edge (cobble the apron out to the stair top)
         midz = (z_open + z_back) / 2
         self.court = (cx, hx, z_open, z_back)
 
@@ -235,8 +235,8 @@ class Town:
         cx, cz, R = home.position.x, home.position.z, home.radius
         gy = home.land_y
         sw = 18.0                                    # wide stair/landing half-width (opening width)
-        z_edge = cz - 0.82 * R                       # start the flight at the shelf edge, so the
-        z_stair_bot = z_open - 11.0                  # steps sit over the falling beach -> no mesh
+        z_edge = cz - 0.84 * R                       # start the flight at the shelf edge, so the
+        z_stair_bot = z_edge - 8.5                   # steps sit over the falling beach -> no mesh
         z_land_bot = z_stair_bot - 4.0
         # wide grand wooden staircase: shelf edge (gy) down to the landing (DECK_Y)
         self._stairs(md, cx, z_edge, z_stair_bot, gy, DECK_Y, sw, n=10)
