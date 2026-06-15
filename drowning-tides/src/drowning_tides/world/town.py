@@ -64,10 +64,12 @@ class Town:
         hx = 18.0
         z_open = cz - 0.79 * R               # courtyard opening (dock side, near the shelf edge)
         z_back = z_open + 32.0               # north/back wall (inland)
+        z_edge = cz - 0.82 * R               # shelf edge (cobble the apron out to the stair top)
         midz = (z_open + z_back) / 2
         self.court = (cx, hx, z_open, z_back)
 
-        md.box(cx, gy + 0.12, midz, hx, 0.12, (z_back - z_open) / 2, PLAZA_COLOR)   # cobble floor
+        # cobble floor, extended south over the flat-shelf apron to where the stairs begin
+        md.box(cx, gy + 0.12, (z_edge + z_back) / 2, hx, 0.12, (z_back - z_edge) / 2, PLAZA_COLOR)
         self._courtyard_walls(md, home, hx, z_open, z_back)
 
         # centre: well + a cluster of market stalls
@@ -76,8 +78,8 @@ class Town:
         self._solid(cx, midz, 2.2, 2.2)
         self._kit('stall-red.glb', cx - 6.0, midz - 4.0, S, yaw=0.3, y=gy)
         self._kit('stall-green.glb', cx + 6.0, midz - 4.0, S, yaw=2.8, y=gy)
-        self._kit('cart.glb', cx + 7.0, midz + 5.0, S, yaw=1.0, y=gy)
-        self._kit('stall-stool.glb', cx - 5.0, midz + 4.0, S, y=gy)
+        self._kit('stall-stool.glb', cx - 6.0, midz + 4.0, S, y=gy)
+        self._kit('cart.glb', cx + 6.0, midz + 4.0, S, yaw=1.0, y=gy)
         for (lx, lz) in ((-hx + 2, z_open + 3), (hx - 2, z_open + 3),
                          (-hx + 2, z_back - 3), (hx - 2, z_back - 3)):
             self._kit('lantern.glb', cx + lx, lz, 1.7, y=gy)
@@ -89,8 +91,10 @@ class Town:
         cx = home.position.x
         rng = random.Random(777)
         self._wall(md, 'x', z_back, cx - hx, cx + hx, math.pi, rng)          # north (back)
-        self._wall(md, 'z', cx + hx, z_open, z_back, -math.pi / 2, rng)      # east
-        self._wall(md, 'z', cx - hx, z_open, z_back, math.pi / 2, rng)       # west
+        # east + west use the SAME rolled run, mirrored about cx -> exact left-right symmetry
+        side = self._roll_wall(z_back - z_open, rng)
+        self._lay_wall(md, 'z', cx + hx, z_open, z_back, -math.pi / 2, *side, rng)
+        self._lay_wall(md, 'z', cx - hx, z_open, z_back, math.pi / 2, *side, rng)
         gy = home.land_y
         for sgn in (1, -1):
             # seal the back corners where the north + side walls meet (hedge + crate cluster)
@@ -101,31 +105,50 @@ class Town:
             # short fence stubs flanking the opening, funnelling the south side to the stairs
             self._blocker(md, 'z', cx + sgn * hx, z_open - 4.0, z_open - 0.5, rng)
 
-    def _wall(self, md, axis, fixed, lo, hi, face_yaw, rng):
-        """Pack buildings edge-to-edge along a wall (axis 'x' or 'z'), fronts facing into the
-        courtyard, and plug the gaps between them with colliding props."""
-        fnx, fnz = math.sin(face_yaw), math.cos(face_yaw)
-        spans = []
-        t = lo
-        while t < hi - 5.0:
+    def _roll_wall(self, span, rng):
+        """Roll a sequence of buildings + inter-gaps that fits within a wall span."""
+        items, gaps_between, total = [], [], 0.0
+        while True:
             w, d = rng.choice([2, 3, 3, 4]), rng.choice([2, 3])
             bw = w * S
-            if t + bw > hi:
+            nxt_gap = rng.uniform(1.6, 2.8) if items else 0.0
+            if total + nxt_gap + bw > span - 1.0:
                 break
+            if items:
+                gaps_between.append(nxt_gap)
+                total += nxt_gap
+            items.append((w, d, rng.choice([2, 3, 3]), rng.choice(['wood', 'wood', 'stone'])))
+            total += bw
+        return items, gaps_between, total
+
+    def _lay_wall(self, md, axis, fixed, lo, hi, face_yaw, items, gaps_between, total, rng):
+        """Place a rolled wall run centred within [lo, hi] (equal end-margins), fronts facing into
+        the courtyard, with colliding props plugging the gaps."""
+        fnx, fnz = math.sin(face_yaw), math.cos(face_yaw)
+        if not items:
+            self._blocker(md, axis, fixed, lo, hi, rng)
+            return
+        t = lo + ((hi - lo) - total) / 2.0
+        spans = []
+        for k, (w, d, floors, style) in enumerate(items):
+            if k > 0:
+                t += gaps_between[k - 1]
+            bw = w * S
             mt = t + bw / 2
             ax, az = (mt, fixed) if axis == 'x' else (fixed, mt)
             cxb, czb = ax - fnx * (d * S * 0.5), az - fnz * (d * S * 0.5)
-            self._building(md, cxb, czb, w, d, rng.choice([2, 3, 3]), face_yaw,
-                           rng.choice(['wood', 'wood', 'stone']))
+            self._building(md, cxb, czb, w, d, floors, face_yaw, style)
             spans.append((t, t + bw))
-            t += bw + rng.uniform(1.6, 2.8)
-        gaps = [(lo, spans[0][0])] if spans else [(lo, hi)]
+            t += bw
+        gaps = [(lo, spans[0][0])]
         gaps += [(spans[i][1], spans[i + 1][0]) for i in range(len(spans) - 1)]
-        if spans:
-            gaps.append((spans[-1][1], hi))
+        gaps.append((spans[-1][1], hi))
         for (g0, g1) in gaps:
             if g1 - g0 > 0.4:
                 self._blocker(md, axis, fixed, g0, g1, rng)
+
+    def _wall(self, md, axis, fixed, lo, hi, face_yaw, rng):
+        self._lay_wall(md, axis, fixed, lo, hi, face_yaw, *self._roll_wall(hi - lo, rng), rng)
 
     def _blocker(self, md, axis, fixed, g0, g1, rng):
         """Plug an alley gap with a colliding prop (fence/hedge line, cart, or crate stack)."""
@@ -210,18 +233,32 @@ class Town:
     def _build_dock(self, md, home, z_open):
         cx, cz, R = home.position.x, home.position.z, home.radius
         gy = home.land_y
+        sw = 18.0                                    # wide stair/landing half-width (opening width)
+        z_edge = cz - 0.82 * R                       # start the flight at the shelf edge, so the
+        z_stair_bot = z_open - 11.0                  # steps sit over the falling beach -> no mesh
+        z_land_bot = z_stair_bot - 4.0
+        # wide grand wooden staircase: shelf edge (gy) down to the landing (DECK_Y)
+        self._stairs(md, cx, z_edge, z_stair_bot, gy, DECK_Y, sw, n=10)
+        # wide low landing / wharf at water level, on pilings
+        md.box(cx, DECK_Y - 0.11, (z_stair_bot + z_land_bot) / 2, sw, 0.11,
+               abs(z_stair_bot - z_land_bot) / 2, PLANK_COLOR)
+        self.flat_decks.append((cx - sw, z_land_bot, cx + sw, z_stair_bot, DECK_Y))
+        for i in range(7):
+            self._piling(md, cx - sw + i * (sw / 3.0), z_land_bot, DECK_Y + 0.4)
+        for sz in (z_stair_bot, (z_stair_bot + z_land_bot) / 2, z_land_bot):
+            self._piling(md, cx - sw, sz, DECK_Y + 0.4)
+            self._piling(md, cx + sw, sz, DECK_Y + 0.4)
+        # narrow boat pier from the landing centre out to the T-head
         hw = 2.5
-        z_bot = z_open - 3.5
-        self._stairs(md, cx, z_open, z_bot, gy, DECK_Y, 3.5)         # courtyard -> pier level
         z1 = cz - 0.997 * R
-        n = max(2, round(abs(z_bot - z1) / 0.95))
-        stp = (z1 - z_bot) / n
+        n = max(2, round(abs(z_land_bot - z1) / 0.95))
+        stp = (z1 - z_land_bot) / n
         for k in range(n):
-            za, zb = z_bot + stp * k, z_bot + stp * (k + 1)
+            za, zb = z_land_bot + stp * k, z_land_bot + stp * (k + 1)
             md.box(cx, DECK_Y - 0.11, (za + zb) / 2, hw, 0.11, abs(zb - za) / 2 - 0.05, PLANK_COLOR)
-        self.flat_decks.append((cx - hw, min(z_bot, z1), cx + hw, max(z_bot, z1), DECK_Y))
-        for k in range(5):
-            z = z_bot + (z1 - z_bot) * (k + 0.5) / 5
+        self.flat_decks.append((cx - hw, min(z_land_bot, z1), cx + hw, max(z_land_bot, z1), DECK_Y))
+        for k in range(4):
+            z = z_land_bot + (z1 - z_land_bot) * (k + 0.5) / 4
             for px in (cx - hw - 0.12, cx + hw + 0.12):
                 self._piling(md, px, z, DECK_Y + 0.5)
 
@@ -252,6 +289,15 @@ class Town:
             zb = z_top + (z_bot - z_top) * (i + 1) / n
             yi = y_top + (y_bot - y_top) * (i + 1) / n
             md.box(cx, yi - 0.6, (za + zb) / 2, hw, 0.6, abs(zb - za) / 2, PLANK_COLOR)
+        # solid sloped side stringers (read as a built flight + hide where steps meet the beach)
+        yb = -0.4
+        for sx in (cx - hw, cx + hw):
+            md.quad((sx, y_top, z_top), (sx, y_bot, z_bot), (sx, yb, z_bot), (sx, yb, z_top),
+                    PLANK_COLOR)
+            md.quad((sx, yb, z_top), (sx, yb, z_bot), (sx, y_bot, z_bot), (sx, y_top, z_top),
+                    PLANK_COLOR)
+            self._piling(md, sx, z_bot, y_bot + 0.4)
+            self._piling(md, sx, z_top, y_top - 0.4)
         self.ramps.append((cx - hw, min(z_top, z_bot), cx + hw, max(z_top, z_bot),
                            y_bot, y_top, 'z'))
 

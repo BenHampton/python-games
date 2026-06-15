@@ -156,9 +156,16 @@ def _terrain(acc, rng, kind, seg, lod):
     aspect = (rng.uniform(0.72, 1.3), rng.uniform(0.72, 1.3))
     phases = [rng.uniform(0, math.tau) for _ in range(7)]
     hfreq = rng.uniform(2.0, 3.3)
-    hamp = {"reef": 0.02, "home": 0.003}.get(kind, 0.105)   # bumpiness (home: near-level shelf)
+    hamp = {"reef": 0.02, "home": 0.0}.get(kind, 0.105)     # bumpiness (home: dead-flat shelf)
+    # the home island is the harbor: keep it a clean circle so the south shore is symmetric
+    # about its centre (otherwise a jagged/elongated coast skews the dock + stairs off-centre)
+    home = kind == "home"
+    if home:
+        aspect = (1.0, 1.0)
 
     def rmul(ang):
+        if home:
+            return 1.0
         # jagged coastline: more + higher-frequency radial variation
         return (1.0 + 0.26 * math.sin(ang * 3 + phases[0])
                 + 0.16 * math.sin(ang * 5 + phases[1])
