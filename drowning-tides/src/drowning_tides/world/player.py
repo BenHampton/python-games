@@ -14,7 +14,7 @@ from drowning_tides.config import settings as cfg
 def walk(pos, yaw, fwd, strafe, dt, center, radius, land_y, speed):
     """Pure step: move (pos) by WASD along the look yaw, clamped to the island disc."""
     s, c = math.sin(yaw), math.cos(yaw)
-    move = glm.vec2(s, c) * fwd + glm.vec2(c, -s) * strafe   # forward, right
+    move = glm.vec2(s, c) * fwd + glm.vec2(-c, s) * strafe   # forward, right (= cross(fwd, up))
     x, z = pos.x, pos.z
     if glm.length(move) > 1e-6:
         step = glm.normalize(move) * speed * dt

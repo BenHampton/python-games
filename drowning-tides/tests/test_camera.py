@@ -3,7 +3,7 @@ import math
 from pyglm import glm
 
 from drowning_tides.config import settings as cfg
-from drowning_tides.render.camera import Camera
+from drowning_tides.render.camera import FIRST_PERSON, Camera
 
 
 class _Boat:
@@ -13,9 +13,15 @@ class _Boat:
         self.yaw = 0.0
 
 
+class _Player:
+    def __init__(self):
+        self.position = glm.vec3(0.0, 0.0, 0.0)
+
+
 class _App:
     def __init__(self):
         self.boat = _Boat()
+        self.player = _Player()
 
 
 def _camera():
@@ -39,12 +45,24 @@ def test_add_look_changes_yaw_and_pitch():
     assert cam.orbit_pitch != p0  # default (non-inverted) Y moves pitch
 
 
+def test_pitch_moves_opposite_per_mode():
+    # same vertical input tilts the view up in both modes -> opposite raw pitch deltas
+    follow = Camera(_App())
+    fp = Camera(_App(), mode=FIRST_PERSON)
+    p0 = cfg.CAM_PITCH_START
+    follow.add_look(0.0, 50.0)
+    fp.add_look(0.0, 50.0)
+    assert (follow.orbit_pitch - p0) * (fp.orbit_pitch - p0) < 0.0
+
+
 def test_pitch_clamps_to_limits():
-    cam = _camera()
-    cam.add_look(0.0, 100000.0)
-    assert math.isclose(cam.orbit_pitch, cfg.CAM_PITCH_MIN)
-    cam.add_look(0.0, -100000.0)
-    assert math.isclose(cam.orbit_pitch, cfg.CAM_PITCH_MAX)
+    # the two extreme vertical inputs hit the two pitch limits (regardless of invert-Y)
+    a = _camera()
+    a.add_look(0.0, 100000.0)
+    b = _camera()
+    b.add_look(0.0, -100000.0)
+    limits = {round(cfg.CAM_PITCH_MIN, 5), round(cfg.CAM_PITCH_MAX, 5)}
+    assert {round(a.orbit_pitch, 5), round(b.orbit_pitch, 5)} == limits
 
 
 def test_zoom_clamps_distance():

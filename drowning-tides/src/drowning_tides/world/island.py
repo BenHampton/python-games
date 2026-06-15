@@ -7,6 +7,7 @@ outside the frustum or beyond the cull distance and picks an LOD by distance.
 """
 import math
 
+import numpy as np
 from pyglm import glm
 
 from drowning_tides.config import settings as cfg
@@ -16,12 +17,37 @@ from drowning_tides.core.model import MODELS_DIR, Model
 ISLANDS_DIR = MODELS_DIR / "islands"
 
 
+def sample_height(heights, ext, scale, yaw, pos, x, z):
+    """Bilinear-sample a baked terrain heightmap (model space) at world (x, z) and return the
+    world ground height. Inverts the island's transform (T(pos)*R_y(yaw)*S(scale), see
+    core/model.py::Model) to reach model space, then samples the grid over [-ext, ext]^2."""
+    ux = (x - pos.x) / scale
+    uz = (z - pos.z) / scale
+    c, s = math.cos(yaw), math.sin(yaw)
+    mx = c * ux - s * uz                       # inverse Y-rotation
+    mz = s * ux + c * uz
+    g = heights.shape[0]
+    cell = 2.0 * ext / g
+    fx = (mx + ext) / cell - 0.5               # cell-centre sampling coords
+    fz = (mz + ext) / cell - 0.5
+    i0 = max(0, min(g - 1, int(math.floor(fx))))
+    j0 = max(0, min(g - 1, int(math.floor(fz))))
+    i1 = min(g - 1, i0 + 1)
+    j1 = min(g - 1, j0 + 1)
+    tx = max(0.0, min(1.0, fx - i0))
+    tz = max(0.0, min(1.0, fz - j0))
+    h0 = heights[j0, i0] * (1.0 - tx) + heights[j0, i1] * tx
+    h1 = heights[j1, i0] * (1.0 - tx) + heights[j1, i1] * tx
+    return pos.y + float(h0 * (1.0 - tz) + h1 * tz) * scale
+
+
 class Island:
     def __init__(self, app, spec):
         self.name = spec["name"]
         self.position = glm.vec3(*spec["pos"])
         self.radius = spec["radius"]          # collision disc
         scale, yaw = spec["scale"], spec["yaw"]
+        self.scale, self.yaw = scale, yaw
         self.kind = spec["kind"]
         self.dockable = spec["kind"] != "reef"        # can't disembark onto a reef
         if self.kind == "home":                       # big flat island
@@ -44,18 +70,20 @@ class Island:
         self.center = glm.vec3(m * glm.vec4(self.lods[0].local_center, 1.0))
         self.cull_radius = self.lods[0].local_radius * scale
 
+        # baked terrain heightmap (so the player follows the real surface); flat fallback if absent
+        hp = ISLANDS_DIR / f"{self.name}_height.npz"
+        if hp.exists():
+            data = np.load(hp)
+            self.heights, self.ext = data["heights"], float(data["ext"])
+        else:
+            self.heights, self.ext = None, 0.0
+
     def ground_y(self, x, z):
-        """Walkable ground height at (x, z). The home island ramps from the shore up to its
-        flat plateau so you can walk up the beach; other islands use a flat summit plane."""
-        if self.kind != 'home':
+        """Walkable ground height at (x, z), bilinear-sampled from the baked terrain heightmap
+        so the player follows the real surface. Falls back to a flat summit if no map loaded."""
+        if self.heights is None:
             return self.land_y
-        r = math.hypot(x - self.position.x, z - self.position.z) / self.radius
-        if r <= cfg.HOME_FLAT_FRAC:
-            return self.land_y
-        if r >= 1.0:
-            return cfg.HOME_SHORE_Y
-        t = (r - cfg.HOME_FLAT_FRAC) / (1.0 - cfg.HOME_FLAT_FRAC)
-        return self.land_y * (1.0 - t) + cfg.HOME_SHORE_Y * t
+        return sample_height(self.heights, self.ext, self.scale, self.yaw, self.position, x, z)
 
     def render(self, lod):
         self.lods[lod].render()

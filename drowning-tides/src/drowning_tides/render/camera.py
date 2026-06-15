@@ -33,7 +33,10 @@ class Camera:
     # ------------------------------------------------------------------- mouse input
     def add_look(self, dx, dy):
         self.orbit_yaw += dx * cfg.MOUSE_SENSITIVITY
-        sign = 1.0 if cfg.INVERT_Y else -1.0
+        # "mouse up = view tilts up" means opposite pitch signs per mode: on foot raising pitch
+        # looks up; at the helm raising pitch lifts the orbit camera (view tilts down).
+        base = 1.0 if self.mode == FOLLOW else -1.0
+        sign = -base if cfg.INVERT_Y else base
         self.orbit_pitch += sign * dy * cfg.MOUSE_SENSITIVITY
         if self.mode == FIRST_PERSON:
             lo, hi = cfg.FP_PITCH_MIN, cfg.FP_PITCH_MAX

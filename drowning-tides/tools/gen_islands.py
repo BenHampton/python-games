@@ -44,6 +44,9 @@ FOLIAGE = (0.14, 0.26, 0.16)
 PALM = (0.18, 0.33, 0.20)
 DOCK = (0.30, 0.21, 0.13)
 REEF = (0.19, 0.23, 0.24)
+HOME_SAND = (0.66, 0.60, 0.46)     # home beach
+HOME_DIRT = (0.40, 0.33, 0.23)     # home path
+HOME_PATH_HALF = 0.06              # path half-width (model space) along the -z dock corridor
 
 # CC0 Kenney Nature Kit props baked into the islands (with procedural fallback if missing)
 NATURE_DIR = MODELS_DIR / "nature"
@@ -52,8 +55,13 @@ TREE_MODELS = ['tree_pineDefaultA.glb', 'tree_pineDefaultB.glb', 'tree_pineRound
 ROCK_MODELS = ['rock_smallA.glb', 'rock_smallB.glb', 'rock_smallC.glb', 'rock_smallD.glb']
 BIG_ROCK_MODELS = ['rock_largeA.glb', 'rock_largeB.glb', 'rock_largeC.glb',
                    'rock_tallC.glb', 'rock_tallE.glb']
+BUSH_MODELS = ['plant_bush.glb', 'plant_bushDetailed.glb', 'plant_bushLarge.glb',
+               'plant_bushSmall.glb']
+FLOWER_MODELS = ['flower_redA.glb', 'flower_purpleA.glb', 'flower_yellowA.glb']
+GRASS_MODELS = ['grass.glb', 'grass_large.glb', 'grass_leafs.glb']
 _ALL_PROPS = TREE_MODELS + ROCK_MODELS + BIG_ROCK_MODELS
 PROPS_AVAILABLE = all((NATURE_DIR / m).exists() for m in _ALL_PROPS)
+GROUNDCOVER_OK = all((NATURE_DIR / m).exists() for m in BUSH_MODELS + FLOWER_MODELS + GRASS_MODELS)
 PROP_MUTE = 0.35            # desaturate Kenney's bright palette toward our muted mood
 _PROP_CACHE = {}
 
@@ -133,8 +141,10 @@ def _profile(kind):
     if kind == "reef":
         return [(1.00, -0.05), (0.90, -0.01), (0.60, 0.03), (0.30, 0.06)], 0.09
     if kind == "home":
-        # big flat-topped plateau with a wide walkable beach ramp (flat inside r~0.58)
-        return [(1.00, -0.03), (0.80, 0.05), (0.58, 0.12), (0.10, 0.12)], 0.12
+        # flat shelf out to ~r0.82 (level walk to the village), then a short beach to the water;
+        # several flat rings keep foliage distributed across the top. Sync HOME_LAND_FRAC.
+        return [(1.00, -0.02), (0.90, 0.00), (0.82, 0.03), (0.62, 0.03),
+                (0.45, 0.03), (0.28, 0.03), (0.10, 0.03)], 0.03
     # flatter, less conical: wider mid terraces, a low rounded top
     return [(1.00, -0.06), (0.96, 0.03), (0.82, 0.13), (0.62, 0.27),
             (0.42, 0.40), (0.26, 0.48)], 0.55
@@ -146,7 +156,7 @@ def _terrain(acc, rng, kind, seg, lod):
     aspect = (rng.uniform(0.72, 1.3), rng.uniform(0.72, 1.3))
     phases = [rng.uniform(0, math.tau) for _ in range(7)]
     hfreq = rng.uniform(2.0, 3.3)
-    hamp = {"reef": 0.02, "home": 0.0}.get(kind, 0.105)   # vertical bumpiness (0 = flat)
+    hamp = {"reef": 0.02, "home": 0.003}.get(kind, 0.105)   # bumpiness (home: near-level shelf)
 
     def rmul(ang):
         # jagged coastline: more + higher-frequency radial variation
@@ -172,7 +182,11 @@ def _terrain(acc, rng, kind, seg, lod):
     apex = (rng.uniform(-0.04, 0.04), apex_h * peak, rng.uniform(-0.04, 0.04))
     peak_y = apex[1]
 
-    def color(cy, ny):
+    def color(cx, cy, cz, ny):
+        if kind == "home":
+            if cz < 0.02 and abs(cx) < HOME_PATH_HALF:   # dirt path down to the -z dock
+                return HOME_DIRT
+            return HOME_SAND if cy < 0.02 else GRASS     # lower beach -> grassy shelf
         if kind == "reef":
             return SAND if cy < 0.0 else REEF
         if ny < 0.5:
@@ -183,23 +197,24 @@ def _terrain(acc, rng, kind, seg, lod):
             return ROCK
         return GRASS
 
+    def face(a, b, c):
+        n = _norm(a, b, c)
+        if n[1] < 0:
+            n = -n
+        cx = (a[0] + b[0] + c[0]) / 3.0
+        cy = (a[1] + b[1] + c[1]) / 3.0
+        cz = (a[2] + b[2] + c[2]) / 3.0
+        acc.tri(a, b, c, color(cx, cy, cz, n[1]), n)
+
     for k in range(len(rings) - 1):
         lo, hi = rings[k], rings[k + 1]
         for s in range(seg):
             s2 = (s + 1) % seg
-            for a, b, c in ((lo[s], lo[s2], hi[s2]), (lo[s], hi[s2], hi[s])):
-                n = _norm(a, b, c)
-                if n[1] < 0:
-                    n = -n
-                cy = (a[1] + b[1] + c[1]) / 3.0
-                acc.tri(a, b, c, color(cy, n[1]), n)
+            face(lo[s], lo[s2], hi[s2])
+            face(lo[s], hi[s2], hi[s])
     top = rings[-1]
     for s in range(seg):
-        a, b, c = top[s], top[(s + 1) % seg], apex
-        n = _norm(a, b, c)
-        if n[1] < 0:
-            n = -n
-        acc.tri(a, b, c, color((a[1] + b[1] + c[1]) / 3.0, n[1]), n)
+        face(top[s], top[(s + 1) % seg], apex)
 
     # base cap (underside, faces down)
     base = rings[0]
@@ -346,21 +361,102 @@ def _add_dock(acc, rng):
         _box(acc, sx, sz, -0.08, y, 0.02, DOCK)
 
 
+# ----------------------------------------------------------------- home foliage detail
+def _add_trees_clustered(acc, rng, grass, palmy, scale):
+    """Trees in a few clumps; sized in WORLD units (target/scale) so they don't scale up
+    with a bigger island."""
+    if not (grass and PROPS_AVAILABLE):
+        return _add_trees(acc, rng, grass, palmy)
+    spread = 12.0 / scale
+    for _ in range(rng.randint(6, 10)):
+        cv = rng.choice(grass)
+        for _ in range(rng.randint(2, 4)):
+            pos, nrm, col, h = _prop(rng.choice(TREE_MODELS))
+            target = rng.uniform(5.5, 9.0) / scale
+            acc.add_transformed(pos, nrm, col, target / h, rng.uniform(0.0, math.tau),
+                                cv[0] + rng.uniform(-spread, spread), cv[1] - 0.01,
+                                cv[2] + rng.uniform(-spread, spread), mute=PROP_MUTE)
+
+
+def _add_groundcover(acc, rng, grass, scale):
+    """Scatter bushes, flowers and grass tufts (CC0 Nature Kit), sized in WORLD units."""
+    if not (grass and GROUNDCOVER_OK):
+        return
+    jit = 7.0 / scale
+    for models, count, lo, hi in (
+        (BUSH_MODELS, rng.randint(16, 26), 1.4, 2.8),
+        (FLOWER_MODELS, rng.randint(28, 44), 0.5, 1.1),
+        (GRASS_MODELS, rng.randint(36, 56), 0.5, 1.3),
+    ):
+        for _ in range(count):
+            v = rng.choice(grass)
+            pos, nrm, col, h = _prop(rng.choice(models))
+            target = rng.uniform(lo, hi) / scale
+            acc.add_transformed(pos, nrm, col, target / h, rng.uniform(0.0, math.tau),
+                                v[0] + rng.uniform(-jit, jit), v[1] - 0.005,
+                                v[2] + rng.uniform(-jit, jit), mute=PROP_MUTE)
+
+
+# --------------------------------------------------------------------- heightfield
+def _bake_heightmap(verts, grid=256):
+    """Rasterize terrain triangles (model space) into a (grid, grid) top-surface heightmap.
+    heights[j, i] is the max surface y over cell (i<->x, j<->z); `ext` is the model half-extent
+    so the grid spans [-ext, ext]^2. Used by Island.ground_y so the player follows the real
+    surface. Pass terrain-only triangles (no foliage)."""
+    v = np.asarray(verts, dtype=float)
+    tris = v.reshape(-1, 3, 3)
+    ext = float(np.abs(v[:, [0, 2]]).max()) * 1.02
+    cell = 2.0 * ext / grid
+    heights = np.full((grid, grid), -1e30)
+    for t in tris:
+        x, y, z = t[:, 0], t[:, 1], t[:, 2]
+        i0 = max(int((x.min() + ext) / cell), 0)
+        i1 = min(int((x.max() + ext) / cell) + 1, grid - 1)
+        j0 = max(int((z.min() + ext) / cell), 0)
+        j1 = min(int((z.max() + ext) / cell) + 1, grid - 1)
+        if i1 < i0 or j1 < j0:
+            continue
+        x0, x1, x2 = x
+        z0, z1, z2 = z
+        denom = (z1 - z2) * (x0 - x2) + (x2 - x1) * (z0 - z2)
+        if abs(denom) < 1e-15:
+            continue
+        px = -ext + (np.arange(i0, i1 + 1) + 0.5) * cell
+        pz = -ext + (np.arange(j0, j1 + 1) + 0.5) * cell
+        gx, gz = np.meshgrid(px, pz)
+        a = ((z1 - z2) * (gx - x2) + (x2 - x1) * (gz - z2)) / denom
+        b = ((z2 - z0) * (gx - x2) + (x0 - x2) * (gz - z2)) / denom
+        c = 1.0 - a - b
+        inside = (a >= -1e-6) & (b >= -1e-6) & (c >= -1e-6)
+        yh = a * y[0] + b * y[1] + c * y[2]
+        block = heights[j0:j1 + 1, i0:i1 + 1]
+        np.maximum(block, np.where(inside, yh, -1e30), out=block)
+    touched = heights[heights > -1e29]
+    heights[heights <= -1e29] = float(touched.min()) if touched.size else 0.0
+    return heights.astype("float32"), ext
+
+
 # ------------------------------------------------------------------------- glb io
 def gen_island(spec, lod):
     rng = random.Random(spec["seed"] * 100 + lod)
     acc = Acc()
-    seg = 20 if lod == 0 else 10
+    seg = (26 if spec["kind"] == "home" else 20) if lod == 0 else 10
     grass, _ = _terrain(acc, rng, spec["kind"], seg, lod)
+    heightmap = _bake_heightmap(acc.pos) if lod == 0 else None   # terrain-only (pre-foliage)
     if lod == 0 and spec["kind"] != "reef":
+        palmy = spec["seed"] % 2 == 0
         if spec["kind"] == "home":
-            grass = [v for v in grass if v[0] * v[0] + v[2] * v[2] > 0.45 * 0.45]  # clear village
-        _add_trees(acc, rng, grass, palmy=(spec["seed"] % 2 == 0))
-        _add_rocks(acc, rng, grass)
-        _add_offshore_rocks(acc, rng)
-        if spec["kind"] == "home":
-            _add_dock(acc, rng)
-    return acc.arrays()
+            # home island: foliage only (no rocks), village centre + path kept clear
+            grass = [v for v in grass
+                     if v[0] * v[0] + v[2] * v[2] > 0.45 * 0.45
+                     and not (v[2] < 0.04 and abs(v[0]) < HOME_PATH_HALF + 0.04)]
+            _add_trees_clustered(acc, rng, grass, palmy, spec["scale"])
+            _add_groundcover(acc, rng, grass, spec["scale"])
+        else:
+            _add_trees(acc, rng, grass, palmy)
+            _add_rocks(acc, rng, grass)
+            _add_offshore_rocks(acc, rng)
+    return acc.arrays(), heightmap
 
 
 def write_glb(path, pos, nrm, rgba):
@@ -395,11 +491,14 @@ def main():
     for spec in cfg.ISLANDS:
         tris = {}
         for lod in (0, 1):
-            pos, nrm, rgba = gen_island(spec, lod)
+            (pos, nrm, rgba), heightmap = gen_island(spec, lod)
             write_glb(OUT_DIR / f"{spec['name']}_lod{lod}.glb", pos, nrm, rgba)
             tris[lod] = len(pos) // 3
+            if heightmap is not None:
+                heights, ext = heightmap
+                np.savez(OUT_DIR / f"{spec['name']}_height.npz", heights=heights, ext=ext)
         print(f"{spec['name']:16s} {spec['kind']:7s} lod0={tris[0]:4d} lod1={tris[1]:4d} tris")
-    print(f"wrote {len(cfg.ISLANDS) * 2} glbs to {OUT_DIR}")
+    print(f"wrote {len(cfg.ISLANDS) * 2} glbs + {len(cfg.ISLANDS)} heightmaps to {OUT_DIR}")
 
 
 if __name__ == "__main__":

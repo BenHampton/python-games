@@ -39,7 +39,7 @@ class Boat:
 
         # physics state
         self.position = glm.vec3(cfg.BOAT_START_POS)
-        self.yaw = 0.0          # radians, heading about +Y
+        self.yaw = cfg.BOAT_START_YAW   # radians, heading about +Y (moored alongside the pier)
         self.speed = 0.0        # signed scalar along forward
         self.pitch = 0.0        # set by wave sampling (stub for now)
         self.roll = 0.0

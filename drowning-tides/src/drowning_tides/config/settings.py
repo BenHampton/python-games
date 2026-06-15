@@ -9,7 +9,7 @@ MINOR_VERSION = 3
 DEPTH_SIZE = 24
 
 # resolution
-FULLSCREEN = True               # use the native desktop resolution; False uses WIN_RES below
+FULLSCREEN = False              # start windowed (WIN_RES); True uses native desktop resolution
 WIN_RES = glm.vec2(1280, 720)   # windowed size / fallback (overwritten at startup in fullscreen)
 
 # control keys
@@ -41,7 +41,7 @@ CAM_LERP = 4.0          # follow smoothing (higher = snappier), used as 1-exp(-k
 
 # camera mouse-look orbit (world-space yaw so the angle holds as the boat turns)
 MOUSE_SENSITIVITY = 0.0025          # radians of orbit per pixel of mouse motion
-INVERT_Y = False                    # flip vertical look
+INVERT_Y = False                    # flip vertical look (per-mode default is mouse up = view up)
 CAM_PITCH_START = math.radians(24.0)
 CAM_PITCH_MIN = math.radians(-5.0)  # don't dip the camera under the sea
 CAM_PITCH_MAX = math.radians(80.0)  # don't flip overhead
@@ -52,18 +52,18 @@ FP_PITCH_MIN = math.radians(-85.0)  # first-person look-down limit
 FP_PITCH_MAX = math.radians(85.0)   # first-person look-up limit
 
 # on-foot (first-person, walk on land when docked)
-DOCK_RANGE = 14.0                   # how close the boat must be to an island shore to disembark
+DOCK_RANGE = 22.0                   # how close the boat must be to an island shore to disembark
 PLAYER_SPEED = 9.0                  # walk speed (units/sec)
 PLAYER_EYE_HEIGHT = 1.7             # camera eye height above the land plane
 ISLAND_LAND_FRAC = 0.42            # mesa islands: stand on the grassy cap (frac of scale)
 ISLAND_WALK_FRAC = 0.35            # mesa: walkable summit radius (frac of island radius)
 ISLAND_SPAWN_FRAC = 0.15          # mesa: spawn near the summit centre
 # the home island is a big FLAT-topped island so the village is easy to reach + visible
-HOME_LAND_FRAC = 0.12             # flat plateau height (frac of scale): flat top, visible from sea
-HOME_FLAT_FRAC = 0.58            # inside this radius fraction the top is flat; outside ramps down
+HOME_LAND_FRAC = 0.03             # flat shelf height (frac of scale): low level top (sync gen)
+HOME_FLAT_FRAC = 0.40            # flat inside this radius frac; gentle ramp outside (sync gen)
 HOME_SHORE_Y = 0.4              # ground height at the shore (just above water; ramp foot)
-HOME_WALK_FRAC = 0.95            # walk out to near the shore
-HOME_SPAWN_FRAC = 0.92           # disembark low on the beach, walk up the ramp to the village
+HOME_WALK_FRAC = 0.85            # walk out to the waterline (beyond this the beach is underwater)
+HOME_SPAWN_FRAC = 0.78           # disembark on dry beach, walk up the ramp to the village
 
 # boat physics
 BOAT_MAX_SPEED = 22.0       # units / second forward
@@ -74,7 +74,8 @@ WATER_DRAG = 0.9            # linear drag coefficient (per second, exp decay)
 BOAT_TURN_RATE = 1.4        # max yaw rad/sec at full turn authority
 # turn authority scales with how fast we're moving: sluggish near stop, wide at speed
 TURN_SPEED_FACTOR = 0.65    # fraction of max speed at which turning is fully authoritative
-BOAT_START_POS = glm.vec3(0.0, 0.0, -280.0)  # south of Freeport, bow (+Z) pointed at it
+BOAT_START_POS = glm.vec3(0.0, 0.0, -384.0)  # moored alongside Freeport's pier T-head
+BOAT_START_YAW = math.pi / 2                  # bow +X: lies parallel to the T-head crossbar
 BOAT_COLLISION_RADIUS = 2.0     # boat's collision disc radius (world units)
 BOAT_COLLISION_BLEED = 0.3      # speed retained after hitting land
 
@@ -85,7 +86,7 @@ BOAT_COLLISION_BLEED = 0.3      # speed retained after hitting land
 # 'radius' is the collision disc (world units, ~= scale).
 # (name, x, z, scale, yaw, seed, kind); collision radius == scale
 _ISLAND_TABLE = [
-    ('freeport',          0.0, -185.0, 45.0, 0.3, 11, 'home'),
+    ('freeport',          0.0, -185.0, 195.0, 0.3, 11, 'home'),
     ('haven',          -260.0, -320.0, 20.0, 1.1, 22, 'island'),
     ('fogholms',       -120.0, -560.0, 16.0, 2.4, 33, 'island'),
     ('cedar_march',     380.0, -430.0, 40.0, 0.7, 44, 'island'),
