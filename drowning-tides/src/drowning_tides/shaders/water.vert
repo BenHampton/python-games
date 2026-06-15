@@ -13,6 +13,8 @@ uniform float u_wave_w[N_WAVES];
 uniform float u_wave_amp[N_WAVES];
 uniform float u_wave_q[N_WAVES];
 uniform float u_time;
+uniform vec2 u_shelter_center;   // town / home-island "main point" (xz)
+uniform vec4 u_shelter;          // x=R0, y=R1, z=min gain, w=max gain
 
 out vec3 v_world;
 out vec3 v_normal;
@@ -42,6 +44,11 @@ void main() {
         nz += d.y * wa * c;
         ny_sub += q * wa * s;
     }
+
+    // rougher seas the further from the town (must match waves.py::shelter_gain)
+    float g = u_shelter.z + (u_shelter.w - u_shelter.z)
+              * smoothstep(u_shelter.x, u_shelter.y, distance(base, u_shelter_center));
+    h *= g; horiz *= g; nx *= g; nz *= g; ny_sub *= g;
 
     vec3 world = vec3(base.x + horiz.x, h, base.y + horiz.y);
     v_world = world;

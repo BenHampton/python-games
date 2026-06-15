@@ -44,7 +44,8 @@ class WaveField:
 
     # ------------------------------------------------------------------ CPU sample
     def sample(self, x, z, t):
-        """Return (height, normal) at world (x, z) and time t. Matches water.vert."""
+        """Return (height, normal) at world (x, z) and time t. Matches water.vert (incl. the
+        distance-from-town shelter gain)."""
         height = 0.0
         nx = nz = 0.0
         ny_sub = 0.0
@@ -60,6 +61,11 @@ class WaveField:
             nx += dx * wa * c
             nz += dz * wa * c
             ny_sub += self.q[i] * wa * s
+        g = shelter_gain(x, z)                       # rougher further from the town
+        height *= g
+        nx *= g
+        nz *= g
+        ny_sub *= g
         normal = glm.normalize(glm.vec3(-nx, 1.0 - ny_sub, -nz))
         return height, normal
 
@@ -72,3 +78,15 @@ class WaveField:
         prog['u_wave_amp'].write(np.array(self.amp, dtype='f4').tobytes())
         prog['u_wave_q'].write(np.array(self.q, dtype='f4').tobytes())
         prog['u_time'] = t
+        # distance-from-town shelter gain (must match shelter_gain on the CPU)
+        prog['u_shelter_center'] = (cfg.SHELTER_CENTER.x, cfg.SHELTER_CENTER.y)
+        prog['u_shelter'] = (cfg.SHELTER_R0, cfg.SHELTER_R1, cfg.SHELTER_MIN, cfg.SHELTER_MAX)
+
+
+def shelter_gain(x, z):
+    """Wave-amplitude multiplier at world (x, z): small near the town (sheltered harbor), rising
+    to full out at sea. Mirrors the gain in shaders/water.vert (parity invariant)."""
+    d = math.hypot(x - cfg.SHELTER_CENTER.x, z - cfg.SHELTER_CENTER.y)
+    t = min(1.0, max(0.0, (d - cfg.SHELTER_R0) / (cfg.SHELTER_R1 - cfg.SHELTER_R0)))
+    s = t * t * (3.0 - 2.0 * t)                              # smoothstep (matches GLSL)
+    return cfg.SHELTER_MIN + (cfg.SHELTER_MAX - cfg.SHELTER_MIN) * s

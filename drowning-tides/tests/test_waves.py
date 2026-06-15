@@ -34,3 +34,16 @@ def test_calm_amplitude_below_storm():
     wf.recompute(glm.vec2(1.0, 0.0), 1.0)
     storm_total = sum(wf.amp)
     assert calm_total < storm_total
+
+
+def test_waves_calmer_near_town_than_open_sea():
+    wf = WaveField()
+    wf.recompute(glm.vec2(1.0, 0.0), 1.0)        # full storm
+    cx, cz = cfg.SHELTER_CENTER.x, cfg.SHELTER_CENTER.y
+
+    def peak_amp(px, pz):                          # max |height| over a time sweep
+        return max(abs(wf.sample(px, pz, t)[0]) for t in (0.0, 0.5, 1.0, 1.5, 2.0, 2.5))
+
+    near = peak_amp(cx + 5.0, cz + 5.0)            # in the harbor
+    far = peak_amp(cx + 1500.0, cz)                # far out to sea
+    assert near < far * 0.6                        # clearly sheltered near the town

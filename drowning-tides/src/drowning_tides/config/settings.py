@@ -168,7 +168,7 @@ CURRENT_PUSH = 4.0                      # boat drift speed (units/sec) at full s
 # ------------------------------------------------------------------- Gerstner waves
 N_WAVES = 4
 GRAVITY = 9.8
-WAVE_WAVELENGTHS = (60.0, 37.0, 23.0, 13.0)
+WAVE_WAVELENGTHS = (62.0, 42.0, 28.0, 22.0)  # all >= ~4 water-grid cells -> no storm shimmer
 WAVE_AMP_RATIOS = (1.0, 0.6, 0.35, 0.2)     # relative amplitude per component
 WAVE_DIR_SPREAD = 0.6                        # radians fanned around the wind dir
 WAVE_STEEPNESS = 0.85                        # Gerstner Q (sharpness); <1 avoids loops
@@ -176,8 +176,16 @@ WAVE_CALM_AMP = 0.07                          # gentle swell even in calm
 WAVE_STORM_AMP = 1.6                          # base amplitude scale at full storm
 WAVE_MAX_AMPLITUDE = 1.8                      # hard playability cap on total height
 
+# waves grow rougher the further you sail from the town (the home-island harbor): a spatial
+# amplitude gain applied IDENTICALLY on GPU (water.vert) + CPU (waves.py) — see the parity invariant
+SHELTER_CENTER = glm.vec2(0.0, -185.0)        # the town / home-island "main point"
+SHELTER_R0 = 110.0                            # within this radius: sheltered (SHELTER_MIN)
+SHELTER_R1 = 700.0                            # beyond this radius: full open-sea swell
+SHELTER_MIN = 0.35                            # wave amplitude multiplier in the harbor
+SHELTER_MAX = 1.0                             # wave amplitude multiplier far out to sea
+
 # ------------------------------------------------------------------------- rain
-RAIN_COUNT = 7000
+RAIN_COUNT = 4000               # streaks in a box around the camera (alpha overdraw in storms)
 RAIN_FALL_SPEED = 45.0          # units/sec downward
 RAIN_STREAK_LEN = 1.3           # length of each streak
 RAIN_BOX = glm.vec3(70.0, 45.0, 70.0)   # spawn volume (half-extents) around camera
