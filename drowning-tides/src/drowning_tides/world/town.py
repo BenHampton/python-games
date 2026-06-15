@@ -1,10 +1,10 @@
-"""The home island's harbor town — an organic, irregular "haunted docks" settlement at the
-landward end of the pier: a ragged cobble plaza with a well, varied half-timbered buildings
-scattered at mixed sizes/heights/angles with alleys between, a few landmark buildings (tavern,
-warehouse, market hall), branching jetties with shacks and rowboats over the water, a beached
-ship wreck, and a lighthouse beacon out on a point. Buildings are assembled from the CC0 Kenney
-Fantasy Town Kit (baked muted); boats/tower/dock/wreck are CC0 Kenney Pirate Kit. The pier itself
-is procedural (`_build_dock`).
+"""The home island's harbor town — a sealed walled courtyard. Buildings sit edge-to-edge forming
+three walls of a rectangular courtyard, with the alley gaps plugged by colliding props (fences,
+hedges, carts, crate/barrel stacks); the opening faces the dock, where stairs climb from the boat
+pier up into the courtyard. The well + market stalls sit in the centre. The wall ring + the water
+seal the player to the dock + courtyard — the rest of the island is closed off. Buildings are
+assembled from the CC0 Kenney Fantasy Town Kit (baked muted); boats/tower/dock/wreck are CC0
+Kenney Pirate Kit.
 """
 import math
 import random
@@ -19,15 +19,15 @@ PROPS_DIR = MODELS_DIR / "props"
 NATURE_DIR = MODELS_DIR / "nature"
 TOWN_DIR = MODELS_DIR / "town"          # CC0 Kenney Fantasy Town Kit (half-timbered modules)
 
-DECK_Y = 0.6                       # pier deck top (above the ~0 waterline)
+DECK_Y = 0.6                       # low pier/jetty deck (just above the ~0 waterline)
 PILING_COLOR = (0.20, 0.16, 0.12)
-PLANK_COLOR = (0.36, 0.27, 0.18)
+PLANK_COLOR = (0.36, 0.27, 0.18)   # shared dock colour (pier, jetties, stairs)
 TIRE_COLOR = (0.06, 0.06, 0.07)
 
 TOWN_MUTE = 0.45
 S = 2.8                            # world size of one 1-unit kit module (a building floor)
 PLASTER = (0.42, 0.38, 0.32)
-ROOF_COLORS = [(0.34, 0.22, 0.17), (0.30, 0.30, 0.31), (0.26, 0.24, 0.22)]  # tile / slate / dark
+ROOF_COLORS = [(0.34, 0.22, 0.17), (0.30, 0.30, 0.31), (0.26, 0.24, 0.22)]
 PLAZA_COLOR = (0.34, 0.33, 0.32)
 
 WALLS_WOOD = ['wall-wood.glb', 'wall-wood-window-shutters.glb', 'wall-wood-window-glass.glb',
@@ -49,7 +49,8 @@ class Town:
         self.instances = []             # (key, m_model)
         self.colliders = []             # solid AABBs (min_x, min_z, max_x, max_z)
         self.flat_decks = []            # walkable flat plank rects (x0, z0, x1, z1, y)
-        self._pier = None               # sloped main-pier walkway (cx, hw, z_far, z_near)
+        self.ramps = []                 # walkable ramps (x0, z0, x1, z1, y_lo, y_hi, axis)
+        self._t_head_z = None
         if self.home is not None:
             self._build(md, self.home)
         self.mesh = Mesh(app.ctx, self.program, md.array(), '3f 3f 3f',
@@ -59,96 +60,126 @@ class Town:
     # ------------------------------------------------------------------ layout
     def _build(self, md, home):
         cx, cz, gy = home.position.x, home.position.z, home.land_y
-        z_dock = cz - 0.805 * home.radius            # pier's landward end
-        px, pz = cx - 2.0, z_dock + 11.0             # plaza centre, just off the dock
-        self.plaza = glm.vec2(px, pz)
+        R = home.radius
+        hx = 18.0
+        z_open = cz - 0.79 * R               # courtyard opening (dock side, near the shelf edge)
+        z_back = z_open + 32.0               # north/back wall (inland)
+        midz = (z_open + z_back) / 2
+        self.court = (cx, hx, z_open, z_back)
 
-        # ragged cobble plaza + off-centre well
-        md.box(px, gy + 0.12, pz, 11.0, 0.12, 10.0, PLAZA_COLOR)
-        self._kit('fountain-round.glb', px - 3.0, pz - 1.0, 2.0, y=gy)
-        self._kit('fountain-center.glb', px - 3.0, pz - 1.0, 2.0, y=gy)
-        self._solid(px - 3.0, pz - 1.0, 2.0, 2.0)
+        md.box(cx, gy + 0.12, midz, hx, 0.12, (z_back - z_open) / 2, PLAZA_COLOR)   # cobble floor
+        self._courtyard_walls(md, home, hx, z_open, z_back)
 
-        # landmark buildings (assembled bigger to anchor the town)
-        self._building(md, cx + 11.0, pz + 4.0, 4, 3, 3, self._face(cx + 11.0, pz + 4.0),
-                       'wood', banner=True)                                    # tavern/inn
-        self._building(md, cx - 15.0, pz + 2.0, 5, 3, 2, self._face(cx - 15.0, pz + 2.0),
-                       'stone')                                                # warehouse
-        self._building(md, cx + 2.0, pz + 13.0, 4, 2, 3, self._face(cx + 2.0, pz + 13.0),
-                       'stone')                                                # market hall
+        # centre: well + a cluster of market stalls
+        self._kit('fountain-round.glb', cx, midz, 2.2, y=gy)
+        self._kit('fountain-center.glb', cx, midz, 2.2, y=gy)
+        self._solid(cx, midz, 2.2, 2.2)
+        self._kit('stall-red.glb', cx - 6.0, midz - 4.0, S, yaw=0.3, y=gy)
+        self._kit('stall-green.glb', cx + 6.0, midz - 4.0, S, yaw=2.8, y=gy)
+        self._kit('cart.glb', cx + 7.0, midz + 5.0, S, yaw=1.0, y=gy)
+        self._kit('stall-stool.glb', cx - 5.0, midz + 4.0, S, y=gy)
+        for (lx, lz) in ((-hx + 2, z_open + 3), (hx - 2, z_open + 3),
+                         (-hx + 2, z_back - 3), (hx - 2, z_back - 3)):
+            self._kit('lantern.glb', cx + lx, lz, 1.7, y=gy)
 
-        # organic scatter of varied houses, leaving alley gaps
-        self._scatter_houses(md, home, n=20)
+        self._build_dock(md, home, z_open)
+        self._build_harbor(md, home)
 
-        # over-water sprawl: branching jetties, shacks, rowboats, wreck, lighthouse
-        self._build_dock(md, home)
-        self._build_harbor(md, home, z_dock)
-        self._dress(home, px, pz)
+    def _courtyard_walls(self, md, home, hx, z_open, z_back):
+        cx = home.position.x
+        rng = random.Random(777)
+        self._wall(md, 'x', z_back, cx - hx, cx + hx, math.pi, rng)          # north (back)
+        self._wall(md, 'z', cx + hx, z_open, z_back, -math.pi / 2, rng)      # east
+        self._wall(md, 'z', cx - hx, z_open, z_back, math.pi / 2, rng)       # west
+        gy = home.land_y
+        for sgn in (1, -1):
+            # seal the back corners where the north + side walls meet (hedge + crate cluster)
+            self._solid(cx + sgn * hx, z_back, 4.5, 4.5)
+            self._kit('hedge.glb', cx + sgn * hx, z_back, S * 0.85, y=gy)
+            self._place('crate.glb', cx + sgn * (hx - 1.5), z_back - 1.5, 1.5,
+                        yaw=0.4, y=gy)
+            # short fence stubs flanking the opening, funnelling the south side to the stairs
+            self._blocker(md, 'z', cx + sgn * hx, z_open - 4.0, z_open - 0.5, rng)
 
-    def _face(self, x, z):
-        """Yaw whose front normal points from (x,z) toward the plaza (door faces the square)."""
-        d = self.plaza - glm.vec2(x, z)
-        return math.atan2(d.x, d.y)
-
-    def _scatter_houses(self, md, home, n):
-        cx, cz, R = home.position.x, home.position.z, home.radius
-        rng = random.Random(20260615)
-        placed = [(self.plaza.x, self.plaza.y, 11.0)]          # avoid the plaza
-        built = 0
-        for _ in range(400):
-            if built >= n:
+    def _wall(self, md, axis, fixed, lo, hi, face_yaw, rng):
+        """Pack buildings edge-to-edge along a wall (axis 'x' or 'z'), fronts facing into the
+        courtyard, and plug the gaps between them with colliding props."""
+        fnx, fnz = math.sin(face_yaw), math.cos(face_yaw)
+        spans = []
+        t = lo
+        while t < hi - 5.0:
+            w, d = rng.choice([2, 3, 3, 4]), rng.choice([2, 3])
+            bw = w * S
+            if t + bw > hi:
                 break
-            ang = rng.uniform(0.0, math.tau)
-            rad = rng.uniform(13.0, 42.0)
-            x = self.plaza.x + math.cos(ang) * rad
-            z = self.plaza.y + math.sin(ang) * rad
-            if math.hypot(x - cx, z - cz) > 0.78 * R or z > cz - 6:   # stay on the south shelf
-                continue
-            w = rng.choice([2, 2, 3, 3, 4])
-            d = rng.choice([2, 2, 3])
-            rr = max(w, d) * S * 0.55
-            if any(math.hypot(x - bx, z - bz) < rr + br + rng.uniform(1.5, 3.5)
-                   for (bx, bz, br) in placed):
-                continue
-            placed.append((x, z, rr))
-            floors = rng.choice([2, 2, 3, 3])               # mostly 2-3 storeys, no sheds
-            yaw = self._face(x, z) + rng.uniform(-0.35, 0.35)
-            self._building(md, x, z, w, d, floors, yaw, rng.choice(['wood', 'wood', 'stone']))
-            built += 1
+            mt = t + bw / 2
+            ax, az = (mt, fixed) if axis == 'x' else (fixed, mt)
+            cxb, czb = ax - fnx * (d * S * 0.5), az - fnz * (d * S * 0.5)
+            self._building(md, cxb, czb, w, d, rng.choice([2, 3, 3]), face_yaw,
+                           rng.choice(['wood', 'wood', 'stone']))
+            spans.append((t, t + bw))
+            t += bw + rng.uniform(1.6, 2.8)
+        gaps = [(lo, spans[0][0])] if spans else [(lo, hi)]
+        gaps += [(spans[i][1], spans[i + 1][0]) for i in range(len(spans) - 1)]
+        if spans:
+            gaps.append((spans[-1][1], hi))
+        for (g0, g1) in gaps:
+            if g1 - g0 > 0.4:
+                self._blocker(md, axis, fixed, g0, g1, rng)
+
+    def _blocker(self, md, axis, fixed, g0, g1, rng):
+        """Plug an alley gap with a colliding prop (fence/hedge line, cart, or crate stack)."""
+        gy = self.home.land_y
+        gw = g1 - g0
+        gc = (g0 + g1) / 2
+        x, z = (gc, fixed) if axis == 'x' else (fixed, gc)
+        if axis == 'x':
+            self._solid(x, z, gw / 2 + 0.3, 1.1)
+        else:
+            self._solid(x, z, 1.1, gw / 2 + 0.3)
+        span_yaw = 0.0 if axis == 'x' else math.pi / 2
+        pick = rng.random()
+        if pick < 0.5:                                   # fence / hedge line
+            prop = rng.choice(['fence.glb', 'fence.glb', 'hedge.glb'])
+            n = max(1, int(round(gw / 1.7)))
+            for i in range(n):
+                o = -gw / 2 + (i + 0.5) * (gw / n)
+                fx, fz = (x + o, z) if axis == 'x' else (x, z + o)
+                self._kit(prop, fx, fz, S * 0.62, yaw=span_yaw, y=gy)
+        elif pick < 0.78:                                # a cart across the alley
+            self._kit('cart.glb', x, z, S * 0.85, yaw=span_yaw, y=gy)
+        else:                                            # crate + barrel stack
+            self._place('crate.glb', x, z, 1.4, yaw=rng.uniform(0, math.tau), y=gy)
+            self._place('barrel.glb', x + 0.5, z + 0.4, 1.2, y=gy)
 
     # ------------------------------------------------------------- building assembler
     def _building(self, md, cx, cz, w_units, d_units, floors, yaw, style='wood', banner=False):
         gy = self.home.land_y
-        bx, bz = w_units * S * 0.5, d_units * S * 0.5      # half width / depth (local)
+        bx, bz = w_units * S * 0.5, d_units * S * 0.5
         h = floors * S
         c, s = math.cos(yaw), math.sin(yaw)
 
-        def L(lx, lz, ly):                                  # local (width,depth) -> world
+        def L(lx, lz, ly):
             return (cx + lx * c + lz * s, ly, cz - lx * s + lz * c)
 
         self._rot_box(md, L, bx, bz, gy - 0.4, gy + h, PLASTER)
         rcol = ROOF_COLORS[(w_units + floors) % len(ROOF_COLORS)]
         self._rot_gable(md, L, bx * 1.04, bz * 1.04, gy + h, S * 0.62, rcol)
 
-        # clad the plaza-facing front with kit wall panels (door + windows), per floor
-        pyaw = math.atan2(-c, s)                            # panel yaw so its face points front
+        pyaw = math.atan2(-c, s)
         walls = WALLS_WOOD if style == 'wood' else WALLS_STONE
         prng = random.Random(int(cx * 7 + cz * 13))
         for f in range(floors):
             for i in range(w_units):
                 lx = (i - (w_units - 1) / 2.0) * S
                 wx, _, wz = L(lx, bz - 0.40 * S, 0.0)
-                if f == 0 and i == w_units // 2:
-                    piece = DOORS[style]
-                else:
-                    piece = prng.choice(walls)
+                piece = DOORS[style] if (f == 0 and i == w_units // 2) else prng.choice(walls)
                 self._kit(piece, wx, wz, S, yaw=pyaw, y=gy + f * S)
         dx, _, dz = L(0.0, bz + 1.6, 0.0)
         self.npc_spots.append(glm.vec3(dx, gy, dz))
         if banner:
             self._kit('banner-red.glb', *self._xz(L(bx - 0.3, bz, 0.0)), S, y=gy + h - S)
         self._chimney(md, L, bx, bz, gy + h)
-        # collider: AABB of the rotated footprint
         xs = [cx + lx * c + lz * s for lx in (-bx, bx) for lz in (-bz, bz)]
         zs = [cz - lx * s + lz * c for lx in (-bx, bx) for lz in (-bz, bz)]
         self.colliders.append((min(xs), min(zs), max(xs), max(zs)))
@@ -175,15 +206,64 @@ class Town:
         md.tri(L(-bx, bz, y), L(-bx, 0, y + rh), L(-bx, -bz, y), color)
         md.tri(L(bx, -bz, y), L(bx, 0, y + rh), L(bx, bz, y), color)
 
+    # ------------------------------------------------------------- boat pier + stairs
+    def _build_dock(self, md, home, z_open):
+        cx, cz, R = home.position.x, home.position.z, home.radius
+        gy = home.land_y
+        hw = 2.5
+        z_bot = z_open - 3.5
+        self._stairs(md, cx, z_open, z_bot, gy, DECK_Y, 3.5)         # courtyard -> pier level
+        z1 = cz - 0.997 * R
+        n = max(2, round(abs(z_bot - z1) / 0.95))
+        stp = (z1 - z_bot) / n
+        for k in range(n):
+            za, zb = z_bot + stp * k, z_bot + stp * (k + 1)
+            md.box(cx, DECK_Y - 0.11, (za + zb) / 2, hw, 0.11, abs(zb - za) / 2 - 0.05, PLANK_COLOR)
+        self.flat_decks.append((cx - hw, min(z_bot, z1), cx + hw, max(z_bot, z1), DECK_Y))
+        for k in range(5):
+            z = z_bot + (z1 - z_bot) * (k + 0.5) / 5
+            for px in (cx - hw - 0.12, cx + hw + 0.12):
+                self._piling(md, px, z, DECK_Y + 0.5)
+
+        hz, hxw = 2.0, 7.0
+        zc = z1 - hz
+        md.box(cx, DECK_Y, zc, hxw, 0.10, hz, PLANK_COLOR)
+        self.flat_decks.append((cx - hxw, zc - hz, cx + hxw, zc + hz, DECK_Y))
+        for hxp in (-hxw, -2.5, 2.5, hxw):
+            for sz in (zc - hz, zc + hz):
+                self._piling(md, cx + hxp, sz, DECK_Y + 0.5)
+        face_z = zc - hz
+        bollards = [cx - 5.0, cx, cx + 5.0]
+        for bx in bollards:
+            md.box(bx, DECK_Y + 0.45, face_z, 0.18, 0.45, 0.18, PILING_COLOR)
+        for bx in (cx - 2.5, cx + 2.5):
+            self._tire(md, bx, DECK_Y - 0.15, face_z - 0.06)
+        for a, b in zip(bollards[:-1], bollards[1:], strict=True):
+            self._rope(md, a, b, DECK_Y + 0.72, face_z)
+        self._lamp(md, cx - hxw, DECK_Y, zc + hz)
+        self._lamp(md, cx + hxw, DECK_Y, zc + hz)
+        self._place('barrel.glb', cx - 4.6, zc + 0.6, 1.2, 0.3, y=DECK_Y)
+        self._place('crate.glb', cx + 4.7, zc - 0.5, 1.2, 0.8, y=DECK_Y)
+        self._t_head_z = z1
+
+    def _stairs(self, md, cx, z_top, z_bot, y_top, y_bot, hw, n=4):
+        for i in range(n):
+            za = z_top + (z_bot - z_top) * i / n
+            zb = z_top + (z_bot - z_top) * (i + 1) / n
+            yi = y_top + (y_bot - y_top) * (i + 1) / n
+            md.box(cx, yi - 0.6, (za + zb) / 2, hw, 0.6, abs(zb - za) / 2, PLANK_COLOR)
+        self.ramps.append((cx - hw, min(z_top, z_bot), cx + hw, max(z_top, z_bot),
+                           y_bot, y_top, 'z'))
+
     # ------------------------------------------------------------- harbor / over-water
-    def _build_harbor(self, md, home, z_dock):
+    def _build_harbor(self, md, home):
         cx = home.position.x
-        # branching jetties off the main pier, each a walkable plank path to a dock shack
-        for sgn, jz in ((1, z_dock - 7.0), (-1, z_dock - 12.0)):
-            x_end = cx + sgn * 13.0
+        z1 = self._t_head_z
+        for sgn, jz in ((1, z1 + 1.5), (-1, z1 - 1.5)):
+            x_end = cx + sgn * 12.0
             x0, x1 = sorted((cx, x_end))
-            md.box((x0 + x1) / 2, DECK_Y, jz, abs(x1 - x0) / 2, 0.10, 1.4, PLANK_COLOR)  # planks
-            self.flat_decks.append((x0 - 1.0, jz - 1.4, x1 + 1.0, jz + 1.4, DECK_Y))     # walkable
+            md.box((x0 + x1) / 2, DECK_Y - 0.11, jz, abs(x1 - x0) / 2, 0.11, 1.4, PLANK_COLOR)
+            self.flat_decks.append((x0 - 1.0, jz - 1.4, x1 + 1.0, jz + 1.4, DECK_Y))
             for k in range(7):
                 jx = cx + sgn * (1.5 + k * 1.8)
                 self._piling(md, jx, jz - 1.3, DECK_Y + 0.4)
@@ -191,15 +271,13 @@ class Town:
             self._shack(md, x_end + sgn * 2.5, jz)
             self._place('boat-row-small.glb', x_end + sgn * 3.0, jz + 3.0, 1.3,
                         yaw=rng_yaw(jz), y=-0.15)
-        # a half-sunk wreck looming in the water + the lighthouse beacon on a point
-        self._place('ship-wreck.glb', cx - 22.0, z_dock - 14.0, 1.1, yaw=2.3, y=-1.4)
-        self._lighthouse(md, cx + 17.0, z_dock - 18.0)
+        self._place('ship-wreck.glb', cx - 24.0, z1 - 12.0, 1.1, yaw=2.3, y=-1.4)
+        self._lighthouse(md, cx + 20.0, z1 - 14.0)
 
     def _shack(self, md, x, z, half=2.6):
-        """A small weathered hut on a walkable wooden dock platform out over the water."""
-        md.box(x, DECK_Y, z, half, 0.10, half, PLANK_COLOR)              # plank platform
+        md.box(x, DECK_Y, z, half, 0.10, half, PLANK_COLOR)
         self.flat_decks.append((x - half, z - half, x + half, z + half, DECK_Y))
-        for cxp in (x - half + 0.3, x + half - 0.3):                    # corner pilings
+        for cxp in (x - half + 0.3, x + half - 0.3):
             for czp in (z - half + 0.3, z + half - 0.3):
                 self._piling(md, cxp, czp, DECK_Y + 0.3)
         gy = DECK_Y + 0.05
@@ -215,25 +293,8 @@ class Town:
         self._place('structure-platform-dock.glb', x, z, 2.4, y=0.0)
         self._place('tower-complete-large.glb', x, z, 1.7, y=0.5)
         top = 0.5 + 10.22 * 1.7
-        md.box(x, top + 0.5, z, 1.0, 0.6, 1.0, (1.0, 0.92, 0.62))     # glowing lamp room (bloom)
+        md.box(x, top + 0.5, z, 1.0, 0.6, 1.0, (1.0, 0.92, 0.62))
         self._solid(x, z, 3.4, 3.4)
-
-    def _dress(self, home, px, pz):
-        rng = random.Random(7)
-        gy = home.land_y
-        self._kit('stall-red.glb', px + 4.0, pz - 2.0, S, yaw=0.4, y=gy)
-        self._kit('stall-green.glb', px - 5.5, pz + 3.0, S, yaw=2.6, y=gy)
-        self._kit('cart.glb', px + 6.5, pz + 1.0, S, yaw=1.0, y=gy)
-        for _ in range(7):                                            # lanterns about the lanes
-            a, r = rng.uniform(0, math.tau), rng.uniform(7.0, 26.0)
-            lx, lz = px + math.cos(a) * r, pz + math.sin(a) * r
-            if math.hypot(lx - home.position.x, lz - home.position.z) < 0.80 * home.radius:
-                self._kit('lantern.glb', lx, lz, 1.7, y=home.ground_y(lx, lz))
-        for _ in range(6):
-            a, r = rng.uniform(0, math.tau), rng.uniform(8.0, 24.0)
-            bx, bz = px + math.cos(a) * r, pz + math.sin(a) * r
-            self._place(rng.choice(['barrel.glb', 'crate.glb']), bx, bz, 1.2,
-                        rng.uniform(0, math.tau), y=home.ground_y(bx, bz))
 
     # ------------------------------------------------------------- model instancing
     def _solid(self, cx, cz, hx, hz):
@@ -244,8 +305,7 @@ class Town:
 
     def deck_height(self, x, z):
         """Plank height at (x, z) if standing over a walkable dock surface, else None."""
-        ly = self.home.land_y if self.home is not None else 0.0
-        return deck_height_at(x, z, self._pier, self.flat_decks, ly, DECK_Y)
+        return deck_height_at(x, z, self.ramps, self.flat_decks)
 
     def _inst(self, path, x, z, scale, yaw=0.0, y=None, mute=0.0):
         key = (str(path), mute)
@@ -263,56 +323,7 @@ class Town:
     def _place(self, name, x, z, scale, yaw=0.0, y=None):
         self._inst(_prop_path(name), x, z, scale, yaw, y, mute=0.0)
 
-    # ---------------------------------------------------- Dredge-style pier (south, -z)
-    def _build_dock(self, md, home):
-        cx, cz = home.position.x, home.position.z
-        z0 = cz - 0.805 * home.radius
-        z1 = cz - 0.997 * home.radius
-        y0, y1 = home.land_y, DECK_Y
-        hw = 2.0
-
-        def deck_y(z):
-            t = max(0.0, min(1.0, (z - z0) / (z1 - z0)))
-            return y0 + (y1 - y0) * t
-
-        self._pier = (cx, hw, z1, z0)            # walkable sloped walkway (far z1 -> near z0)
-        n = 22
-        plank_hz = abs(z1 - z0) / n * 0.42
-        for k in range(n):
-            z = z0 + (z1 - z0) * (k + 0.5) / n
-            md.box(cx, deck_y(z), z, hw, 0.10, plank_hz, PLANK_COLOR)
-        for k in range(7):
-            z = z0 + (z1 - z0) * (k + 0.5) / 7
-            for px in (cx - hw - 0.12, cx + hw + 0.12):
-                self._piling(md, px, z, deck_y(z) + 0.5)
-
-        hz = 2.0
-        hxw = 7.0                                            # T-head half-width
-        zc = z1 - hz
-        md.box(cx, y1, zc, hxw, 0.10, hz, PLANK_COLOR)
-        self.flat_decks.append((cx - hxw, zc - hz, cx + hxw, zc + hz, y1))   # walkable T-head
-        for hx in (-hxw, -2.5, 2.5, hxw):
-            for sz in (zc - hz, zc + hz):
-                self._piling(md, cx + hx, sz, y1 + 0.5)
-
-        face_z = zc - hz
-        bollards = [cx - 5.0, cx, cx + 5.0]
-        for bx in bollards:
-            md.box(bx, y1 + 0.45, face_z, 0.18, 0.45, 0.18, PILING_COLOR)
-        for bx in (cx - 2.5, cx + 2.5):
-            self._tire(md, bx, y1 - 0.15, face_z - 0.06)
-        for a, b in zip(bollards[:-1], bollards[1:], strict=True):
-            self._rope(md, a, b, y1 + 0.72, face_z)
-
-        for k in range(4):
-            z = z0 + (z1 - z0) * (k + 0.7) / 4
-            self._lamp(md, cx + hw + 0.35, deck_y(z), z)
-        self._lamp(md, cx - hxw, y1, zc + hz)
-        self._lamp(md, cx + hxw, y1, zc + hz)
-
-        self._place('barrel.glb', cx - 4.6, zc + 0.6, 1.2, 0.3, y=y1)
-        self._place('crate.glb', cx + 4.7, zc - 0.5, 1.2, 0.8, y=y1)
-
+    # ------------------------------------------------------------- procedural dock parts
     def _piling(self, md, x, z, top_y, base_y=-3.5, r=0.16, lean=0.0, lean_dir=0.0):
         tx, tz = x + lean * math.cos(lean_dir), z + lean * math.sin(lean_dir)
         b = [(x - r, base_y, z - r), (x + r, base_y, z - r),
@@ -369,15 +380,18 @@ def _prop_path(name):
     return p if p.exists() else NATURE_DIR / name
 
 
-def deck_height_at(x, z, pier, flat_decks, land_y, deck_top):
-    """Walkable plank height at (x, z): the sloped main pier (cx, hw, z_far, z_near) plus any flat
-    deck rect (x0, z0, x1, z1, y). Returns the highest deck under the point, or None. Pure."""
+def deck_height_at(x, z, ramps, flat_decks):
+    """Walkable plank height at (x, z): highest of any ramp (linear y over its rect along an axis)
+    or flat deck rect under the point, else None. Pure -> unit-testable without a GL context."""
     y = None
-    if pier is not None:
-        cx, hw, z_far, z_near = pier
-        if cx - hw <= x <= cx + hw and z_far <= z <= z_near:
-            t = max(0.0, min(1.0, (z - z_near) / (z_far - z_near)))
-            y = land_y + (deck_top - land_y) * t
+    for (x0, z0, x1, z1, y_lo, y_hi, axis) in ramps:
+        if x0 <= x <= x1 and z0 <= z <= z1:
+            if axis == 'z':
+                t = (z - z0) / (z1 - z0) if z1 > z0 else 0.0
+            else:
+                t = (x - x0) / (x1 - x0) if x1 > x0 else 0.0
+            ry = y_lo + (y_hi - y_lo) * t
+            y = ry if y is None else max(y, ry)
     for (x0, z0, x1, z1, fy) in flat_decks:
         if x0 <= x <= x1 and z0 <= z <= z1:
             y = fy if y is None else max(y, fy)

@@ -26,20 +26,21 @@ def test_collision_leaves_clear_point_untouched():
     assert (x, z) == (5.0, 5.0)
 
 
-# walkable docks: sloped pier (cx, hw, z_far, z_near) + flat deck rects
-PIER = (0.0, 1.6, -20.0, -10.0)
+# walkable docks: ramps (x0,z0,x1,z1, y_lo, y_hi, axis) + flat deck rects (x0,z0,x1,z1, y)
+# a z-axis ramp: at z-min(-20) the deck is 0.6, at z-max(-10) it's 3.0
+RAMPS = [(-1.6, -20.0, 1.6, -10.0, 0.6, 3.0, 'z')]
 DECKS = [(5.0, -25.0, 9.0, -21.0, 0.6)]
 
 
-def test_deck_height_pier_slopes_land_to_deck():
-    assert math.isclose(deck_height_at(0, -10, PIER, [], 3.0, 0.6), 3.0)        # near = land
-    assert math.isclose(deck_height_at(0, -20, PIER, [], 3.0, 0.6), 0.6)        # far = deck top
-    assert math.isclose(deck_height_at(0, -15, PIER, [], 3.0, 0.6), 1.8)        # midpoint
+def test_deck_height_ramp_slopes_along_axis():
+    assert math.isclose(deck_height_at(0, -10, RAMPS, []), 3.0)        # z-max end
+    assert math.isclose(deck_height_at(0, -20, RAMPS, []), 0.6)        # z-min end
+    assert math.isclose(deck_height_at(0, -15, RAMPS, []), 1.8)        # midpoint
 
 
 def test_deck_height_flat_rect_and_off():
-    assert math.isclose(deck_height_at(7, -23, None, DECKS, 3.0, 0.6), 0.6)     # on the rect
-    assert deck_height_at(50, 50, PIER, DECKS, 3.0, 0.6) is None                # open water
+    assert math.isclose(deck_height_at(7, -23, [], DECKS), 0.6)        # on the flat rect
+    assert deck_height_at(50, 50, RAMPS, DECKS) is None                # open water
 
 
 def test_walk_forward_along_yaw_and_pins_height():
