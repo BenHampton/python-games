@@ -50,9 +50,14 @@ class Town:
         self.colliders = []             # solid AABBs (min_x, min_z, max_x, max_z)
         self.flat_decks = []            # walkable flat plank rects (x0, z0, x1, z1, y)
         self.ramps = []                 # walkable ramps (x0, z0, x1, z1, y_lo, y_hi, axis)
+        self.boat_blockers = []         # over-water structures the boat collides with (AABBs)
+        self.dock_anchor = None         # glm.vec2 mooring point (pier T-head face); docking gate
         self._t_head_z = None
         if self.home is not None:
             self._build(md, self.home)
+            # the boat can't sail through the pier/jetties/landing planks (plus the lighthouse,
+            # appended in _lighthouse) — the courtyard walls sit inland behind the island disc.
+            self.boat_blockers += [(x0, z0, x1, z1) for (x0, z0, x1, z1, _y) in self.flat_decks]
         self.mesh = Mesh(app.ctx, self.program, md.array(), '3f 3f 3f',
                          ('in_position', 'in_normal', 'in_color'))
         self.m_model = glm.mat4(1.0)
@@ -283,6 +288,7 @@ class Town:
         self._place('barrel.glb', cx - 4.6, zc + 0.6, 1.2, 0.3, y=DECK_Y)
         self._place('crate.glb', cx + 4.7, zc - 0.5, 1.2, 0.8, y=DECK_Y)
         self._t_head_z = z1
+        self.dock_anchor = glm.vec2(cx, face_z)      # where the boat ties up; docking-range centre
 
     def _stairs(self, md, cx, z_top, z_bot, y_top, y_bot, hw, n=4):
         for i in range(n):
@@ -342,6 +348,7 @@ class Town:
         top = 0.5 + 10.22 * 1.7
         md.box(x, top + 0.5, z, 1.0, 0.6, 1.0, (1.0, 0.92, 0.62))
         self._solid(x, z, 3.4, 3.4)
+        self.boat_blockers.append((x - 3.4, z - 3.4, x + 3.4, z + 3.4))   # boat can't ram the base
 
     # ------------------------------------------------------------- model instancing
     def _solid(self, cx, cz, hx, hz):
@@ -349,6 +356,11 @@ class Town:
 
     def collide(self, x, z, radius):
         return resolve_town_collision(x, z, self.colliders, radius)
+
+    def collide_boat(self, x, z, radius):
+        """Push the boat's disc out of the over-water dock structures. Returns (x, z, hit)."""
+        nx, nz = resolve_town_collision(x, z, self.boat_blockers, radius)
+        return nx, nz, abs(nx - x) > 1e-6 or abs(nz - z) > 1e-6
 
     def deck_height(self, x, z):
         """Plank height at (x, z) if standing over a walkable dock surface, else None."""

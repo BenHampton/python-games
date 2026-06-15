@@ -28,21 +28,33 @@ def walk(pos, yaw, fwd, strafe, dt, center, radius, land_y, speed):
     return glm.vec3(x, land_y, z)
 
 
+def disembark_pos(item_xz, center, offset):
+    """Horizontal landing spot when leaving a mounted item: just inland of the item (toward the
+    island centre), stepping off the boat onto the dock beside it. Returns (xz, inland)."""
+    d = center - item_xz
+    d = glm.normalize(d) if glm.length(d) > 1e-6 else glm.vec2(1.0, 0.0)
+    return item_xz + d * offset, d
+
+
 class Player:
     def __init__(self, app):
         self.app = app
         self.position = glm.vec3(0.0, 0.0, 0.0)
         self.island = None
 
-    def spawn(self, island, boat_pos):
-        """Land on the island's shore nearest the boat and face inland."""
+    def disembark(self, item_pos, island):
+        """Step off a mounted item (the boat) onto the walkable surface right beside it, facing
+        inland so W walks up the dock into the town."""
         center = glm.vec2(island.position.x, island.position.z)
-        d = glm.vec2(boat_pos.x, boat_pos.z) - center
-        d = glm.normalize(d) if glm.length(d) > 1e-6 else glm.vec2(1.0, 0.0)
-        landing = center + d * (island.radius * island.spawn_frac)
+        item_xz = glm.vec2(item_pos.x, item_pos.z)
+        place, inland = disembark_pos(item_xz, center, cfg.DISEMBARK_OFFSET)
         self.island = island
-        self.position = glm.vec3(landing.x, island.ground_y(landing.x, landing.y), landing.y)
-        self.app.camera.orbit_yaw = math.atan2(d.x, d.y)     # face the boat / open sea
+        ground = island.ground_y(place.x, place.y)
+        town = getattr(self.app, 'town', None)
+        deck = town.deck_height(place.x, place.y) if town is not None else None
+        y = max(ground, deck) if deck is not None else ground
+        self.position = glm.vec3(place.x, y, place.y)
+        self.app.camera.orbit_yaw = math.atan2(inland.x, inland.y)   # face inland / the town
 
     def update(self, dt):
         if self.island is None or not self.app.game_state.is_on_foot() or self.app.console.active:

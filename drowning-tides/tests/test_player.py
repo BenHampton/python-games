@@ -2,7 +2,7 @@ import math
 
 from pyglm import glm
 
-from drowning_tides.world.player import walk
+from drowning_tides.world.player import disembark_pos, walk
 from drowning_tides.world.town import deck_height_at, resolve_town_collision
 
 CENTER = glm.vec2(0.0, 0.0)
@@ -67,3 +67,21 @@ def test_walk_clamped_to_island_disc():
 def test_walk_no_input_holds_position():
     p = walk(glm.vec3(4, 0, -3), 1.2, 0.0, 0.0, 0.5, CENTER, 100.0, 2.0, 9.0)
     assert abs(p.x - 4) < 1e-6 and abs(p.z + 3) < 1e-6 and abs(p.y - 2.0) < 1e-9
+
+
+def test_boat_stopped_at_dock_face():
+    # T-head crossbar footprint; a boat disc (r2) approaching from the south is pushed back so it
+    # moors just off the face rather than sailing through the planks
+    thead = [(-7.0, -286.7, 7.0, -282.7)]
+    x, z = resolve_town_collision(0.0, -288.0, thead, 2.0)
+    assert math.isclose(z, -288.7, abs_tol=1e-6) and math.isclose(x, 0.0, abs_tol=1e-6)
+
+
+def test_disembark_pos_is_offset_toward_center():
+    # boat south of the island centre -> land just inland (north) of the boat, beside it
+    item = glm.vec2(0.0, -288.0)
+    center = glm.vec2(0.0, -185.0)
+    place, inland = disembark_pos(item, center, 3.5)
+    assert math.isclose(glm.length(place - item), 3.5, abs_tol=1e-5)   # exactly the offset away
+    assert place.y > item.y and abs(place.x) < 1e-6                    # toward the centre (+z)
+    assert math.isclose(inland.x, 0.0, abs_tol=1e-6) and inland.y > 0  # unit inland direction

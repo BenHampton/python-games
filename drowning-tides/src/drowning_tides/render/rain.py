@@ -40,9 +40,14 @@ class Rain:
 
     def render(self):
         weather = self.app.weather
-        alpha = cfg.RAIN_MAX_ALPHA * weather.storm_intensity
-        if alpha < 0.01:
+        rain_i = weather.rain_intensity
+        if rain_i < 0.02:
             return
+
+        # density rides on rain_intensity: a drizzle draws few faint streaks, a downpour the full
+        # set at peak alpha (the alpha floor keeps light rain visible, not a wall of water)
+        count = max(1, int(cfg.RAIN_COUNT * rain_i))
+        alpha = cfg.RAIN_MAX_ALPHA * min(1.0, 0.35 + 0.65 * rain_i)
 
         cam = self.app.camera.position
         wind = weather.wind_dir * (weather.wind_strength * cfg.RAIN_WIND_SLANT)
@@ -51,4 +56,4 @@ class Rain:
         self.program['u_time'] = self.app.time
         self.program['u_alpha'] = alpha
 
-        self.vao.render(mode=mgl.LINES, instances=cfg.RAIN_COUNT)
+        self.vao.render(mode=mgl.LINES, instances=count)

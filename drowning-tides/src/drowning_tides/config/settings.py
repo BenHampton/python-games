@@ -53,6 +53,9 @@ FP_PITCH_MAX = math.radians(85.0)   # first-person look-up limit
 
 # on-foot (first-person, walk on land when docked)
 DOCK_RANGE = 22.0                   # how close the boat must be to an island shore to disembark
+DOCK_DISTANCE = 12.0               # must be this close to the dock station (pier T-head) to dock
+DISEMBARK_OFFSET = 3.5              # placed this far inland of the boat (onto the dock beside it)
+BOARD_RANGE = 7.0                  # must be within this of the docked boat to re-board (on foot)
 PLAYER_SPEED = 9.0                  # walk speed (units/sec)
 PLAYER_EYE_HEIGHT = 1.7             # camera eye height above the land plane
 PLAYER_RADIUS = 0.55                # on-foot collision radius (stops short of walls/props)
@@ -155,15 +158,15 @@ WEATHER_CALM_RANGE = (20.0, 60.0)       # quiet gap before a storm rolls in
 WEATHER_BUILDUP_RANGE = (15.0, 30.0)    # ramp up to peak
 WEATHER_HOLD_RANGE = (20.0, 45.0)       # sustained near peak
 WEATHER_EASE_RANGE = (15.0, 30.0)       # ramp back down to calm
-WEATHER_PEAK_RANGE = (0.5, 1.0)         # random peak storm_intensity
+WEATHER_PEAK_RANGE = (0.65, 1.0)        # random peak storm_intensity (skewed strong)
 STORM_INTENSITY_LERP = 0.5              # how fast intensity tracks its target (/sec)
 STORM_KILL_RATE = 0.6                   # fast target decay used by /storm-kill (/sec)
 
 # wind
-WIND_MAX_STRENGTH = 1.0                 # normalized; scales rain slant + current
+WIND_MAX_STRENGTH = 1.25                # normalized; scales rain slant + current
 WIND_WANDER_RATE = 0.06                 # rad/sec random walk of wind direction
 WIND_START_DIR = glm.vec2(1.0, 0.3)     # initial wind heading (xz), normalized at use
-CURRENT_PUSH = 4.0                      # boat drift speed (units/sec) at full storm
+CURRENT_PUSH = 5.5                      # boat drift speed (units/sec) at full storm
 
 # ------------------------------------------------------------------- Gerstner waves
 N_WAVES = 4
@@ -171,10 +174,10 @@ GRAVITY = 9.8
 WAVE_WAVELENGTHS = (62.0, 42.0, 28.0, 22.0)  # all >= ~4 water-grid cells -> no storm shimmer
 WAVE_AMP_RATIOS = (1.0, 0.6, 0.35, 0.2)     # relative amplitude per component
 WAVE_DIR_SPREAD = 0.6                        # radians fanned around the wind dir
-WAVE_STEEPNESS = 0.85                        # Gerstner Q (sharpness); <1 avoids loops
+WAVE_STEEPNESS = 0.70                        # Gerstner Q (sharpness); lower = rounder, less choppy
 WAVE_CALM_AMP = 0.07                          # gentle swell even in calm
-WAVE_STORM_AMP = 1.6                          # base amplitude scale at full storm
-WAVE_MAX_AMPLITUDE = 1.8                      # hard playability cap on total height
+WAVE_STORM_AMP = 1.7                          # base amplitude scale at full storm
+WAVE_MAX_AMPLITUDE = 2.0                      # hard playability cap on total height (big, not spiky)
 
 # waves grow rougher the further you sail from the town (the home-island harbor): a spatial
 # amplitude gain applied IDENTICALLY on GPU (water.vert) + CPU (waves.py) — see the parity invariant
@@ -185,13 +188,25 @@ SHELTER_MIN = 0.35                            # wave amplitude multiplier in the
 SHELTER_MAX = 1.0                             # wave amplitude multiplier far out to sea
 
 # ------------------------------------------------------------------------- rain
-RAIN_COUNT = 4000               # streaks in a box around the camera (alpha overdraw in storms)
+RAIN_COUNT = 2800               # streaks in a box around the camera (alpha overdraw in storms)
 RAIN_FALL_SPEED = 45.0          # units/sec downward
 RAIN_STREAK_LEN = 1.3           # length of each streak
 RAIN_BOX = glm.vec3(70.0, 45.0, 70.0)   # spawn volume (half-extents) around camera
 RAIN_COLOR = glm.vec3(0.6, 0.68, 0.75)
-RAIN_MAX_ALPHA = 0.5            # alpha at full storm
+RAIN_MAX_ALPHA = 0.5            # streak alpha at a full downpour (rain_intensity = 1)
 RAIN_WIND_SLANT = 18.0         # horizontal velocity (units/sec) per unit wind strength
+
+# rain has its OWN scheduler (drizzle..downpour), only loosely tied to storms: it can rain in calm
+# daytime on a random cadence, and storms usually — but not always — bring their own heavier rain.
+RAIN_CALM_RANGE = (90.0, 300.0)     # long dry gaps between independent (non-storm) rain events
+RAIN_BUILDUP_RANGE = (6.0, 20.0)    # rain picking up
+RAIN_HOLD_RANGE = (15.0, 55.0)      # sustained
+RAIN_EASE_RANGE = (8.0, 22.0)       # tapering off
+RAIN_PEAK_RANGE = (0.15, 0.8)       # independent rain peak: light drizzle .. moderate shower
+RAIN_TRACK_LERP = 1.2               # how fast visible rain eases toward its target (/sec)
+RAIN_KILL_RATE = 0.8                # /rain-kill decay (/sec)
+STORM_RAIN_CHANCE = 0.8             # fraction of storms that bring rain (else a dry, windy storm)
+STORM_RAIN_GAIN = (0.85, 1.2)       # rainy storm: rain heaviness as a multiple of storm_intensity
 
 # ------------------------------------------------------------------- boat (storm)
 BOAT_SCALE = 1.4
@@ -304,7 +319,7 @@ AURORA_COLOR_A = glm.vec3(0.10, 0.45, 0.35)     # eerie teal
 AURORA_COLOR_B = glm.vec3(0.30, 0.15, 0.45)     # violet
 
 # ------------------------------------------------------------------- lightning
-LIGHTNING_RATE = 0.35                   # flash attempts/sec at full storm (scaled by intensity)
+LIGHTNING_RATE = 0.5                    # flash attempts/sec at full storm (scaled by intensity)
 LIGHTNING_DECAY = 9.0                   # flash brightness decay (/sec)
 LIGHTNING_COLOR = glm.vec3(0.70, 0.78, 1.0)     # cool flash tint added across the scene
 LIGHTNING_SCENE_BOOST = 0.9             # how much a flash brightens sea/land/boat

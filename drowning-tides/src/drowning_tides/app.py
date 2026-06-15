@@ -1,3 +1,4 @@
+import math
 import sys
 
 import moderngl as mgl
@@ -100,17 +101,29 @@ class Game:
     def toggle_mount(self):
         """E: disembark onto nearby land, or re-board the boat when on foot near it."""
         if self.game_state.is_helm():
-            island = self.islands.nearest_dockable(self.boat.position)
-            if island is not None:
-                self.player.spawn(island, self.boat.position)
+            if self._near_dock():
                 self.boat.docked_pos = glm.vec2(self.boat.position.x, self.boat.position.z)
+                self.player.disembark(self.boat.position, self.town.home)
                 self.game_state.to_on_foot()
                 self.camera.mode = FIRST_PERSON
-        elif self.game_state.is_on_foot():
-            # docked at one island -> E returns to the boat at the shore
+        elif self.game_state.is_on_foot() and self._near_boat():
+            # standing next to the docked boat -> E re-boards at the helm
             self.boat.docked_pos = None
             self.game_state.to_helm()
             self.camera.mode = FOLLOW
+
+    def _near_dock(self):
+        """Boat is within docking range of the pier's mooring point (the dock station)."""
+        anchor = getattr(self.town, 'dock_anchor', None)
+        if anchor is None:
+            return False
+        b = self.boat.position
+        return math.hypot(b.x - anchor.x, b.z - anchor.y) <= cfg.DOCK_DISTANCE
+
+    def _near_boat(self):
+        """Player is within boarding range of the (docked) boat, on foot."""
+        b, p = self.boat.position, self.player.position
+        return math.hypot(p.x - b.x, p.z - b.z) <= cfg.BOARD_RANGE
 
     def _interact(self):
         """F: fish at the helm over water, or talk to a nearby NPC on foot."""
@@ -167,9 +180,12 @@ class Game:
         self.aberration.update(self.delta_time)
         self.fishing.update(self.delta_time)
         self.hud.update(self.delta_time)
-        near_land = (self.game_state.is_helm()
-                     and self.islands.nearest_dockable(self.boat.position) is not None)
-        self.hud.set_prompt('Press E to dock' if near_land else '')
+        if self.game_state.is_helm() and self._near_dock():
+            self.hud.set_prompt('Dock Boat — Press E')
+        elif self.game_state.is_on_foot() and self._near_boat():
+            self.hud.set_prompt('Board Boat — Press E')
+        else:
+            self.hud.set_prompt('')
         self.shader_program.update()
 
     def render(self):

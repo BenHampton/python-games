@@ -182,6 +182,10 @@ class Boat:
             x, z, hit = self.app.islands.collide(
                 self.position.x, self.position.z, cfg.BOAT_COLLISION_RADIUS
             )
+            town = getattr(self.app, 'town', None)
+            if town is not None:
+                x, z, dock_hit = town.collide_boat(x, z, cfg.BOAT_COLLISION_RADIUS)
+                hit = hit or dock_hit
             self.position.x, self.position.z = x, z
             if hit:
                 self.speed *= cfg.BOAT_COLLISION_BLEED

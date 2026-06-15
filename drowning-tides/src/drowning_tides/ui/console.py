@@ -31,6 +31,8 @@ class Console:
             '/storm-kill': self._cmd_storm_kill,
             '/fog-on': self._cmd_fog_on,
             '/fog-kill': self._cmd_fog_kill,
+            '/rain-on': self._cmd_rain_on,
+            '/rain-kill': self._cmd_rain_kill,
             '/time': self._cmd_time,
             '/timescale': self._cmd_timescale,
             '/lightning': self._cmd_lightning,
@@ -105,6 +107,14 @@ class Console:
     def _cmd_fog_kill(self, args):
         self.app.weather.kill_fog()
         self.message = 'fog clearing...'
+
+    def _cmd_rain_on(self, args):
+        self.app.weather.start_rain()
+        self.message = 'rain moving in...'
+
+    def _cmd_rain_kill(self, args):
+        self.app.weather.kill_rain()
+        self.message = 'rain clearing...'
 
     def _cmd_time(self, args):
         try:

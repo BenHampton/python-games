@@ -49,10 +49,15 @@ Source is an installable package under `src/drowning_tides/`:
 
 ## Key invariants — don't break these
 
-- **One `storm_intensity` (0–1) drives everything.** `world/weather.py` runs a
-  calm→buildup→hold→ease scheduler that sets it; waves, rain, wind/current, and mood
-  lighting all read from it. Add weather-driven effects by reading `storm_intensity`,
-  not by inventing parallel state.
+- **`storm_intensity` (0–1) drives the storm.** `world/weather.py` runs a
+  calm→buildup→hold→ease scheduler that sets it; waves, wind/current, and mood lighting all
+  read from it. Add *storm*-driven effects by reading `storm_intensity`, not by inventing
+  parallel state.
+- **Rain is its own thing (`weather.rain`, a `RainState`).** Decoupled from storms: rain runs an
+  independent clear→in→hold→out scheduler so it can rain (drizzle..downpour, random peak) in calm
+  daytime, while a storm *usually but not always* drives heavier rain on top (per-storm
+  `STORM_RAIN_CHANCE` → some dry, windy storms). Read `weather.rain_intensity` (0–1), **not**
+  `storm_intensity`, for anything rain-related (`render/rain.py` scales streak count + alpha by it).
 - **GPU/CPU wave parity.** The Gerstner wave field is evaluated *identically* on the GPU
   (`shaders/water.vert`) and the CPU (`world/waves.py::WaveField.sample`) so the boat
   floats on the visibly rendered sea. If you change one, change the other and keep them
@@ -123,7 +128,7 @@ Open-world for now; a story and side-quests come later. Rough order:
 
 Backtick (`` ` ``) toggles an in-game console. Commands live in `ui/console.py`'s
 `commands` table — extend it there. Current: `/storm-on`, `/storm-kill`, `/fog-on`,
-`/fog-kill`, `/time`, `/timescale`, `/lightning`, `/clouds`.
+`/fog-kill`, `/rain-on`, `/rain-kill`, `/time`, `/timescale`, `/lightning`, `/clouds`.
 
 Other keys: `E` mount/dismount (dock when near land), `F` interact, `F11` fullscreen,
 `Esc` pause menu, mouse-look + scroll-zoom.
