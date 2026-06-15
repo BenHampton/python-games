@@ -52,7 +52,26 @@ class Player:
         strafe = float(keys[cfg.KEYS['TURN_RIGHT']]) - float(keys[cfg.KEYS['TURN_LEFT']])
         center = glm.vec2(self.island.position.x, self.island.position.z)
         walk_radius = self.island.radius * self.island.walk_frac
+        prev = glm.vec3(self.position)
+        # move freely (no disc clamp here), then resolve boundaries below
         p = walk(self.position, self.app.camera.orbit_yaw, fwd, strafe, dt,
-                 center, walk_radius, self.island.land_y, cfg.PLAYER_SPEED)
-        # follow the island's ground ramp (walk up the beach onto the plateau)
-        self.position = glm.vec3(p.x, self.island.ground_y(p.x, p.z), p.z)
+                 center, 1e9, self.island.land_y, cfg.PLAYER_SPEED)
+        town = getattr(self.app, 'town', None)
+        x, z = town.collide(p.x, p.z, cfg.PLAYER_RADIUS) if town is not None else (p.x, p.z)
+        deck = town.deck_height(x, z) if town is not None else None
+        d = math.hypot(x - center.x, z - center.y)
+        if deck is not None:                                  # standing on a plank dock
+            self.position = glm.vec3(x, max(self.island.ground_y(x, z), deck), z)
+        elif d <= walk_radius:                                # on the island
+            self.position = glm.vec3(x, self.island.ground_y(x, z), z)
+        else:
+            # off the shelf and not on a dock: slide along the shore if we came from land,
+            # otherwise (stepping off a dock edge) stay put — don't walk onto open water
+            prev_deck = town.deck_height(prev.x, prev.z) if town is not None else None
+            prev_d = math.hypot(prev.x - center.x, prev.z - center.y)
+            if prev_deck is None and prev_d <= walk_radius and d > 1e-6:
+                x = center.x + (x - center.x) / d * walk_radius
+                z = center.y + (z - center.y) / d * walk_radius
+                self.position = glm.vec3(x, self.island.ground_y(x, z), z)
+            else:
+                self.position = prev

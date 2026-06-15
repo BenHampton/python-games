@@ -55,6 +55,7 @@ FP_PITCH_MAX = math.radians(85.0)   # first-person look-up limit
 DOCK_RANGE = 22.0                   # how close the boat must be to an island shore to disembark
 PLAYER_SPEED = 9.0                  # walk speed (units/sec)
 PLAYER_EYE_HEIGHT = 1.7             # camera eye height above the land plane
+PLAYER_RADIUS = 0.55                # on-foot collision radius (stops short of walls/props)
 ISLAND_LAND_FRAC = 0.42            # mesa islands: stand on the grassy cap (frac of scale)
 ISLAND_WALK_FRAC = 0.35            # mesa: walkable summit radius (frac of island radius)
 ISLAND_SPAWN_FRAC = 0.15          # mesa: spawn near the summit centre
@@ -74,7 +75,7 @@ WATER_DRAG = 0.9            # linear drag coefficient (per second, exp decay)
 BOAT_TURN_RATE = 1.4        # max yaw rad/sec at full turn authority
 # turn authority scales with how fast we're moving: sluggish near stop, wide at speed
 TURN_SPEED_FACTOR = 0.65    # fraction of max speed at which turning is fully authoritative
-BOAT_START_POS = glm.vec3(0.0, 0.0, -384.0)  # moored alongside Freeport's pier T-head
+BOAT_START_POS = glm.vec3(0.0, 0.0, -288.0)  # moored alongside Freeport's pier T-head (scale 98)
 BOAT_START_YAW = math.pi / 2                  # bow +X: lies parallel to the T-head crossbar
 BOAT_COLLISION_RADIUS = 2.0     # boat's collision disc radius (world units)
 BOAT_COLLISION_BLEED = 0.3      # speed retained after hitting land
@@ -86,7 +87,7 @@ BOAT_COLLISION_BLEED = 0.3      # speed retained after hitting land
 # 'radius' is the collision disc (world units, ~= scale).
 # (name, x, z, scale, yaw, seed, kind); collision radius == scale
 _ISLAND_TABLE = [
-    ('freeport',          0.0, -185.0, 195.0, 0.3, 11, 'home'),
+    ('freeport',          0.0, -185.0, 98.0, 0.3, 11, 'home'),
     ('haven',          -260.0, -320.0, 20.0, 1.1, 22, 'island'),
     ('fogholms',       -120.0, -560.0, 16.0, 2.4, 33, 'island'),
     ('cedar_march',     380.0, -430.0, 40.0, 0.7, 44, 'island'),

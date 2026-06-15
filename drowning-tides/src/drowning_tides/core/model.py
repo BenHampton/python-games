@@ -160,9 +160,14 @@ class Model:
     matrix; call `render()` inside the depth-tested world pass.
     """
 
-    def __init__(self, ctx, program, path, position=(0.0, 0.0, 0.0), scale=1.0, yaw=0.0):
+    def __init__(self, ctx, program, path, position=(0.0, 0.0, 0.0), scale=1.0, yaw=0.0,
+                 mute=0.0):
         self.program = program
         verts = load_vertices(path)
+        if mute:   # desaturate toward luminance + dim, to fit the muted maritime palette
+            v = verts.reshape(-1, 9)
+            lum = v[:, 6:9] @ np.array([0.299, 0.587, 0.114], dtype="f4")
+            v[:, 6:9] = (v[:, 6:9] * (1.0 - mute) + lum[:, None] * mute) * 0.94
         self.mesh = Mesh(
             ctx, program, verts, "3f 3f 3f",
             ("in_position", "in_normal", "in_color"),

@@ -3,8 +3,43 @@ import math
 from pyglm import glm
 
 from drowning_tides.world.player import walk
+from drowning_tides.world.town import deck_height_at, resolve_town_collision
 
 CENTER = glm.vec2(0.0, 0.0)
+BOX = [(-2.0, -2.0, 2.0, 2.0)]   # a solid footprint centred at origin
+
+
+def test_collision_pushes_out_when_inside():
+    # standing inside the box -> ejected to the nearest face (+x here) plus radius
+    x, z = resolve_town_collision(1.5, 0.0, BOX, 0.5)
+    assert math.isclose(x, 2.5, abs_tol=1e-6) and math.isclose(z, 0.0, abs_tol=1e-6)
+
+
+def test_collision_pushes_off_a_face():
+    # just outside the +x face but within radius -> pushed back to face + radius
+    x, z = resolve_town_collision(2.3, 0.0, BOX, 0.5)
+    assert math.isclose(x, 2.5, abs_tol=1e-6) and math.isclose(z, 0.0, abs_tol=1e-6)
+
+
+def test_collision_leaves_clear_point_untouched():
+    x, z = resolve_town_collision(5.0, 5.0, BOX, 0.5)
+    assert (x, z) == (5.0, 5.0)
+
+
+# walkable docks: sloped pier (cx, hw, z_far, z_near) + flat deck rects
+PIER = (0.0, 1.6, -20.0, -10.0)
+DECKS = [(5.0, -25.0, 9.0, -21.0, 0.6)]
+
+
+def test_deck_height_pier_slopes_land_to_deck():
+    assert math.isclose(deck_height_at(0, -10, PIER, [], 3.0, 0.6), 3.0)        # near = land
+    assert math.isclose(deck_height_at(0, -20, PIER, [], 3.0, 0.6), 0.6)        # far = deck top
+    assert math.isclose(deck_height_at(0, -15, PIER, [], 3.0, 0.6), 1.8)        # midpoint
+
+
+def test_deck_height_flat_rect_and_off():
+    assert math.isclose(deck_height_at(7, -23, None, DECKS, 3.0, 0.6), 0.6)     # on the rect
+    assert deck_height_at(50, 50, PIER, DECKS, 3.0, 0.6) is None                # open water
 
 
 def test_walk_forward_along_yaw_and_pins_height():
