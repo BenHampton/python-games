@@ -374,10 +374,10 @@ def _add_trees_clustered(acc, rng, grass, palmy, scale):
     with a bigger island."""
     if not (grass and PROPS_AVAILABLE):
         return _add_trees(acc, rng, grass, palmy)
-    spread = 12.0 / scale
-    for _ in range(rng.randint(6, 10)):
+    spread = 13.0 / scale
+    for _ in range(rng.randint(16, 24)):                 # a forest over the rest of the island
         cv = rng.choice(grass)
-        for _ in range(rng.randint(2, 4)):
+        for _ in range(rng.randint(3, 5)):
             pos, nrm, col, h = _prop(rng.choice(TREE_MODELS))
             target = rng.uniform(5.5, 9.0) / scale
             acc.add_transformed(pos, nrm, col, target / h, rng.uniform(0.0, math.tau),
@@ -453,10 +453,9 @@ def gen_island(spec, lod):
     if lod == 0 and spec["kind"] != "reef":
         palmy = spec["seed"] % 2 == 0
         if spec["kind"] == "home":
-            # home island: foliage only (no rocks), village centre + path kept clear
-            grass = [v for v in grass
-                     if v[0] * v[0] + v[2] * v[2] > 0.45 * 0.45
-                     and not (v[2] < 0.04 and abs(v[0]) < HOME_PATH_HALF + 0.04)]
+            # forest the island, but keep foliage OUT of the harbor town (south-central strip,
+            # model space: |x|<0.36 and z<-0.30) so the buildings/docks read cleanly
+            grass = [v for v in grass if not (v[2] < -0.30 and abs(v[0]) < 0.36)]
             _add_trees_clustered(acc, rng, grass, palmy, spec["scale"])
             _add_groundcover(acc, rng, grass, spec["scale"])
         else:

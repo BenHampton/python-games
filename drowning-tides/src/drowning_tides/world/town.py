@@ -160,7 +160,8 @@ class Town:
             self._solid(x, z, gw / 2 + 0.3, 1.1)
         else:
             self._solid(x, z, 1.1, gw / 2 + 0.3)
-        span_yaw = 0.0 if axis == 'x' else math.pi / 2
+        # fence/hedge/cart models span their local Z, so align that span with the wall axis
+        span_yaw = math.pi / 2 if axis == 'x' else 0.0
         pick = rng.random()
         if pick < 0.5:                                   # fence / hedge line
             prop = rng.choice(['fence.glb', 'fence.glb', 'hedge.glb'])

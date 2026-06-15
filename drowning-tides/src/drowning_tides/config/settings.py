@@ -87,7 +87,7 @@ BOAT_COLLISION_BLEED = 0.3      # speed retained after hitting land
 # 'radius' is the collision disc (world units, ~= scale).
 # (name, x, z, scale, yaw, seed, kind); collision radius == scale
 _ISLAND_TABLE = [
-    ('freeport',          0.0, -185.0, 98.0, 0.3, 11, 'home'),
+    ('freeport',          0.0, -185.0, 98.0, 0.0, 11, 'home'),
     ('haven',          -260.0, -320.0, 20.0, 1.1, 22, 'island'),
     ('fogholms',       -120.0, -560.0, 16.0, 2.4, 33, 'island'),
     ('cedar_march',     380.0, -430.0, 40.0, 0.7, 44, 'island'),
