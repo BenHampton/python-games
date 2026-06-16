@@ -14,6 +14,7 @@ from drowning_tides.ui.console import Console
 from drowning_tides.ui.hud import Hud
 from drowning_tides.ui.pause_menu import PauseMenu
 from drowning_tides.world.aberration import Aberration
+from drowning_tides.world.birds import Birds
 from drowning_tides.world.boat import Boat
 from drowning_tides.world.daycycle import DayCycle
 from drowning_tides.world.fishing import Fishing
@@ -75,6 +76,7 @@ class Game:
         self.town = Town(self)
         self.npcs = NpcCrowd(self)
         self.npc_boats = NpcBoats(self)
+        self.birds = Birds(self)
         self.fishing = Fishing(self)
         self.scene = Scene(self)
         self.paused = False
@@ -176,6 +178,7 @@ class Game:
         self.boat.update(self.delta_time)
         self.player.update(self.delta_time)
         self.npc_boats.update(self.delta_time)
+        self.birds.update(self.delta_time)
         self.camera.update(self.delta_time)
         self.aberration.update(self.delta_time)
         self.fishing.update(self.delta_time)

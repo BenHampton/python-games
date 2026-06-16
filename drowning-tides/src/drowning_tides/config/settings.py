@@ -177,7 +177,7 @@ WAVE_DIR_SPREAD = 0.6                        # radians fanned around the wind di
 WAVE_STEEPNESS = 0.70                        # Gerstner Q (sharpness); lower = rounder, less choppy
 WAVE_CALM_AMP = 0.07                          # gentle swell even in calm
 WAVE_STORM_AMP = 1.7                          # base amplitude scale at full storm
-WAVE_MAX_AMPLITUDE = 2.0                      # hard playability cap on total height (big, not spiky)
+WAVE_MAX_AMPLITUDE = 2.0                      # hard cap on total wave height (big, not spiky)
 
 # waves grow rougher the further you sail from the town (the home-island harbor): a spatial
 # amplitude gain applied IDENTICALLY on GPU (water.vert) + CPU (waves.py) — see the parity invariant
@@ -345,6 +345,24 @@ NPC_HEAD_COLOR = (0.62, 0.50, 0.42)
 NPC_INTERACT_RANGE = 6.0
 NPC_BOAT_COUNT = 3
 NPC_BOAT_SPEED = 4.5
+
+# ------------------------------------------------------------------- ambient birds (gulls)
+BIRD_PERCH_COUNT = 4            # perched gulls that flee when you get close (a few, not a flock)
+BIRD_SOAR_COUNT = 2            # gulls wheeling high overhead (pure ambience, unreachable)
+BIRD_FLEE_RANGE = 6.0          # take off when the player/boat comes within this (~0.5-1 block)
+BIRD_FLEE_SPEED = 16.0         # horizontal escape speed on takeoff (units/sec)
+BIRD_CRUISE_Y = 60.0           # altitude a fleeing/soaring gull climbs toward
+BIRD_CLIMB_RATE = 0.5          # how fast it eases up to cruise altitude (/sec)
+BIRD_FLY_TIME = 9.0            # seconds airborne after fleeing, then it respawns at a new perch
+BIRD_WATER_RADIUS = (105.0, 165.0)   # annulus of open sea (outside the island) for water perches
+BIRD_SOAR_RADIUS = (120.0, 220.0)    # circle radius for the high soarers
+BIRD_SOAR_SPEED = 9.0          # soarer ground speed along its circle (units/sec)
+BIRD_FLAP_RATE = 7.0           # wing-beat rate (rad/sec) when active
+BIRD_FLAP_AMPL = 0.7           # wing-beat amplitude (radians)
+BIRD_SCALE = 1.0               # gull model scale (wingspan ~2 units)
+BIRD_BODY_COLOR = (0.80, 0.82, 0.84)    # pale gull body
+BIRD_WING_COLOR = (0.60, 0.64, 0.68)    # grey wing
+BIRD_TIP_COLOR = (0.18, 0.20, 0.24)     # dark wingtip / beak
 
 # ------------------------------------------------------------------- fishing (phase 4)
 # (name, rarity weight, aberrated)

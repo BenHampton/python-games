@@ -85,6 +85,7 @@ class Scene:
         self.app.town.render()
         self.app.npcs.render()
         self.app.npc_boats.render()
+        self.app.birds.render()
 
         # seed the final buffer with the opaque scene, then composite transparent water on top
         self.ctx.copy_framebuffer(self.scene_fbo, self.opaque_fbo)
